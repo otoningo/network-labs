@@ -442,12 +442,7 @@ describe('vecinos', () => {
       .router('R1')
       .router('R2')
       .link('R1:ether1', 'R2:ether1')
-      .add('R1', 'interfaceLists', (h) => ({
-        name: 'LAN',
-        members: [h.iface('ether2')],
-        include: [],
-        disabled: false,
-      }))
+      .interfaceList('R1', 'LAN', ['ether2'])
       .op('R1', () => ({
         op: 'setSingleton',
         key: 'discovery',

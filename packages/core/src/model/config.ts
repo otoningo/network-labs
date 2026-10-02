@@ -31,7 +31,15 @@ export interface User extends ItemBase {
 }
 
 /** `native-gui` es la herramienta gráfica propia de cada sistema; el driver le pone nombre. */
-export type ServiceName = 'ssh' | 'telnet' | 'http' | 'https' | 'api' | 'api-tls' | 'native-gui';
+export type ServiceName =
+  | 'ssh'
+  | 'telnet'
+  | 'ftp'
+  | 'http'
+  | 'https'
+  | 'api'
+  | 'api-tls'
+  | 'native-gui';
 
 export interface MgmtService extends ItemBase {
   readonly name: ServiceName;
@@ -109,9 +117,14 @@ export type InterfaceKind = Interface['kind'];
 /** Grupo de interfaces con nombre (listas de RouterOS, zonas, grupos de objetos). */
 export interface InterfaceList extends ItemBase {
   readonly name: string;
-  readonly members: readonly ItemId[];
   /** Otras listas incluidas, por nombre. */
   readonly include: readonly string[];
+}
+
+/** Pertenencia de una interfaz a una lista. Es un ítem propio: se puede deshabilitar o comentar. */
+export interface InterfaceListMember extends ItemBase {
+  readonly list: ItemId;
+  readonly iface: ItemId;
 }
 
 // ── Capa 2: semántica 802.1Q ────────────────────────────────────────────────
@@ -302,6 +315,7 @@ export interface DeviceConfig {
   readonly services: readonly MgmtService[];
   readonly interfaces: readonly Interface[];
   readonly interfaceLists: readonly InterfaceList[];
+  readonly interfaceListMembers: readonly InterfaceListMember[];
   readonly bridging: {
     readonly ports: readonly BridgePort[];
     readonly vlans: readonly BridgeVlan[];
@@ -333,6 +347,7 @@ export function emptyConfig(identity: string): DeviceConfig {
     services: [],
     interfaces: [],
     interfaceLists: [],
+    interfaceListMembers: [],
     bridging: { ports: [], vlans: [] },
     addressing: { addresses: [], staticArp: [], dhcpClients: [] },
     routing: { static: [] },

@@ -186,12 +186,7 @@ describe('firewall', () => {
   it('respeta listas, negaciones, saltos y reject', () => {
     const n = office()
       .masquerade('R1', 'ether1')
-      .add('R1', 'interfaceLists', (h) => ({
-        name: 'WAN',
-        members: [h.iface('ether1')],
-        include: [],
-        disabled: false,
-      }))
+      .interfaceList('R1', 'WAN', ['ether1'])
       .add('R1', 'addressLists', () => ({
         list: 'vip',
         address: range('192.168.88.10-192.168.88.10'),

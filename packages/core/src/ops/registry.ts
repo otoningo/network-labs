@@ -204,7 +204,7 @@ export const REGISTRY: Registry = {
     key: 'interfaceLists',
     get: (c) => c.interfaceLists,
     put: (c, items) => ({ ...c, interfaceLists: items }),
-    refs: (l) => l.members.map((m) => ifaceRef('members', m)),
+    refs: noRefs,
     uniques: (l) => [{ field: 'name', value: l.name }],
     check: (l, c) => {
       const base = required('interfaceLists', 'name', l.name);
@@ -233,6 +233,21 @@ export const REGISTRY: Registry = {
       }
       return null;
     },
+    optional: ['comment'],
+    creatable: always,
+    removable: always,
+  },
+
+  interfaceListMembers: {
+    key: 'interfaceListMembers',
+    get: (c) => c.interfaceListMembers,
+    put: (c, items) => ({ ...c, interfaceListMembers: items }),
+    refs: (m) => [
+      { field: 'list', coll: 'interfaceLists', id: m.list },
+      ifaceRef('iface', m.iface),
+    ],
+    uniques: (m) => [{ field: 'iface', value: `${m.list}:${m.iface}` }],
+    check: noCheck,
     optional: ['comment'],
     creatable: always,
     removable: always,

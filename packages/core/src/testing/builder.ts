@@ -287,6 +287,18 @@ export class NetBuilder {
     }));
   }
 
+  interfaceList(id: string, name: string, members: readonly string[]): this {
+    this.add(id, 'interfaceLists', () => ({ name, include: [], disabled: false }));
+    for (const member of members) {
+      this.add(id, 'interfaceListMembers', (h) => ({
+        list: h.find('interfaceLists', (l) => l.name === name),
+        iface: h.iface(member),
+        disabled: false,
+      }));
+    }
+    return this;
+  }
+
   wifi(id: string, iface: string, mode: 'ap' | 'station', ssid: string, passphrase?: string): this {
     return this.op(id, (h) => ({
       op: 'set',

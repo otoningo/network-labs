@@ -602,13 +602,27 @@ describe('add', () => {
     const list = (name: string, include: string[] = []): Op => ({
       op: 'add',
       coll: 'interfaceLists',
-      item: { name, members: [ifc(r1, 'ether2')], include, disabled: false },
+      item: { name, include, disabled: false },
     });
     expect(fails(r1, list('all'))).toMatchObject({ detail: 'reserved-name' });
     expect(fails(r1, list(''))).toMatchObject({ code: 'missing-required' });
     expect(fails(r1, list('LAN', ['LAN']))).toMatchObject({ detail: 'self-reference' });
     expect(fails(r1, list('LAN', ['WAN']))).toMatchObject({ code: 'not-found', ref: 'WAN' });
-    expect(applyOp(r1, list('LAN', ['all'])).ok).toBe(true);
+    const lan = applyOp(r1, list('LAN', ['all']));
+    if (!lan.ok) throw new Error('sin LAN');
+    const member = (iface: ItemId): Op => ({
+      op: 'add',
+      coll: 'interfaceListMembers',
+      item: { list: lan.value.created ?? itemId(0), iface, disabled: false },
+    });
+    const withMember = must(lan.value.device, member(ifc(r1, 'ether2')));
+    expect(fails(withMember.device, member(ifc(r1, 'ether2')))).toMatchObject({
+      code: 'duplicate',
+    });
+    expect(fails(lan.value.device, member(itemId(99)))).toMatchObject({
+      code: 'not-found',
+      field: 'iface',
+    });
 
     const entry: Op = {
       op: 'add',

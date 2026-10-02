@@ -6,7 +6,7 @@
 import type { Ipv4, Ipv4Prefix } from '../net/ipv4';
 import type { Mac } from '../net/mac';
 import type { DeviceId, ItemId, SimTime } from './brand';
-import type { CollectionKey } from './collections';
+import type { CollectionKey, SingletonKey } from './collections';
 import type { DiscoveryProtocol, DnsRecordType, IpProtocol, NatChain } from './config';
 import type { OsId, PortRef } from './network';
 
@@ -186,7 +186,14 @@ export type LogEvent =
       readonly mac: Mac;
     }
   | { readonly kind: 'backup-saved'; readonly file: string }
-  | { readonly kind: 'backup-loaded'; readonly file: string };
+  | { readonly kind: 'backup-loaded'; readonly file: string }
+  | {
+      readonly kind: 'config-change';
+      readonly scope: CollectionKey | SingletonKey;
+      readonly action: 'added' | 'changed' | 'removed';
+      readonly by: string;
+    }
+  | { readonly kind: 'session'; readonly action: 'login' | 'logout'; readonly user: string };
 
 export interface LogEntry {
   readonly at: SimTime;

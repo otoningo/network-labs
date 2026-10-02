@@ -11,6 +11,7 @@ import type {
   FilterRule,
   Interface,
   InterfaceList,
+  InterfaceListMember,
   IpAddress,
   MgmtService,
   NatRule,
@@ -26,6 +27,7 @@ import type {
 export interface CollectionItems {
   interfaces: Interface;
   interfaceLists: InterfaceList;
+  interfaceListMembers: InterfaceListMember;
   bridgePorts: BridgePort;
   bridgeVlans: BridgeVlan;
   addresses: IpAddress;
@@ -69,6 +71,7 @@ export type SingletonKey = keyof SingletonItems;
 export const COLLECTION_KEYS: readonly CollectionKey[] = [
   'interfaces',
   'interfaceLists',
+  'interfaceListMembers',
   'bridgePorts',
   'bridgeVlans',
   'addresses',

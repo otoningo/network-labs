@@ -14,7 +14,11 @@ export function interfaceListMembers(
   if (name === 'none' || name === 'dynamic' || seen.has(name)) return new Set();
   const list = config.interfaceLists.find((l) => l.name === name);
   if (!list || list.disabled) return new Set();
-  const members = new Set(list.members);
+  const members = new Set(
+    config.interfaceListMembers
+      .filter((m) => !m.disabled && m.list === list.id)
+      .map((m) => m.iface),
+  );
   const nextSeen = new Set([...seen, name]);
   for (const included of list.include) {
     const sub = interfaceListMembers(config, included, nextSeen);
