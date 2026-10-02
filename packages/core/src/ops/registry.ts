@@ -110,7 +110,8 @@ function portsNeedTcpUdp(scope: ErrorScope, match: Match, toPorts: boolean): Cor
   const usesPorts = match.srcPort !== undefined || match.dstPort !== undefined || toPorts;
   if (!usesPorts) return null;
   const proto = match.protocol;
-  const ok = proto && !proto.negate && (proto.value === 'tcp' || proto.value === 'udp');
+  const tcpOrUdp = ['tcp', 'udp', 6, 17];
+  const ok = proto && !proto.negate && tcpOrUdp.includes(proto.value);
   return ok
     ? null
     : { code: 'conflict', scope, field: 'match.protocol', detail: 'port-requires-tcp-udp' };
