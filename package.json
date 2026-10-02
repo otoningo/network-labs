@@ -1,0 +1,29 @@
+{
+  "name": "nos-labs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Labs de CLI de sistemas operativos de red en el navegador.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@vitest/coverage-v8": "5.0.3",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}
