@@ -112,6 +112,7 @@ const printOption = (name: string, about: string): ArgSpec => ({
 });
 
 const PRINT_ARGS: readonly ArgSpec[] = [
+  printOption('brief', 'Print a table with the main properties'),
   printOption('count-only', 'Print only the number of items'),
   printOption('detail', 'Print all properties of each item'),
   printOption('stats', 'Print statistics'),
@@ -123,13 +124,16 @@ const PRINT_NAMES = PRINT_ARGS.map((a) => a.name);
 
 const GLOBAL_ARGS: Readonly<Record<string, readonly ArgSpec[]>> = {
   ping: [
-    arg('address', T.ip),
+    { ...arg('address', T.string), about: 'IP address or DNS name' },
     arg('count', T.int(1, 4294967295)),
+    arg('interface', T.ref('interface')),
+    arg('interval', T.time),
     arg('src-address', T.ip),
     arg('size', T.int(14, 65535)),
   ],
   export: [
     arg('compact', T.flag),
+    arg('terse', T.flag),
     arg('verbose', T.flag),
     arg('file', T.string),
     arg('show-sensitive', T.flag),
@@ -144,7 +148,8 @@ function argSpecs(path: string, command: string): readonly ArgSpec[] {
   if (menu) {
     const actions = menu.actions;
     const action = actions && Object.hasOwn(actions, command) ? actions[command] : undefined;
-    if (action) return action.args.map(fromProp);
+    // `confirmed` lo añade el driver al responder [y/N]; no es algo que se escriba.
+    if (action) return action.args.filter((a) => a.name !== 'confirmed').map(fromProp);
     if (command === 'add' && menu.add) return menu.props.filter((p) => p.writable).map(fromProp);
     if (command === 'set' && menu.update) {
       return menu.props.filter((p) => p.writable && !p.addOnly).map(fromProp);

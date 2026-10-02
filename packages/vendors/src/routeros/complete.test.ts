@@ -117,6 +117,7 @@ describe('complete: argumentos', () => {
 
   it('print propone sus opciones como palabras', () => {
     expect(texts('/ip address print ')).toEqual([
+      'brief',
       'count-only',
       'detail',
       'stats',
@@ -128,18 +129,26 @@ describe('complete: argumentos', () => {
   });
 
   it('acciones del menú usan sus argumentos', () => {
-    expect(texts('/system reboot ')).toEqual(['confirmed=']);
+    expect(texts('/system reboot ')).toEqual([]);
     expect(texts('/system backup save ')).toEqual(['dont-encrypt=', 'name=', 'password=']);
     expect(texts('/tool traceroute ')).toEqual(['address=', 'count=']);
   });
 
   it('comandos globales: ping, export e import', () => {
-    expect(texts('ping ')).toEqual(['address=', 'count=', 'size=', 'src-address=']);
+    expect(texts('ping ')).toEqual([
+      'address=',
+      'count=',
+      'interface=',
+      'interval=',
+      'size=',
+      'src-address=',
+    ]);
     expect(texts('/ip address export ')).toEqual([
       'compact',
       'file=',
       'hide-sensitive',
       'show-sensitive',
+      'terse',
       'verbose',
     ]);
     expect(texts('import f')).toEqual(['file-name=']);
@@ -310,7 +319,7 @@ describe('help', () => {
     expect(helpLines('/ip address print ')).toContain(
       'where -- Print only the items that match an expression',
     );
-    expect(helpLines('ping ')).toContain('address -- IP address');
+    expect(helpLines('ping ')).toContain('address -- IP address or DNS name');
     expect(helpLines('import ')).toContain('file-name -- File name');
   });
 

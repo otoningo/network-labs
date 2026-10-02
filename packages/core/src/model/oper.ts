@@ -7,7 +7,7 @@ import type { Ipv4, Ipv4Prefix } from '../net/ipv4';
 import type { Mac } from '../net/mac';
 import type { DeviceId, ItemId, SimTime } from './brand';
 import type { CollectionKey, SingletonKey } from './collections';
-import type { DiscoveryProtocol, DnsRecordType, IpProtocol, NatChain } from './config';
+import type { ConnState, DiscoveryProtocol, DnsRecordType, IpProtocol, NatChain } from './config';
 import type { OsId, PortRef } from './network';
 
 export interface Counters {
@@ -177,6 +177,12 @@ export type LogEvent =
       readonly dst: Endpoint;
       readonly inIface?: ItemId;
       readonly outIface?: ItemId;
+      /** Estado de conexión del paquete: la ida es new, la vuelta established. */
+      readonly state: ConnState;
+      /** Tipo ICMP (8 eco, 0 respuesta) cuando aplica. */
+      readonly icmpType?: number;
+      /** Longitud del paquete en bytes. */
+      readonly len: number;
     }
   | { readonly kind: 'nat'; readonly rule: ItemId; readonly chain: NatChain }
   | {
@@ -184,6 +190,11 @@ export type LogEvent =
       readonly server: ItemId;
       readonly ip: Ipv4;
       readonly mac: Mac;
+    }
+  | {
+      readonly kind: 'dhcp-pool-empty';
+      readonly server: ItemId;
+      readonly pool: ItemId;
     }
   | { readonly kind: 'backup-saved'; readonly file: string }
   | { readonly kind: 'backup-loaded'; readonly file: string }

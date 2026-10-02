@@ -36,8 +36,11 @@ function updateDevice(net: Network, id: DeviceId, update: (d: Device) => Device)
 /** Suma contadores de reglas y deja en el log las reglas con `log` que coincidieron. */
 export function recordTrace(net: Network, result: TraceResult, bytes = 84): Network {
   let next = net;
-  const legs = [result.forward, ...(result.reply ? [result.reply] : [])];
-  for (const leg of legs) {
+  const legs = [
+    { leg: result.forward, state: 'new' as const, icmpType: 8 },
+    ...(result.reply ? [{ leg: result.reply, state: 'established' as const, icmpType: 0 }] : []),
+  ];
+  for (const { leg, state, icmpType } of legs) {
     for (const hop of leg.hops) {
       next = updateDevice(next, hop.device, (device) => {
         let counters = device.oper.ruleCounters;
@@ -58,6 +61,9 @@ export function recordTrace(net: Network, result: TraceResult, bytes = 84): Netw
                 dst: endpoint(hop.received, 'dst'),
                 ...(hop.inIface === undefined ? {} : { inIface: hop.inIface }),
                 ...(hop.outIface === undefined ? {} : { outIface: hop.outIface }),
+                state,
+                ...(hop.received.protocol === 'icmp' ? { icmpType } : {}),
+                len: bytes,
               },
             });
           }

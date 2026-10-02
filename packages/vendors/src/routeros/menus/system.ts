@@ -93,11 +93,11 @@ const NOUNS: Readonly<Record<CollectionKey | SingletonKey, string>> = {
   discovery: 'neighbor discovery settings',
 };
 
-const PROTO_UPPER: Readonly<Record<string, string>> = {
-  tcp: 'TCP (SYN)',
-  udp: 'UDP',
-  icmp: 'ICMP (type 8, code 0)',
-};
+function protoText(event: Extract<LogEvent, { kind: 'firewall' }>): string {
+  if (event.protocol === 'icmp') return `ICMP (type ${event.icmpType ?? 8}, code 0)`;
+  if (event.protocol === 'tcp') return event.state === 'new' ? 'TCP (SYN)' : 'TCP (ACK)';
+  return 'UDP';
+}
 
 export function logLine(event: LogEvent, ctx: MenuCtx): { topics: string; message: string } {
   switch (event.kind) {
@@ -122,11 +122,16 @@ export function logLine(event: LogEvent, ctx: MenuCtx): { topics: string; messag
       const prefix = event.prefix ? `${event.prefix} ` : '';
       return {
         topics: 'firewall,info',
-        message: `${prefix}${event.chain}: in:${inIf} out:${outIf}, connection-state:new proto ${PROTO_UPPER[event.protocol] ?? event.protocol}, ${ep(event.src)}->${ep(event.dst)}, len 60`,
+        message: `${prefix}${event.chain}: in:${inIf} out:${outIf}, connection-state:${event.state} proto ${protoText(event)}, ${ep(event.src)}->${ep(event.dst)}, len ${event.len}`,
       };
     }
     case 'nat':
       return { topics: 'firewall,info', message: `nat ${event.chain}` };
+    case 'dhcp-pool-empty':
+      return {
+        topics: 'dhcp,warning',
+        message: `${refName(ctx, 'dhcp-server', event.server)} failed to give out IP address: pool <${refName(ctx, 'pool', event.pool)}> is empty`,
+      };
     case 'backup-saved':
       return { topics: 'system,info', message: 'configuration backup saved' };
     case 'backup-loaded':
