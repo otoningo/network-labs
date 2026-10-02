@@ -145,6 +145,12 @@ export interface ExportDef {
    * `set-name`: `set <nombre>` para ítems fijos con nombre (servicios).
    */
   readonly style: 'add' | 'set' | 'set-default-name' | 'set-name';
+  /**
+   * Valores de fábrica propios de cada fila, para omitirlos en export cuando
+   * no dependen solo de la propiedad (el nombre de fábrica de una interfaz,
+   * el puerto de cada servicio). Tienen prioridad sobre `PropDef.default`.
+   */
+  readonly rowDefaults?: (row: Row, ctx: MenuCtx) => Props;
 }
 
 export interface MenuDef {

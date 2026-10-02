@@ -184,7 +184,16 @@ export const ethernetMenu: MenuDef = collectionMenu({
   columns: ['name', 'mtu', 'mac-address', 'arp'],
   statsColumns: ['name', 'rx-byte', 'tx-byte', 'rx-packet', 'tx-packet'],
   nameProp: 'name',
-  export: { order: 20, style: 'set-default-name' },
+  export: {
+    order: 20,
+    style: 'set-default-name',
+    rowDefaults: (row) =>
+      props([
+        ['name', row.props.get('default-name')],
+        ['mtu', '1500'],
+        ['disabled', 'no'],
+      ]),
+  },
   toProps: (i, ctx) =>
     props([
       ['name', i.name],
@@ -518,7 +527,16 @@ export const wifiMenu: MenuDef = collectionMenu({
   style: 'table',
   columns: ['name', 'mac-address', 'configuration.mode', 'configuration.ssid'],
   nameProp: 'name',
-  export: { order: 25, style: 'set-default-name' },
+  export: {
+    order: 25,
+    style: 'set-default-name',
+    // Las radios salen de fábrica deshabilitadas.
+    rowDefaults: (row) =>
+      props([
+        ['name', row.props.get('default-name')],
+        ['disabled', 'yes'],
+      ]),
+  },
   toProps: (i, ctx) => {
     if (i.kind !== 'wireless') return props([]);
     const band = i.band === hardwareBand(ctx, i) ? '' : `${i.band}-ax`;

@@ -669,7 +669,18 @@ export const serviceMenu: MenuDef = collectionMenu({
   style: 'table',
   columns: ['name', 'port', 'address'],
   nameProp: 'name',
-  export: { order: 95, style: 'set-name' },
+  export: {
+    order: 95,
+    style: 'set-name',
+    rowDefaults: (row) => {
+      const name = row.props.get('name') ?? '';
+      return props([
+        ['port', String(SERVICE_DEFAULT_PORTS[name] ?? '')],
+        ['address', ''],
+        ['disabled', yn(name === 'www-ssl')],
+      ]);
+    },
+  },
   toProps: (s) =>
     props([
       ['name', SERVICE_NAMES[s.name]],
