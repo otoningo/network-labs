@@ -63,6 +63,8 @@ export type RosAction =
   | { readonly kind: 'undo' }
   | { readonly kind: 'redo' }
   | { readonly kind: 'resolve'; readonly name: string }
-  | { readonly kind: 'put'; readonly text: string };
+  | { readonly kind: 'put'; readonly text: string }
+  /** Varios comandos en una línea (`;`): se analizan uno a uno al ejecutar, con el estado ya actualizado. */
+  | { readonly kind: 'script'; readonly lines: readonly string[] };
 
 export type RosIntent = Intent<RosView, RosSessionChange, RosAction>;

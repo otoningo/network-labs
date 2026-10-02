@@ -179,3 +179,44 @@ Cada paquete instalado, con versión fija (`--save-exact`) para builds reproduci
 
 Tailwind, xterm.js, Zustand y la librería de iconos se instalarán en la fase 3,
 cuando haya interfaz que los use, en lugar de en la fase 1 como decía el plan.
+
+## D-021 · Wifi con el menú `/interface wifi` (paquete actual de v7)
+
+- **Elegido:** `/interface wifi` con interfaces `wifi1..N` y propiedades
+  `configuration.ssid`, `configuration.mode`, `channel.band`,
+  `security.authentication-types` y `security.passphrase`.
+- **Descartado:** el menú antiguo `/interface wireless` (`wlan1`).
+- **Por qué:** es el que traen los equipos nuevos con v7. Si un lab necesitara
+  el antiguo, se puede añadir como otra vista sobre el mismo modelo neutral.
+
+## D-022 · Formato de salida de referencia: RouterOS v7 reciente
+
+- Prompt con la ruta en forma v7 (`[admin@MikroTik] /ip/address>`), línea
+  `Columns:`, leyenda de flags en mayúsculas y solo con los flags presentes,
+  rutas dinámicas sin número y `print` de firewall en formato detalle.
+- Se aceptan las dos formas de escribir rutas: `/ip address print` y
+  `/ip/address/print`, más abreviaturas únicas como hace el equipo.
+- La salida busca ser verosímil, no idéntica byte a byte: no copiamos
+  documentación ni salidas reales, se escribió a partir de su descripción pública.
+
+## D-023 · Mensajes de error centralizados
+
+- Todos los textos de error viven en `errors.ts`, traducidos desde códigos
+  estables (del parser y del núcleo). Algunos están confirmados con la
+  documentación pública («input does not match any value of interface»,
+  «expected end of command»); el resto son aproximaciones que se pueden
+  corregir en un solo lugar.
+
+## D-024 · Números de ítem sin print previo
+
+- **Elegido:** si el usuario usa `set 0` sin haber hecho `print` en ese menú,
+  se numera como si hubiera hecho un `print` completo.
+- **Descartado:** exigir un `print` previo.
+- **Por qué:** evita un tropiezo frustrante al aprender, y tras cualquier
+  `print` (incluido `print where`) se usa exactamente la numeración mostrada.
+
+## D-025 · Varias órdenes en una línea se ejecutan en secuencia
+
+- Con `;`, cada comando se analiza al ejecutarse, con el estado que dejó el
+  anterior (por ejemplo, crear un bridge y añadirle puertos en la misma línea).
+  Import y los scripts de arranque de los labs siguen el mismo camino.

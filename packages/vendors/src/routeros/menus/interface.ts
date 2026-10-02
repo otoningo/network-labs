@@ -535,6 +535,7 @@ export const wifiMenu: MenuDef = collectionMenu({
       props([
         ['name', row.props.get('default-name')],
         ['disabled', 'yes'],
+        ['security.authentication-types', 'wpa2-psk'],
       ]),
   },
   toProps: (i, ctx) => {

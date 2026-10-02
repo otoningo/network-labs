@@ -663,7 +663,7 @@ export const serviceMenu: MenuDef = collectionMenu({
     ro('name'),
     prop('port', T.int(1, 65535)),
     prop('address', T.prefixList, { default: '' }),
-    prop('disabled', T.bool, { default: 'no' }),
+    prop('disabled', T.bool, { default: 'no', hidden: true }),
   ],
   flags: [[F.disabled, F.invalid]],
   style: 'table',
@@ -926,8 +926,7 @@ function matchFrom(p: Props, ctx: MenuCtx): Match {
   const match: Record<string, unknown> = {};
   for (const [key, value] of entries) if (value !== undefined) match[key] = value;
   const states = opt(p, 'connection-state');
-  if (states !== undefined) match['connectionState'] = states.split(',');
-  return match as Match;
+  return (states === undefined ? match : { ...match, connectionState: states.split(',') }) as Match;
 }
 
 function counters(ctx: MenuCtx, id: ItemId): (readonly [string, string])[] {

@@ -59,7 +59,8 @@ export const baseProps = (item: ItemBase): (readonly [string, string | undefined
 
 export const COMMON_PROPS: readonly PropDef[] = [
   prop('comment', T.string),
-  prop('disabled', T.bool, { default: 'no' }),
+  // En print detail el estado se ve como flag X, no como propiedad.
+  prop('disabled', T.bool, { default: 'no', hidden: true }),
 ];
 
 export const flags = (...pairs: readonly (readonly [string, boolean])[]): string =>
