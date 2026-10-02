@@ -1,0 +1,82 @@
+# Lab de ejemplo para las pruebas del esquema y del cargador.
+# Los labs reales viven en content/labs (fase 4).
+id: demo-nat
+vendor: routeros
+title:
+  es: Salida a Internet con NAT
+  en: Internet access with NAT
+summary:
+  es: Conecta la LAN de una oficina a Internet a través del router.
+  en: Connect an office LAN to the Internet through the router.
+difficulty: beginner
+minutes: 8
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      internet:
+        address: 203.0.113.1/24
+        dhcp:
+          pool: 203.0.113.10-203.0.113.20
+          dns: [1.1.1.1]
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      position: { x: 300, y: 120 }
+      startup: |
+        /ip address add address=192.168.88.1/24 interface=ether2
+    - id: PC1
+      os: host
+      board: sim-host
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+        dns: [1.1.1.1]
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+  flows:
+    - { id: web, from: PC1, to: example.com, protocol: tcp, port: 443, bps: 120000, replyBps: 2000000 }
+
+objectives:
+  - id: lan
+    text:
+      es: La PC llega a su puerta de enlace.
+      en: The PC reaches its gateway.
+    check:
+      reachable: { from: PC1, to: 192.168.88.1 }
+    hints:
+      - es: Ya viene resuelto; sirve de referencia.
+        en: Already solved; it is here as a reference.
+  - id: wan
+    text:
+      es: El router tiene una dirección pública en su puerto WAN.
+      en: The router has a public address on its WAN port.
+    check:
+      hasAddress: { device: R1, iface: ether1, within: 203.0.113.0/24 }
+    hints:
+      - es: El proveedor entrega direcciones por DHCP.
+        en: The provider hands out addresses over DHCP.
+      - es: Necesitas un cliente DHCP en la interfaz que va hacia el ISP.
+        en: You need a DHCP client on the interface facing the ISP.
+  - id: internet
+    text:
+      es: La PC navega y sale con la IP pública del router.
+      en: The PC browses using the router public IP.
+    check:
+      all:
+        - reachable: { from: PC1, to: 8.8.8.8 }
+        - natSourceIs: { from: PC1, to: 8.8.8.8, expect: { addressOf: "R1:ether1" } }
+    hints:
+      - es: Internet no sabe volver a una red privada.
+        en: The Internet cannot route back to a private network.
+      - es: Traduce el origen de lo que sale por la WAN.
+        en: Translate the source of traffic leaving through the WAN.
+
+explanation:
+  es: Sin NAT, las respuestas no encuentran el camino de vuelta a 192.168.88.0/24.
+  en: Without NAT, replies cannot find their way back to 192.168.88.0/24.

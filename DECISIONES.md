@@ -122,3 +122,43 @@ eligió, qué se descartó y por qué. Las nuevas van al final.
   función del motor.
 - **Por qué:** el estado queda autocontenido y serializable, y el motor no
   necesita saber qué fabricante es.
+
+## D-016 · Labs en YAML, validados con Zod y compilados a JSON
+
+- **Elegido:** YAML para escribir, con un esquema Zod que valida y genera un
+  JSON Schema para el autocompletado del editor. Los textos en español e
+  inglés van juntos en el mismo archivo.
+- **Descartado:** JSON a mano (sin comentarios, mucho ruido de comillas) y labs
+  como módulos TypeScript (mezclan contenido con código).
+- **Por qué:** los labs tienen texto largo en dos idiomas y conviene comentarlos.
+  El parser de YAML solo corre al compilar y en las pruebas (entrada aparte
+  `@nos/core/lab-yaml`), así que no llega al navegador.
+- La configuración inicial de los equipos de fabricante se escribe en su
+  propia sintaxis y la ejecuta el driver al cargar el lab. Si el driver no la
+  entiende, la prueba del lab falla: los labs también prueban a los drivers.
+
+## D-017 · Contrato de driver ampliado respecto al brief
+
+- `complete(input, cursor, ctx)` recibe el contexto: el autocompletado depende
+  del menú actual y de los nombres de interfaz del equipo.
+- `key(chord, ctx)` traduce combinaciones como Ctrl+X (safe mode) a intenciones.
+- `describeError(error, ctx)` redacta los errores con la voz del fabricante,
+  tanto los de sintaxis como los códigos del núcleo.
+- `apply` recibe y devuelve la red completa, porque acciones como `ping` o
+  `torch` dependen de otros equipos y dejan efectos (contadores, caché DNS).
+
+## D-018 · Estado operativo en arreglos, no en diccionarios
+
+- **Elegido:** `oper.interfaces` y `oper.dhcpClients` son arreglos con el id
+  dentro de cada entrada (el plan aprobado los mostraba como `Record`).
+- **Por qué:** las claves numéricas de un objeto se convierten en texto al
+  serializar y se pierde el tipo nominal. Los arreglos se guardan y comparan
+  sin conversiones.
+
+## D-019 · Internet emulado responde solo por IPs públicas
+
+- **Elegido:** el equipo `internet` responde por cualquier IP pública del
+  escenario y descarta las privadas (RFC 1918, CGNAT, link-local).
+- **Por qué:** así un lab sin NAT falla igual que en la realidad: el paquete
+  sale, pero la respuesta no tiene ruta de vuelta a 192.168.x.x. Si Internet
+  respondiera a todo, se aprobarían configuraciones que no funcionan.
