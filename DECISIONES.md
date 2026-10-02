@@ -162,3 +162,20 @@ eligió, qué se descartó y por qué. Las nuevas van al final.
 - **Por qué:** así un lab sin NAT falla igual que en la realidad: el paquete
   sale, pero la respuesta no tiene ruta de vuelta a 192.168.x.x. Si Internet
   respondiera a todo, se aprobarían configuraciones que no funcionan.
+
+## D-020 · Dependencias y su justificación
+
+Cada paquete instalado, con versión fija (`--save-exact`) para builds reproducibles.
+
+| Paquete | Dónde | Para qué |
+|---|---|---|
+| `typescript` 6.0 | raíz (dev) | Tipado estricto en todo el monorepo (ver D-002). |
+| `vitest` + `@vitest/coverage-v8` | raíz (dev) | Pruebas pedidas en el brief y umbral de cobertura del núcleo. `vite` llega como dependencia par de Vitest. |
+| `@biomejs/biome` | raíz (dev) | Lint y formato; prohíbe `any` (ver D-003). |
+| `zod` | `@nos/core` | Esquema de labs, mensajes de error legibles y JSON Schema para editores. Servirá también para validar lo que se lea de localStorage. |
+| `yaml` | `@nos/core` | Leer labs en YAML. Solo en compilación y pruebas (ver D-016). |
+| `next`, `react`, `react-dom` | `@nos/web` | Stack pedido en el brief. |
+| `@types/react`, `@types/react-dom`, `@types/node` | `@nos/web` (dev) | Tipos que exige Next.js con TypeScript. El núcleo no los usa: no depende de Node ni del DOM. |
+
+Tailwind, xterm.js, Zustand y la librería de iconos se instalarán en la fase 3,
+cuando haya interfaz que los use, en lugar de en la fase 1 como decía el plan.
