@@ -1,0 +1,17 @@
+{
+  "name": "@nos/vendors",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Drivers de sistemas operativos de red: traducen la CLI de cada fabricante al modelo neutral de @nos/core.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./routeros": "./src/routeros/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nos/core": "*"
+  }
+}
