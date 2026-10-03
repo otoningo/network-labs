@@ -60,10 +60,12 @@ export function Figure() {
 
   return (
     <figure className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 px-5 pt-4">
+      <div className="flex min-h-0 flex-1 items-center justify-center px-5 pt-4">
         <svg
           viewBox={`${minX} ${minY} ${width} ${height}`}
-          className="size-full"
+          width={width}
+          height={height}
+          className="h-auto max-h-full w-auto max-w-full"
           role="img"
           aria-labelledby="lab-figure-title"
         >
