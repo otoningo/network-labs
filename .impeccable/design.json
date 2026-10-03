@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T13:54:30.143644+00:00",
+  "title": "Design System: nos-labs",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Grafito de fondo",
+        "canonical": "#141618",
+        "tonalRamp": [
+          "#23262a",
+          "#3d434a",
+          "#586169",
+          "#727e89",
+          "#929ba4",
+          "#b2b8be",
+          "#d1d5d9",
+          "#f1f2f3"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Grafito de hoja",
+        "canonical": "#181a1d",
+        "tonalRamp": [
+          "#23262a",
+          "#3d424a",
+          "#575f6a",
+          "#727b8a",
+          "#9199a4",
+          "#b1b7bf",
+          "#d1d4d9",
+          "#f1f2f3"
+        ]
+      },
+      "console": {
+        "role": "neutral",
+        "displayName": "Grafito de consola",
+        "canonical": "#0f1012",
+        "tonalRamp": [
+          "#23252a",
+          "#3d414a",
+          "#585e69",
+          "#727a89",
+          "#9298a4",
+          "#b2b6be",
+          "#d1d4d9",
+          "#f1f2f3"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Filete",
+        "canonical": "#2a2e33",
+        "tonalRamp": [
+          "#23262a",
+          "#3d434a",
+          "#575f6a",
+          "#727c8a",
+          "#919aa5",
+          "#b1b7bf",
+          "#d1d5d9",
+          "#f1f2f3"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Filete marcado",
+        "canonical": "#3a3f45",
+        "tonalRamp": [
+          "#23262a",
+          "#3e4349",
+          "#586069",
+          "#737d89",
+          "#929aa3",
+          "#b2b7be",
+          "#d1d5d9",
+          "#f1f2f3"
+        ]
+      },
+      "control": {
+        "role": "neutral",
+        "displayName": "Gris de control",
+        "canonical": "#8a929a",
+        "tonalRamp": [
+          "#232629",
+          "#3e4348",
+          "#596168",
+          "#747e87",
+          "#939ba2",
+          "#b3b8bd",
+          "#d2d5d8",
+          "#f1f2f3"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta blanco papel",
+        "canonical": "#e3e6e8",
+        "tonalRamp": [
+          "#22272a",
+          "#3d454a",
+          "#57626a",
+          "#71808a",
+          "#919da5",
+          "#b1b9bf",
+          "#d1d6d9",
+          "#f1f3f4"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Tinta media",
+        "canonical": "#a3aab1",
+        "tonalRamp": [
+          "#232629",
+          "#3e4349",
+          "#596168",
+          "#737e88",
+          "#939ba3",
+          "#b2b8be",
+          "#d2d5d9",
+          "#f1f2f3"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Tinta tenue",
+        "canonical": "#7d858d",
+        "tonalRamp": [
+          "#242629",
+          "#3f4348",
+          "#5a6167",
+          "#757e86",
+          "#949ba1",
+          "#b3b8bd",
+          "#d2d5d8",
+          "#f1f2f3"
+        ]
+      },
+      "done": {
+        "role": "secondary",
+        "displayName": "Verde de casilla cumplida",
+        "canonical": "#5fae7b",
+        "tonalRamp": [
+          "#1a3323",
+          "#2d593d",
+          "#418057",
+          "#54a772",
+          "#7abc91",
+          "#a1cfb1",
+          "#c7e3d1",
+          "#eef6f1"
+        ]
+      },
+      "warn": {
+        "role": "secondary",
+        "displayName": "Ámbar de regresión",
+        "canonical": "#e0b04f",
+        "tonalRamp": [
+          "#412f0b",
+          "#735314",
+          "#a4771d",
+          "#d69b26",
+          "#e1b355",
+          "#eac986",
+          "#f2dfb8",
+          "#fbf5e9"
+        ]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Rojo destructivo",
+        "canonical": "#d45b4f",
+        "tonalRamp": [
+          "#3d130f",
+          "#6c221a",
+          "#9b3026",
+          "#ca3f31",
+          "#d8695e",
+          "#e3958d",
+          "#efc0bc",
+          "#faeceb"
+        ]
+      },
+      "done-quiet": {
+        "role": "secondary",
+        "displayName": "Verde tenue",
+        "canonical": "#1d2a22",
+        "tonalRamp": [
+          "#1f2d25",
+          "#375041",
+          "#4f725c",
+          "#679578",
+          "#88ad97",
+          "#abc5b5",
+          "#cdddd3",
+          "#f0f5f2"
+        ]
+      },
+      "warn-quiet": {
+        "role": "secondary",
+        "displayName": "Ámbar tenue",
+        "canonical": "#2d2618",
+        "tonalRamp": [
+          "#322a1b",
+          "#584a2f",
+          "#7e6a43",
+          "#a48a57",
+          "#b9a57c",
+          "#cebfa2",
+          "#e2d9c8",
+          "#f6f4ee"
+        ]
+      },
+      "error-quiet": {
+        "role": "tertiary",
+        "displayName": "Rojo tenue",
+        "canonical": "#2e1c1b",
+        "tonalRamp": [
+          "#301d1c",
+          "#553432",
+          "#7a4a47",
+          "#9e605d",
+          "#b58381",
+          "#caa7a5",
+          "#e0cbca",
+          "#f6efef"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "Foco de tinta",
+        "canonical": "#e3e6e8",
+        "tonalRamp": [
+          "#22272a",
+          "#3d454a",
+          "#57626a",
+          "#71808a",
+          "#919da5",
+          "#b1b9bf",
+          "#d1d6d9",
+          "#f1f3f4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título del lab al inicio de la hoja."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Numeral de tarea: grande, ligero y de un solo tono."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de lab completado."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Título del lab en la barra superior."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Enunciados, resumen y explicación; medida máxima 62ch."
+      },
+      "body-sm": {
+        "displayName": "Body small",
+        "purpose": "Pistas, encabezado Tareas, navegación, pestañas y botones."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metadatos, pie de figura, franja de consola, nota de regresión."
+      },
+      "fine": {
+        "displayName": "Fine",
+        "purpose": "Aviso legal; tamaño mínimo de la interfaz."
+      },
+      "console": {
+        "displayName": "Console",
+        "purpose": "Solo la terminal (Geist Mono)."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Salida suave de la marca nueva en la casilla."
+      },
+      {
+        "name": "tick",
+        "value": "260ms scale 0.6→1, opacity 0→1",
+        "purpose": "Entrada de una casilla que se cumple durante la sesión; lo restaurado aparece quieto."
+      },
+      {
+        "name": "progress-segment",
+        "value": "500ms color",
+        "purpose": "Cambio de color de los segmentos de progreso de la barra."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "prefers-reduced-motion anula animaciones y transiciones."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "sheet-md",
+        "value": "28rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Barra superior",
+      "kind": "nav",
+      "refersTo": "top-bar",
+      "description": "Barra de 48px: producto, ruta, título, progreso monocromo, idioma.",
+      "html": "<header class=\"ds-bar\"><a class=\"ds-bar-name\" href=\"#\">nos-labs</a><span class=\"ds-bar-path\">MikroTik desde cero <span aria-hidden=\"true\">/</span> <span class=\"ds-bar-lab\">Lab 1</span></span><h1 class=\"ds-bar-title\">Acceso inicial y CLI</h1><div class=\"ds-bar-end\"><ol class=\"ds-seg\" aria-hidden=\"true\"><li class=\"on\"></li><li class=\"on\"></li><li></li><li></li></ol><span class=\"ds-bar-progress\">2 de 4 tareas</span><a class=\"ds-lang\" aria-current=\"true\" href=\"#\">es</a><a class=\"ds-lang\" href=\"#\">en</a></div></header>",
+      "css": ".ds-bar{display:flex;align-items:center;gap:20px;height:48px;padding:0 20px;border-bottom:1px solid var(--color-rule);background:var(--color-ground);color:var(--color-ink);font-family:var(--font-ui),system-ui,sans-serif;font-size:.9375rem}.ds-bar-name{font-weight:600;letter-spacing:-.025em;color:var(--color-ink);text-decoration:none}.ds-bar-path{font-size:.875rem;color:var(--color-ink-faint)}.ds-bar-lab{color:var(--color-ink-muted)}.ds-bar-title{margin:0;font-size:.9375rem;font-weight:500}.ds-bar-end{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:.875rem}.ds-seg{display:flex;gap:4px;margin:0;padding:0;list-style:none}.ds-seg li{width:10px;height:10px;border:1px solid var(--color-control);transition:background-color .5s,border-color .5s}.ds-seg li.on{background:var(--color-ink-muted);border-color:var(--color-ink-muted)}.ds-bar-progress{color:var(--color-ink-muted)}.ds-lang{padding:2px 6px;border-radius:2px;text-transform:uppercase;text-decoration:none;color:var(--color-ink-faint)}.ds-lang:hover{color:var(--color-ink-muted)}.ds-lang[aria-current]{color:var(--color-ink)}.ds-lang:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Botón discreto (pista)",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Acción secundaria en la hoja: texto en tinta media con icono, sin caja.",
+      "html": "<button class=\"ds-btn-quiet\" type=\"button\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M176 232a8 8 0 0 1-8 8H88a8 8 0 0 1 0-16h80a8 8 0 0 1 8 8Zm40-128a87.55 87.55 0 0 1-33.64 69.21A16.24 16.24 0 0 0 176 186v6a16 16 0 0 1-16 16H96a16 16 0 0 1-16-16v-6a16 16 0 0 0-6.23-12.66A87.59 87.59 0 0 1 40 104.49C39.74 56.83 78.26 17.14 125.88 16A88 88 0 0 1 216 104Zm-16 0a72 72 0 0 0-73.74-72c-39 .92-70.47 33.39-70.26 72.39a71.65 71.65 0 0 0 27.64 56.3A32 32 0 0 1 96 186v6h64v-6a32.15 32.15 0 0 1 12.47-25.35A71.65 71.65 0 0 0 200 104Z\"/></svg>Pista</button>",
+      "css": ".ds-btn-quiet{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 2px;border:0;border-radius:2px;background:transparent;color:var(--color-ink-muted);font-family:var(--font-ui),system-ui,sans-serif;font-size:.875rem;cursor:pointer;transition:color .15s}.ds-btn-quiet:hover{color:var(--color-ink)}.ds-btn-quiet:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Botón de icono (reiniciar)",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Control global de 32px con icono de 16px; fondo de filete al pasar.",
+      "html": "<button class=\"ds-btn-icon\" type=\"button\" aria-label=\"Reiniciar\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224 128a96 96 0 0 1-94.71 96H128a95.38 95.38 0 0 1-65.9-26.2 8 8 0 0 1 11-11.63 80 80 0 1 0-1.67-114.78L55.43 88H80a8 8 0 0 1 0 16H32a8 8 0 0 1-8-8V48a8 8 0 0 1 16 0v29.8l16.4-15A96 96 0 0 1 224 128Z\"/></svg></button>",
+      "css": ".ds-btn-icon{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:2px;background:transparent;color:var(--color-ink-faint);cursor:pointer}.ds-btn-icon:hover{background:var(--color-rule);color:var(--color-ink)}.ds-btn-icon:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Botón destructivo (confirmar reinicio)",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Único uso del rojo en la interfaz: confirmar en el sitio una acción que borra trabajo.",
+      "html": "<span class=\"ds-confirm\"><button class=\"ds-btn-destructive\" type=\"button\">Reiniciar</button><button class=\"ds-btn-cancel\" type=\"button\">Cancelar</button></span>",
+      "css": ".ds-confirm{display:inline-flex;gap:8px;font-family:var(--font-ui),system-ui,sans-serif;font-size:.875rem}.ds-btn-destructive{padding:2px 8px;border:1px solid var(--color-error);border-radius:2px;background:transparent;color:var(--color-error);font:inherit;cursor:pointer}.ds-btn-destructive:hover{background:var(--color-error-quiet)}.ds-btn-cancel{padding:2px 8px;border:0;border-radius:2px;background:transparent;color:var(--color-ink-muted);font:inherit;cursor:pointer}.ds-btn-cancel:hover{color:var(--color-ink)}.ds-btn-destructive:focus-visible,.ds-btn-cancel:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Pestañas (móvil)",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Por debajo de 1024px: Tareas, Topología, Consola; subrayado de tinta en la activa.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Tareas <span class=\"ds-tab-count\">2/4</span></button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Topología</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Consola</button></div>",
+      "css": ".ds-tabs{display:flex;padding:0 8px;border-bottom:1px solid var(--color-rule);font-family:var(--font-ui),system-ui,sans-serif;}.ds-tab{display:flex;align-items:center;gap:8px;min-height:44px;margin-bottom:-1px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--color-ink-muted);font:inherit;font-size:.875rem;cursor:pointer}.ds-tab:hover{color:var(--color-ink)}.ds-tab[aria-selected=true]{border-bottom-color:var(--color-ink);color:var(--color-ink)}.ds-tab-count{color:var(--color-ink-faint)}.ds-tab:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Código citado",
+      "kind": "chip",
+      "refersTo": "inline-code",
+      "description": "Lo que se escribe en la consola, citado en tareas y pistas; misma sans, sin mono.",
+      "html": "<p class=\"ds-p\">Al crear un usuario indica <code class=\"ds-code\">name</code>, <code class=\"ds-code\">group</code> y <code class=\"ds-code\">password</code>.</p>",
+      "css": ".ds-p{color:var(--color-ink-muted);font-family:var(--font-ui),system-ui,sans-serif;font-size:.875rem;line-height:1.55}.ds-code{font-family:inherit;font-weight:500;font-size:.95em;padding:.05em .3em;border-radius:2px;background:var(--color-rule);color:var(--color-ink);white-space:nowrap}"
+    },
+    {
+      "name": "Fila de tarea con casilla",
+      "kind": "custom",
+      "refersTo": "status-box",
+      "description": "Firma del sistema: numeral ligero de un solo tono, enunciado y la casilla que lleva el color de estado.",
+      "html": "<ol class=\"ds-tasks\"><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">1</span><p>Cambia el nombre del router a R1-Oficina.</p><span class=\"ds-box done\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"m232.49 80.49-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z\"/></svg></span></li><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">2</span><div><p>La PC del técnico llega al router por ether2.</p><p class=\"ds-note\">Se cumplía y ya no.</p></div><span class=\"ds-box warn\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M240.26 186.1 152.81 34.23a28.74 28.74 0 0 0-49.62 0L15.74 186.1a27.45 27.45 0 0 0 0 27.71A28.31 28.31 0 0 0 40.55 228h174.9a28.31 28.31 0 0 0 24.79-14.19 27.45 27.45 0 0 0 .02-27.71ZM116 104a12 12 0 0 1 24 0v40a12 12 0 0 1-24 0Zm12 88a16 16 0 1 1 16-16 16 16 0 0 1-16 16Z\"/></svg></span></li><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">3</span><p>Crea el usuario soporte en el grupo read.</p><span class=\"ds-box\" aria-hidden=\"true\"></span></li></ol>",
+      "css": ".ds-tasks{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:16px;margin:0;padding:0;list-style:none;border-bottom:1px solid var(--color-rule);font-family:var(--font-ui),system-ui,sans-serif;color:var(--color-ink)}.ds-task{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:start;padding:20px 0;border-top:1px solid var(--color-rule)}.ds-task p{margin:0;font-size:.9375rem;line-height:1.55}.ds-num{margin-top:-6px;text-align:right;font-size:2.5rem;font-weight:300;line-height:1;font-variant-numeric:tabular-nums;color:var(--color-ink-faint)}.ds-task p.ds-note{margin-top:6px;font-size:.8125rem;color:var(--color-warn)}.ds-box{display:block;width:18px;height:18px;margin-top:3px;border:1px solid var(--color-control);border-radius:2px;box-sizing:border-box}.ds-box.done,.ds-box.warn{display:grid;place-items:center;border:0;color:var(--color-ground);animation:ds-tick .26s cubic-bezier(.16,1,.3,1)}.ds-box.done{background:var(--color-done)}.ds-box.warn{background:var(--color-warn)}@keyframes ds-tick{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}"
+    },
+    {
+      "name": "Figura de topología",
+      "kind": "custom",
+      "refersTo": "figure",
+      "description": "Figura numerada: cajas de equipo, cables rotulados con interfaz y direcciones, y pie.",
+      "html": "<figure class=\"ds-fig\"><svg viewBox=\"0 0 560 132\" width=\"560\" height=\"132\" role=\"img\" aria-label=\"Topología del lab\"><line x1=\"174\" y1=\"66\" x2=\"386\" y2=\"66\" stroke=\"var(--color-control)\" stroke-width=\"1.5\"/><rect x=\"42\" y=\"40\" width=\"132\" height=\"52\" rx=\"2\" fill=\"var(--color-sheet)\" stroke=\"var(--color-ink)\" stroke-width=\"1.5\"/><text x=\"108\" y=\"63\" text-anchor=\"middle\" class=\"ds-fig-id\">R1</text><text x=\"108\" y=\"80\" text-anchor=\"middle\" class=\"ds-fig-sub\">Router</text><rect x=\"386\" y=\"40\" width=\"132\" height=\"52\" rx=\"2\" fill=\"var(--color-sheet)\" stroke=\"var(--color-rule-strong)\"/><text x=\"452\" y=\"63\" text-anchor=\"middle\" class=\"ds-fig-id\">PC1</text><text x=\"452\" y=\"80\" text-anchor=\"middle\" class=\"ds-fig-sub\">PC del técnico</text><text x=\"182\" y=\"59\" class=\"ds-fig-port\">ether2<tspan x=\"182\" y=\"82\" class=\"ds-fig-sub\">192.168.88.1/24</tspan></text><text x=\"378\" y=\"59\" text-anchor=\"end\" class=\"ds-fig-port\">eth0<tspan x=\"378\" y=\"82\" class=\"ds-fig-sub\">192.168.88.10/24</tspan></text></svg><figcaption><b>Fig. 1.</b> Topología del lab. Las direcciones de cada puerto siguen a la red en vivo.</figcaption></figure>",
+      "css": ".ds-fig{margin:0;background:var(--color-ground);font-family:var(--font-ui),system-ui,sans-serif;}.ds-fig svg{max-width:100%;height:auto}.ds-fig-id{fill:var(--color-ink);font-size:13px;font-weight:600}.ds-fig-sub{fill:var(--color-ink-faint);font-size:11px}.ds-fig-port{fill:var(--color-ink-muted);font-size:11px}.ds-fig figcaption{padding:0 20px 12px;font-size:.8125rem;color:var(--color-ink-faint)}.ds-fig figcaption b{font-weight:500;color:var(--color-ink-muted)}"
+    },
+    {
+      "name": "Franja y selector de consola",
+      "kind": "input",
+      "refersTo": "select-console",
+      "description": "Cabecera de 40px de la consola con el equipo activo y su selector; el único campo del sistema.",
+      "html": "<div class=\"ds-con\"><header class=\"ds-con-head\"><p>Consola de R1</p><select class=\"ds-select\" aria-label=\"Equipo\"><option>R1</option><option>R2</option></select></header><pre class=\"ds-con-body\">[admin@R1-Oficina] &gt; </pre></div>",
+      "css": ".ds-con{background:var(--color-console);font-family:var(--font-ui),system-ui,sans-serif;}.ds-con-head{display:flex;align-items:center;gap:12px;height:40px;padding:0 16px;border-bottom:1px solid var(--color-rule)}.ds-con-head p{margin:0;font-size:.8125rem;color:var(--color-ink-muted)}.ds-select{margin-left:auto;height:28px;padding:0 8px;border:1px solid var(--color-rule);border-radius:2px;background:var(--color-console);color:var(--color-ink);font:inherit;font-size:.8125rem}.ds-select:hover{border-color:var(--color-rule-strong)}.ds-select:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-con-body{margin:0;padding:16px;font-family:var(--font-console),ui-monospace,monospace;font-size:13.5px;line-height:1.35;color:var(--color-ink)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "El cuaderno de prácticas que se corrige solo",
+    "overview": "La pantalla de lab es una hoja de ejercicios impresa en grafito: tareas numeradas con su casilla, una figura de topología rotulada \"Fig. 1\" con su pie y la consola al lado. No es un IDE. No hay pestañas de archivos, árbol de ficheros ni carril de iconos; las zonas se separan con filetes de 1px, no con tarjetas. La densidad es la de una guía de prácticas: mucho aire entre tareas, texto en una medida de lectura y una sola tipografía de interfaz.\n\nEl color es casi todo tinta sobre grafito. El único color con significado es el de estado, y vive en la casilla de cada tarea (verde cumplida, ámbar \"se cumplía y ya no\"). Numerales, progreso de la barra, contador de la pestaña y título de lab completado son monocromos. El rojo no es un estado de objetivo: un objetivo no falla, está pendiente o en regresión; el rojo queda para la confirmación destructiva de reiniciar.\n\nEs una herramienta de ingeniería, no una landing: oscuro único, sin degradados, sin cristal, sin sombras. La monoespaciada existe solo dentro de la consola; lo que se cita de la consola en tareas y pistas va en la misma sans con un fondo.",
+    "keyCharacteristics": [
+      "Grafito casi negro en tres escalones (consola, fondo, cajas de la figura) y tinta blanco papel en tres tonos.",
+      "Filetes de 1px como única estructura; nada de tarjetas ni sombras.",
+      "Numerales de tarea grandes y ligeros, en un solo tono en todo estado.",
+      "La casilla de estado es el portador del color de estado.",
+      "Geist en la interfaz, Geist Mono solo en la consola.",
+      "Esquinas casi rectas (2px) en todo."
+    ],
+    "rules": [
+      {
+        "name": "La Regla de la Casilla",
+        "body": "El color de estado vive en la casilla de la tarea (y en la nota de regresión de esa misma fila). Numerales, progreso, contadores y títulos de lab completado son monocromos.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regla del Rojo Destructivo",
+        "body": "El rojo no es un estado de objetivo. Solo marca una acción que destruye trabajo, y los errores del equipo salen en la consola con su propia voz.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regla del Foco de Tinta",
+        "body": "El anillo de foco es de tinta (2px, separado 2px), nunca de un color de estado.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regla de la Mono Encerrada",
+        "body": "Geist Mono solo dentro de la consola. El código citado en tareas y pistas es Geist en peso 500 sobre un chip de filete.",
+        "section": "typography"
+      },
+      {
+        "name": "La Regla del Numeral Callado",
+        "body": "El numeral es grande y ligero, y nunca cambia de color: el estado lo dice la casilla.",
+        "section": "typography"
+      },
+      {
+        "name": "La Regla del Filete",
+        "body": "Las zonas se separan con una línea de 1px, nunca con una tarjeta, un fondo elevado o una sombra.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** separar zonas y filas con filetes de 1px (rule) y nada más.",
+      "**Do** poner el color de estado en la casilla de la tarea: verde (done) cumplida, ámbar (warn) en regresión.",
+      "**Do** mantener numerales, progreso, contadores y el título de lab completado en tinta, sin color.",
+      "**Do** usar control (#8a929a) para bordes de casillas vacías y controles, para pasar 3:1 con un filete de 1px.",
+      "**Do** citar código en tareas y pistas con Geist 500 sobre un chip de filete.",
+      "**Do** usar 2px de radio en todo lo que tenga esquina.",
+      "**Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en cada extremo de cable."
+    ],
+    "donts": [
+      "**Don't** usar rojo para un objetivo; el rojo es solo de acciones destructivas y de la salida del equipo en la consola.",
+      "**Don't** usar Geist Mono fuera de la consola.",
+      "**Don't** construir la pantalla como un IDE de tres paneles con pestañas de archivo, árbol de ficheros o carril de iconos.",
+      "**Don't** envolver secciones en tarjetas, fondos elevados o sombras.",
+      "**Don't** añadir degradados, efectos de cristal ni un color de acento de marca.",
+      "**Don't** colorear el anillo de foco con un color de estado.",
+      "**Don't** bajar de 0.75rem en texto de interfaz."
+    ]
+  }
+}
