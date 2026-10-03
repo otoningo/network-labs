@@ -1,0 +1,151 @@
+# Ruta "MikroTik desde cero", lab 9. DNS y caché: el router resuelve con servidores
+# propios, atiende a la LAN, publica un nombre local y no queda abierto a Internet.
+id: ros-09-dns-cache
+vendor: routeros
+path: mikrotik-desde-cero
+order: 9
+title:
+  es: DNS y caché
+  en: DNS and caching
+summary:
+  es: Convierte al router en el DNS de la oficina, con un nombre local para la impresora y sin abrirlo a Internet.
+  en: Turn the router into the office DNS, with a local name for the printer and without opening it to the Internet.
+difficulty: intermediate
+minutes: 15
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      # El DHCP de la LAN ya anuncia al router como DNS, pero el router aún no tiene servidores.
+      startup: |
+        /system identity set name=R1-Oficina
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether2
+        /interface bridge port add bridge=bridge1 interface=ether3
+        /interface bridge port add bridge=bridge1 interface=ether4
+        /ip address add address=192.168.88.1/24 interface=bridge1
+        /ip address add address=203.0.113.2/24 interface=ether1
+        /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+        /ip pool add name=lan ranges=192.168.88.100-192.168.88.200
+        /ip dhcp-server add interface=bridge1 address-pool=lan
+        /ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
+        /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de administración, en: Admin PC }
+      position: { x: 660, y: 90 }
+      host:
+        ip: dhcp
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de ventas, en: Sales PC }
+      position: { x: 660, y: 200 }
+      host:
+        ip: dhcp
+    - id: PRN
+      os: host
+      board: sim-host
+      label: { es: Impresora, en: Printer }
+      position: { x: 660, y: 310 }
+      host:
+        ip: 192.168.88.50/24
+        gateway: 192.168.88.1
+        services:
+          - { name: http, port: 80 }
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+    - [R1:ether4, PRN:eth0]
+
+objectives:
+  - id: router-resuelve
+    text:
+      es: El router resuelve example.com usando 1.1.1.1 como servidor DNS propio.
+      en: The router resolves example.com using 1.1.1.1 as its own DNS server.
+    check:
+      all:
+        - setting: { device: R1, key: dns, field: servers, is: { includes: { ip: 1.1.1.1 } } }
+        - resolves: { from: R1, name: example.com, to: 93.184.216.34 }
+    hints:
+      - es: La configuración del resolvedor del router está en `/ip dns`. Mira primero qué tiene con `print`.
+        en: The router resolver settings are under `/ip dns`. Look at what it has with `print` first.
+      - es: El parámetro `servers` acepta una o varias direcciones separadas por comas.
+        en: The `servers` parameter accepts one or more addresses separated by commas.
+      - es: Comprueba el resultado con `:resolve` seguido del nombre.
+        en: Check the result with `:resolve` followed by the name.
+  - id: lan-resuelve
+    text:
+      es: Las dos PCs resuelven example.com preguntándole al router, que es el DNS que reciben por DHCP.
+      en: Both PCs resolve example.com by asking the router, which is the DNS they get over DHCP.
+    check:
+      all:
+        - resolves: { from: PC1, name: example.com, to: 93.184.216.34, via: R1 }
+        - resolves: { from: PC2, name: example.com, to: 93.184.216.34, via: R1 }
+    hints:
+      - es: Que el router resuelva para sí mismo no significa que atienda consultas de otros.
+        en: The router resolving for itself does not mean it answers queries from others.
+      - es: Busca en `/ip dns` el ajuste que permite peticiones remotas.
+        en: Look in `/ip dns` for the setting that allows remote requests.
+  - id: impresora
+    text:
+      es: En toda la oficina, el nombre impresora.lan apunta a la impresora, 192.168.88.50.
+      en: Across the office, the name impresora.lan points to the printer, 192.168.88.50.
+    check:
+      all:
+        - resolves: { from: PC1, name: impresora.lan, to: 192.168.88.50, via: R1 }
+        - resolves: { from: PC2, name: impresora.lan, to: 192.168.88.50, via: R1 }
+    hints:
+      - es: Ningún servidor de Internet conoce ese nombre; tiene que responderlo el propio router.
+        en: No Internet server knows that name; the router itself has to answer it.
+      - es: Las entradas fijas van en el submenú `static` de `/ip dns`, con `name` y `address`.
+        en: Fixed entries go in the `static` submenu of `/ip dns`, with `name` and `address`.
+  - id: no-abierto
+    text:
+      es: El DNS solo sirve a la LAN. Una consulta desde Internet a 203.0.113.2 queda filtrada y la oficina sigue resolviendo.
+      en: DNS only serves the LAN. A query from the Internet to 203.0.113.2 is filtered, and the office still resolves names.
+    check:
+      all:
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: udp, port: 53 }
+        - resolves: { from: PC1, name: example.com, to: 93.184.216.34, via: R1 }
+        - resolves: { from: R1, name: example.com, to: 93.184.216.34 }
+    hints:
+      - es: Al permitir peticiones remotas, el router contesta por todas sus interfaces, también la WAN.
+        en: Once remote requests are allowed, the router answers on all its interfaces, the WAN included.
+      - es: Una regla de input que descarte UDP 53 cuando entra por ether1 lo cierra.
+        en: An input rule that drops UDP 53 coming in through ether1 closes it.
+      - es: Cuidado con descartar todo lo que llega por ether1; las respuestas a las consultas del router también entran por ahí.
+        en: Be careful with dropping everything that arrives on ether1; replies to the router queries come in that way too.
+
+explanation:
+  es: >-
+    En IOS defines a quién pregunta el router con `ip name-server`, lo conviertes en servidor
+    para la LAN con `ip dns server` y añades nombres fijos con `ip host`. RouterOS reúne lo mismo
+    en `/ip dns`: `servers` equivale a `ip name-server`, `allow-remote-requests` a `ip dns server`
+    y las entradas de `static` a `ip host`. El router guarda en caché cada respuesta durante su
+    TTL, así que la oficina pregunta una vez y el resto sale de memoria (`/ip dns cache`). La
+    trampa es la misma que en IOS: al activar el servidor, también escucha por la WAN, y un
+    resolvedor abierto a Internet acaba usándose en ataques de amplificación.
+  en: >-
+    In IOS you set who the router asks with `ip name-server`, make it a server for the LAN with
+    `ip dns server` and add fixed names with `ip host`. RouterOS puts the same things in
+    `/ip dns`: `servers` matches `ip name-server`, `allow-remote-requests` matches
+    `ip dns server` and the `static` entries match `ip host`. The router caches each answer for
+    its TTL, so the office asks once and the rest comes from memory (`/ip dns cache`). The trap
+    is the same as in IOS: once the server is on, it also listens on the WAN, and a resolver
+    open to the Internet ends up used in amplification attacks.

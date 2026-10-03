@@ -1,0 +1,128 @@
+# Ruta "MikroTik desde cero", lab 8. Wireless básico: SSID, WPA2 con contraseña y la
+# portátil dentro de la LAN, con DHCP e Internet.
+id: ros-08-wireless-basico
+vendor: routeros
+path: mikrotik-desde-cero
+order: 8
+title:
+  es: Wireless básico
+  en: Basic wireless
+summary:
+  es: Enciende la radio del router, protégela con WPA2 y deja que la portátil entre a la LAN e Internet.
+  en: Turn on the router radio, protect it with WPA2 and let the laptop join the LAN and the Internet.
+difficulty: intermediate
+minutes: 15
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      # LAN cableada con DHCP y salida a Internet ya hechas; la radio sale de fábrica apagada.
+      startup: |
+        /system identity set name=R1-Oficina
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether2
+        /ip address add address=192.168.88.1/24 interface=bridge1
+        /ip address add address=203.0.113.2/24 interface=ether1
+        /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+        /ip pool add name=lan ranges=192.168.88.100-192.168.88.200
+        /ip dhcp-server add interface=bridge1 address-pool=lan
+        /ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1
+        /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de recepción, en: Front desk PC }
+      position: { x: 660, y: 110 }
+      host:
+        ip: dhcp
+    - id: LAP
+      os: host
+      board: sim-host-w
+      label: { es: Portátil, en: Laptop }
+      position: { x: 660, y: 300 }
+      host:
+        ip: dhcp
+        wifi: { ssid: Oficina, passphrase: Bienvenidos2026 }
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+
+objectives:
+  - id: radio
+    text:
+      es: Enciende la interfaz inalámbrica del router y haz que anuncie la red Oficina.
+      en: Turn on the router wireless interface and make it announce the Oficina network.
+    check:
+      exists:
+        device: R1
+        collection: interfaces
+        where: { kind: wireless, ssid: Oficina }
+    hints:
+      - es: En RouterOS 7 la radio aparece como una interfaz más. Búscala con `/interface print`.
+        en: In RouterOS 7 the radio shows up as one more interface. Find it with `/interface print`.
+      - es: Bajo `/interface wifi` el nombre de la red es un parámetro de `configuration`.
+        en: Under `/interface wifi` the network name is a `configuration` parameter.
+      - es: Las interfaces de fábrica pueden venir deshabilitadas; mira la marca `X` en `print`.
+        en: Factory interfaces may come disabled; look for the `X` flag in `print`.
+  - id: asociada
+    text:
+      es: La portátil se conecta con WPA2 y la contraseña que ya tiene guardada, Bienvenidos2026.
+      en: The laptop connects using WPA2 and the passphrase it already has saved, Bienvenidos2026.
+    check:
+      wifiAssociated: { client: LAP, ap: R1, ssid: Oficina }
+    hints:
+      - es: La seguridad también se configura en `/interface wifi`, con parámetros que empiezan por `security.`.
+        en: Security is also configured in `/interface wifi`, with parameters that start with `security.`.
+      - es: Hacen falta el tipo de autenticación (`wpa2-psk`) y la contraseña. Ambas deben coincidir exactamente.
+        en: You need the authentication type (`wpa2-psk`) and the passphrase. Both must match exactly.
+      - es: La tabla `/interface wifi registration-table` muestra quién está conectado.
+        en: The `/interface wifi registration-table` table shows who is connected.
+  - id: lan
+    text:
+      es: La portátil recibe por DHCP una dirección de la LAN, 192.168.88.0/24, como la PC cableada.
+      en: The laptop gets a LAN address (192.168.88.0/24) over DHCP, just like the wired PC.
+    check:
+      leaseBound: { server: R1, client: LAP, within: 192.168.88.0/24 }
+    hints:
+      - es: Asociarse no es lo mismo que estar en la LAN. ¿En qué interfaz escucha el servidor DHCP?
+        en: Associating is not the same as being on the LAN. Which interface does the DHCP server listen on?
+      - es: La radio tiene que ser un puerto más del bridge de la LAN.
+        en: The radio has to be one more port of the LAN bridge.
+  - id: internet
+    text:
+      es: La portátil navega por Internet y sale con la IP pública del router.
+      en: The laptop browses the Internet using the router public IP.
+    check:
+      natSourceIs: { from: LAP, to: 8.8.8.8, expect: { addressOf: "R1:ether1" } }
+    hints:
+      - es: El NAT ya existe para la LAN. Si la portátil está en la LAN, debería bastar.
+        en: NAT already exists for the LAN. If the laptop is on the LAN, that should be enough.
+      - es: Comprueba en `/ip dhcp-server lease print` que la portátil tiene su dirección.
+        en: Check with `/ip dhcp-server lease print` that the laptop has its address.
+
+explanation:
+  es: >-
+    En el mundo Cisco la wifi suele vivir en un AP aparte o en una controladora, con `dot11 ssid`,
+    `authentication key-management wpa` y `wpa-psk ascii`, y el SSID se une a la red cableada
+    con un `bridge-group` o una BVI. En RouterOS la radio es una interfaz más: le das un SSID y
+    una seguridad, la habilitas y la metes en el mismo bridge que los puertos cableados. Que la
+    portátil aparezca en la tabla de registro solo prueba la capa 2; hasta que la radio no forma
+    parte del bridge, el servidor DHCP de la LAN no la oye.
+  en: >-
+    In the Cisco world Wi-Fi usually lives on a separate AP or a controller, with `dot11 ssid`,
+    `authentication key-management wpa` and `wpa-psk ascii`, and the SSID joins the wired
+    network through a `bridge-group` or a BVI. In RouterOS the radio is just another interface:
+    you give it an SSID and security, enable it and add it to the same bridge as the wired
+    ports. The laptop showing up in the registration table only proves layer 2; until the
+    radio is part of the bridge, the LAN DHCP server cannot hear it.

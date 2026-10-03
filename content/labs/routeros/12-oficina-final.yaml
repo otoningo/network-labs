@@ -1,0 +1,147 @@
+# Ruta "MikroTik desde cero", lab 12. Proyecto final: un router de fábrica que hay que
+# dejar listo para una oficina pequeña, juntando todo lo de la ruta.
+id: ros-12-oficina-final
+vendor: routeros
+path: mikrotik-desde-cero
+order: 12
+title:
+  es: Oficina pequeña de principio a fin
+  en: A small office from start to finish
+summary:
+  es: Un router sin configurar y una oficina que espera. Nombre, WAN, LAN, DHCP, NAT, DNS y firewall, todo tuyo.
+  en: An unconfigured router and an office waiting for it. Name, WAN, LAN, DHCP, NAT, DNS and firewall, all yours.
+difficulty: advanced
+minutes: 30
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+        # El proveedor entrega una sola dirección: la WAN del router siempre es 203.0.113.10.
+        dhcp:
+          pool: 203.0.113.10-203.0.113.10
+          dns: [1.1.1.1]
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router nuevo, en: New router }
+      position: { x: 380, y: 200 }
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de administración, en: Admin PC }
+      position: { x: 660, y: 110 }
+      host:
+        ip: dhcp
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de ventas, en: Sales PC }
+      position: { x: 660, y: 300 }
+      host:
+        ip: dhcp
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+
+objectives:
+  - id: identidad
+    text:
+      es: El router se llama GW-Oficina.
+      en: The router is named GW-Oficina.
+    check:
+      setting: { device: R1, key: system, field: identity, is: GW-Oficina }
+    hints:
+      - es: Es lo mismo que hiciste en el primer lab.
+        en: It is the same thing you did in the first lab.
+      - es: Está en `/system identity`.
+        en: It is in `/system identity`.
+  - id: wan
+    text:
+      es: El router obtiene su dirección pública del proveedor, por DHCP en ether1.
+      en: The router gets its public address from the provider, over DHCP on ether1.
+    check:
+      all:
+        - hasAddress: { device: R1, iface: ether1, within: 203.0.113.0/24 }
+        - reachable: { from: R1, to: 8.8.8.8 }
+    hints:
+      - es: El proveedor no te dio una IP fija; la reparte su servidor DHCP.
+        en: The provider did not give you a fixed IP; its DHCP server hands it out.
+      - es: Mira `/ip dhcp-client`. La ruta por defecto llega con la concesión.
+        en: Look at `/ip dhcp-client`. The default route comes with the lease.
+  - id: lan
+    text:
+      es: Las dos PCs, en ether2 y ether3, forman una sola LAN y reciben por DHCP direcciones de 192.168.10.0/24, con el router en 192.168.10.1.
+      en: Both PCs, on ether2 and ether3, form a single LAN and get 192.168.10.0/24 addresses over DHCP, with the router at 192.168.10.1.
+    check:
+      all:
+        - leaseBound: { server: R1, client: PC1, within: 192.168.10.0/24 }
+        - leaseBound: { server: R1, client: PC2, within: 192.168.10.0/24 }
+        - reachable: { from: PC1, to: 192.168.10.1 }
+        - reachable: { from: PC2, to: 192.168.10.1 }
+    hints:
+      - es: Una sola LAN con dos puertos es un bridge. La dirección del router va en el bridge, no en los puertos.
+        en: A single LAN over two ports is a bridge. The router address goes on the bridge, not on the ports.
+      - es: El servidor DHCP necesita tres piezas, un pool en `/ip pool`, el servidor sobre el bridge y una red con su puerta de enlace.
+        en: The DHCP server needs three pieces, a pool in `/ip pool`, the server on the bridge and a network with its gateway.
+  - id: navegacion
+    text:
+      es: Las PCs navegan con la IP pública del router y resuelven nombres preguntándole al propio router.
+      en: The PCs browse using the router public IP and resolve names by asking the router itself.
+    check:
+      all:
+        - natSourceIs: { from: PC1, to: 8.8.8.8, expect: { addressOf: "R1:ether1" } }
+        - natSourceIs: { from: PC2, to: 8.8.8.8, expect: { addressOf: "R1:ether1" } }
+        - resolves: { from: PC1, name: example.com, to: 93.184.216.34, via: R1 }
+        - resolves: { from: PC2, name: example.com, to: 93.184.216.34, via: R1 }
+    hints:
+      - es: Para salir hace falta traducir el origen; para resolver, que el router acepte consultas y que el DHCP lo anuncie como DNS.
+        en: Getting out needs source translation; resolving needs the router to accept queries and DHCP to announce it as DNS.
+      - es: El NAT va en `/ip firewall nat`, cadena `srcnat`, por la interfaz WAN.
+        en: NAT goes in `/ip firewall nat`, `srcnat` chain, on the WAN interface.
+      - es: En `/ip dns` permite peticiones remotas, y en la red del DHCP indica `dns-server`.
+        en: In `/ip dns` allow remote requests, and set `dns-server` on the DHCP network.
+  - id: firewall
+    text:
+      es: Desde Internet nadie entra al router (203.0.113.10) por SSH, Winbox ni DNS, mientras la LAN lo sigue administrando y navegando.
+      en: Nobody from the Internet reaches the router (203.0.113.10) over SSH, Winbox or DNS, while the LAN still manages it and browses.
+    check:
+      all:
+        - blocked: { from: ISP, to: 203.0.113.10, protocol: tcp, port: 22 }
+        - blocked: { from: ISP, to: 203.0.113.10, protocol: tcp, port: 8291 }
+        - blocked: { from: ISP, to: 203.0.113.10, protocol: udp, port: 53 }
+        - reachable: { from: PC1, to: 192.168.10.1, protocol: tcp, port: 8291 }
+        - reachable: { from: R1, to: 8.8.8.8 }
+        - natSourceIs: { from: PC1, to: 8.8.8.8, expect: { addressOf: "R1:ether1" } }
+        - resolves: { from: PC1, name: example.com, to: 93.184.216.34, via: R1 }
+    hints:
+      - es: Repasa el lab de firewall. El orden de las reglas de input es la mitad del trabajo.
+        en: Go back over the firewall lab. The order of the input rules is half the job.
+      - es: Primero lo establecido y relacionado, luego lo que viene de la LAN, y al final el descarte.
+        en: Established and related first, then what comes from the LAN, and the drop last.
+
+explanation:
+  es: >-
+    Es la misma oficina que montarías en un ISR con IOS: `ip address dhcp` en la WAN, un
+    `ip dhcp pool` para la LAN, `ip nat inside source list ... overload`, `ip dns server` y una
+    ACL que proteja el router. Las diferencias son de forma más que de fondo. En RouterOS la
+    LAN es un bridge que reúne los puertos, el NAT se expresa como masquerade sobre la interfaz
+    de salida en lugar de marcar inside y outside, y el firewall con estado sustituye a las ACL
+    extendidas con `established`. Lo que se valida es lo que haría un cliente real: recibir
+    dirección, navegar, resolver nombres y no ver el router desde Internet.
+  en: >-
+    This is the same office you would build on an ISR with IOS: `ip address dhcp` on the WAN, an
+    `ip dhcp pool` for the LAN, `ip nat inside source list ... overload`, `ip dns server` and an
+    ACL protecting the router. The differences are of form more than substance. In RouterOS the
+    LAN is a bridge that gathers the ports, NAT is expressed as masquerade on the outgoing
+    interface instead of marking inside and outside, and the stateful firewall replaces
+    extended ACLs with `established`. What gets checked is what a real client would do: get an
+    address, browse, resolve names and not see the router from the Internet.

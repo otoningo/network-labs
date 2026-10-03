@@ -1,0 +1,150 @@
+# Ruta "MikroTik desde cero", lab 11. Monitoreo con Torch: encontrar qué equipo se come
+# el ancho de banda y cortarle la salida sin afectar al resto.
+id: ros-11-torch
+vendor: routeros
+path: mikrotik-desde-cero
+order: 11
+title:
+  es: Monitoreo con Torch
+  en: Monitoring with Torch
+summary:
+  es: La oficina va lenta. Averigua con Torch qué equipo acapara el enlace y córtale la salida a Internet.
+  en: The office is slow. Use Torch to find which host hogs the link and cut it off the Internet.
+difficulty: advanced
+minutes: 20
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      startup: |
+        /system identity set name=R1-Oficina
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether2
+        /interface bridge port add bridge=bridge1 interface=ether3
+        /interface bridge port add bridge=bridge1 interface=ether4
+        /ip address add address=192.168.88.1/24 interface=bridge1
+        /ip address add address=203.0.113.2/24 interface=ether1
+        /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+        /ip dns set servers=1.1.1.1 allow-remote-requests=yes
+        /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de recepción, en: Front desk PC }
+      position: { x: 660, y: 90 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+        dns: [192.168.88.1]
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de diseño, en: Design PC }
+      position: { x: 660, y: 200 }
+      host:
+        ip: 192.168.88.11/24
+        gateway: 192.168.88.1
+        dns: [192.168.88.1]
+    - id: PC3
+      os: host
+      board: sim-host
+      label: { es: PC de ventas, en: Sales PC }
+      position: { x: 660, y: 310 }
+      host:
+        ip: 192.168.88.12/24
+        gateway: 192.168.88.1
+        dns: [192.168.88.1]
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+    - [R1:ether4, PC3:eth0]
+  # PC2 descarga sin parar; PC1 y PC3 solo navegan.
+  flows:
+    - { id: web-recepcion, from: PC1, to: example.com, protocol: tcp, port: 80, bps: 12000, replyBps: 150000 }
+    - { id: descarga, from: PC2, to: example.com, protocol: tcp, port: 443, bps: 250000, replyBps: 9000000 }
+    - { id: web-ventas, from: PC3, to: example.com, protocol: tcp, port: 443, bps: 8000, replyBps: 90000 }
+
+objectives:
+  - id: culpable
+    text:
+      es: Averigua qué equipo de la LAN descarga más y añade su dirección a la lista consumo-alto.
+      en: Find out which LAN host downloads the most and add its address to the consumo-alto list.
+    check:
+      all:
+        - exists:
+            device: R1
+            collection: addressLists
+            where: { list: consumo-alto, address: { prefix: 192.168.88.11/32 } }
+        - not:
+            exists:
+              device: R1
+              collection: addressLists
+              where: { list: consumo-alto, address: { within: 192.168.88.0/24 } }
+              count: ">1"
+    hints:
+      - es: Torch está bajo `/tool` y muestra el tráfico de una interfaz en vivo. Para verlo por equipo, clasifica por `src-address`.
+        en: Torch lives under `/tool` and shows an interface traffic live. To see it per host, classify by `src-address`.
+      - es: En ether1 todo lleva la IP pública por el masquerade. En la interfaz de la LAN aún se ve cada PC, y su columna TX es lo que el router le entrega, es decir, su descarga.
+        en: On ether1 everything carries the public IP because of masquerade. On the LAN interface each PC is still visible, and its TX column is what the router delivers to it, that is, its download.
+      - es: Las listas de direcciones están en `/ip firewall address-list`, con `list` y `address`.
+        en: Address lists live in `/ip firewall address-list`, with `list` and `address`.
+  - id: bloqueo
+    text:
+      es: Corta la salida a Internet del equipo que está en consumo-alto.
+      en: Cut off Internet access for the host in consumo-alto.
+    check:
+      blocked: { from: PC2, to: 93.184.216.34, protocol: tcp, port: 443 }
+    hints:
+      - es: El tráfico de la LAN hacia Internet atraviesa el router; piensa en qué cadena se filtra.
+        en: LAN traffic to the Internet crosses the router; think about which chain filters it.
+      - es: Una regla de filtrado puede comparar el origen con una lista mediante `src-address-list`.
+        en: A filter rule can compare the source against a list with `src-address-list`.
+      - es: Tras el cambio, vuelve a mirar Torch; la descarga de ese equipo debería caer a cero.
+        en: After the change, look at Torch again; that host download should drop to zero.
+  - id: resto
+    text:
+      es: Con ese equipo ya cortado, el resto de la oficina sigue navegando con normalidad.
+      en: With that host already cut off, the rest of the office keeps browsing normally.
+    check:
+      all:
+        - blocked: { from: PC2, to: 93.184.216.34, protocol: tcp, port: 443 }
+        - reachable: { from: PC1, to: 93.184.216.34, protocol: tcp, port: 80 }
+        - reachable: { from: PC3, to: 93.184.216.34, protocol: tcp, port: 443 }
+        - resolves: { from: PC1, name: example.com, to: 93.184.216.34, via: R1 }
+    hints:
+      - es: Una regla demasiado amplia, sin origen o con toda la red, se lleva por delante a todos.
+        en: A rule that is too broad, with no source or with the whole network, takes everyone down.
+      - es: Revisa que en la lista solo esté el equipo que querías.
+        en: Check that the list only holds the host you meant.
+
+explanation:
+  es: >-
+    En IOS, para saber quién se come el enlace activas NetFlow y miras `show ip flow top-talkers`
+    o `show ip cache flow`. Torch es la versión inmediata de eso en RouterOS: eliges una
+    interfaz, decides por qué columnas agrupar (origen, destino, puerto) y ves el caudal en vivo,
+    sin configurar nada antes. El sitio donde lo miras importa: en la WAN, después del
+    masquerade, todo lleva la IP pública, como verías en IOS en el lado outside del NAT; en la
+    LAN aún se ve cada PC. Para actuar, una lista de direcciones hace de object-group: la regla
+    no cambia y solo añades o quitas equipos de la lista.
+  en: >-
+    In IOS, to find out who is eating the link you enable NetFlow and look at
+    `show ip flow top-talkers` or `show ip cache flow`. Torch is the instant RouterOS version of
+    that: you pick an interface, choose which columns to group by (source, destination, port)
+    and see live throughput, with nothing to configure beforehand. Where you look matters: on
+    the WAN, after masquerade, everything carries the public IP, just as you would see on the
+    outside of NAT in IOS; on the LAN each PC is still visible. To act on it, an address list
+    works like an object-group: the rule stays the same and you just add or remove hosts.

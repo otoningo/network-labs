@@ -1,0 +1,136 @@
+# Ruta "MikroTik desde cero", lab 10. Respaldo y restauración: respaldo binario, export
+# en texto, borrar la configuración a propósito y volver al estado bueno.
+id: ros-10-respaldo-restauracion
+vendor: routeros
+path: mikrotik-desde-cero
+order: 10
+title:
+  es: Respaldo y restauración
+  en: Backup and restore
+summary:
+  es: Guarda la configuración de la oficina de dos formas, bórrala a propósito y recupérala sin perder nada.
+  en: Save the office configuration two ways, wipe it on purpose and bring it back without losing anything.
+difficulty: intermediate
+minutes: 15
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      # El instalador dejó un respaldo a medio camino (sin DHCP ni NAT) y luego terminó la oficina.
+      startup: |
+        /system identity set name=R1-Oficina
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether2
+        /interface bridge port add bridge=bridge1 interface=ether3
+        /ip address add address=192.168.88.1/24 interface=bridge1
+        /ip address add address=203.0.113.2/24 interface=ether1
+        /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+        /system backup save name=instalacion
+        /ip pool add name=lan ranges=192.168.88.100-192.168.88.200
+        /ip dhcp-server add interface=bridge1 address-pool=lan
+        /ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
+        /ip dns set servers=1.1.1.1 allow-remote-requests=yes
+        /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de contabilidad, en: Accounting PC }
+      position: { x: 660, y: 110 }
+      host:
+        ip: dhcp
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de gerencia, en: Manager PC }
+      position: { x: 660, y: 300 }
+      host:
+        ip: dhcp
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+
+objectives:
+  - id: respaldo
+    text:
+      es: Con la oficina funcionando, guarda un respaldo binario completo del router llamado oficina.
+      en: With the office working, save a full binary backup of the router named oficina.
+    check:
+      fileExists: { device: R1, type: backup, name: oficina.backup }
+    hints:
+      - es: Los respaldos binarios se hacen desde el menú de sistema.
+        en: Binary backups are made from the system menu.
+      - es: En `/system backup` el comando `save` acepta un `name`; la extensión la pone el router.
+        en: In `/system backup` the `save` command takes a `name`; the router adds the extension.
+      - es: Compruébalo con `/file print`.
+        en: Check it with `/file print`.
+  - id: export
+    text:
+      es: Guarda además la configuración como un script de texto, oficina.rsc, que podrías leer o llevar a otro router.
+      en: Also save the configuration as a text script, oficina.rsc, that you could read or take to another router.
+    check:
+      fileExists: { device: R1, type: script, name: oficina.rsc }
+    hints:
+      - es: Sin argumentos, `export` muestra la configuración en pantalla como comandos.
+        en: With no arguments, `export` prints the configuration on screen as commands.
+      - es: Desde la raíz, `export` acepta un parámetro `file` para guardarla en un archivo.
+        en: From the root, `export` takes a `file` parameter to save it into a file.
+  - id: reset
+    text:
+      es: Simula el desastre. Borra toda la configuración del router con un reset sin la configuración por defecto.
+      en: Simulate the disaster. Wipe the whole router configuration with a reset that skips the default configuration.
+    check:
+      fileExists: { device: R1, type: backup, name: auto-before-reset.backup }
+    hints:
+      - es: El reset también está bajo `/system`. Te pedirá confirmación.
+        en: The reset also lives under `/system`. It will ask for confirmation.
+      - es: Usa `no-defaults` para que no cargue la configuración de fábrica. Los archivos sobreviven al reset.
+        en: Use `no-defaults` so it does not load the factory configuration. Files survive the reset.
+  - id: restaurado
+    text:
+      es: Recupera la oficina desde tu respaldo binario. El router vuelve exactamente a ese estado y las PCs reciben dirección y navegan otra vez.
+      en: Recover the office from your binary backup. The router returns to exactly that state and the PCs get addresses and browse again.
+    check:
+      all:
+        - fileExists: { device: R1, type: backup, name: auto-before-reset.backup }
+        - configMatches: { device: R1, snapshot: { file: oficina.backup } }
+        - leaseBound: { server: R1, client: PC1, within: 192.168.88.0/24 }
+        - reachable: { from: PC1, to: 8.8.8.8 }
+    hints:
+      - es: Hay más de un respaldo en el router. Mira cuál es el tuyo antes de cargar nada.
+        en: There is more than one backup on the router. Check which one is yours before loading anything.
+      - es: En `/system backup` el comando `load` necesita el nombre completo del archivo, con su extensión.
+        en: In `/system backup` the `load` command needs the full file name, extension included.
+      - es: Al cargar un respaldo el router se reinicia y cierra tu sesión.
+        en: Loading a backup reboots the router and closes your session.
+
+explanation:
+  es: >-
+    En IOS hay dos configuraciones: la running y la startup, y `copy running-config
+    startup-config` decide qué sobrevive a un reinicio. RouterOS no tiene esa distinción: cada
+    cambio queda guardado al instante, así que la red de seguridad son los respaldos. El
+    `.backup` es binario y completo, como una imagen de la configuración, y está pensado para
+    volver a cargarse en el mismo equipo. El `export` es el equivalente a `show running-config`:
+    texto legible que puedes revisar, comparar o importar en otro router, aunque por defecto
+    omite las contraseñas. `/system reset-configuration` hace lo que `write erase` y `reload`,
+    y antes de borrar deja un respaldo automático por si acaso.
+  en: >-
+    IOS has two configurations, running and startup, and `copy running-config startup-config`
+    decides what survives a reboot. RouterOS has no such split: every change is saved at once,
+    so backups are the safety net. A `.backup` file is binary and complete, like an image of
+    the configuration, and it is meant to be loaded back on the same device. `export` is the
+    counterpart of `show running-config`: readable text you can review, compare or import on
+    another router, although it leaves passwords out by default. `/system reset-configuration`
+    does what `write erase` plus `reload` do, and before wiping it leaves an automatic backup
+    just in case.

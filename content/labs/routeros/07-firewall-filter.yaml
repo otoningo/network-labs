@@ -1,0 +1,171 @@
+# Ruta "MikroTik desde cero", lab 7. Firewall de filtrado: proteger al router (input)
+# sin dejar fuera a la LAN, y una regla de forward para un equipo concreto.
+id: ros-07-firewall-filter
+vendor: routeros
+path: mikrotik-desde-cero
+order: 7
+title:
+  es: Firewall de filtrado
+  en: Filter firewall
+summary:
+  es: Cierra el router a Internet sin quedarte fuera desde la LAN, y corta la salida de una cámara IP.
+  en: Close the router to the Internet without locking yourself out of the LAN, and cut an IP camera off the Internet.
+difficulty: intermediate
+minutes: 20
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      # La oficina ya sale a Internet (labs anteriores); el firewall está vacío.
+      startup: |
+        /system identity set name=R1-Oficina
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether2
+        /interface bridge port add bridge=bridge1 interface=ether3
+        /ip address add address=192.168.88.1/24 interface=bridge1
+        /ip address add address=203.0.113.2/24 interface=ether1
+        /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+        /ip dns set servers=1.1.1.1
+        /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC del técnico, en: Technician PC }
+      position: { x: 660, y: 110 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+    - id: CAM
+      os: host
+      board: sim-host
+      label: { es: Cámara IP, en: IP camera }
+      position: { x: 660, y: 300 }
+      host:
+        ip: 192.168.88.20/24
+        gateway: 192.168.88.1
+        services:
+          - { name: http, port: 80 }
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, CAM:eth0]
+
+objectives:
+  - id: estado
+    text:
+      es: En la cadena input, acepta lo que pertenece a conexiones establecidas o relacionadas y descarta lo inválido.
+      en: In the input chain, accept what belongs to established or related connections and drop anything invalid.
+    check:
+      all:
+        - exists:
+            device: R1
+            collection: filterRules
+            where:
+              chain: input
+              action.kind: accept
+              match.connectionState: { includes: established }
+        - exists:
+            device: R1
+            collection: filterRules
+            where:
+              chain: input
+              action.kind: drop
+              match.connectionState: { includes: invalid }
+    hints:
+      - es: Las reglas de filtrado viven bajo `/ip firewall`. Mira qué cadenas existen.
+        en: Filter rules live under `/ip firewall`. Look at which chains exist.
+      - es: El parámetro `connection-state` admite varios estados separados por comas.
+        en: The `connection-state` parameter accepts several states separated by commas.
+      - es: Son dos reglas en `/ip firewall filter` con `chain=input`, una con `action=accept` y otra con `action=drop`.
+        en: It takes two rules in `/ip firewall filter` with `chain=input`, one with `action=accept` and one with `action=drop`.
+  - id: wan-cerrada
+    text:
+      es: Desde Internet, la IP pública del router (203.0.113.2) ya no atiende nada, ni SSH, ni Winbox, ni DNS, ni ping.
+      en: From the Internet, the router public IP (203.0.113.2) no longer answers anything, neither SSH, Winbox, DNS nor ping.
+    check:
+      all:
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: tcp, port: 22 }
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: tcp, port: 8291 }
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: udp, port: 53 }
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: icmp }
+    hints:
+      - es: Al final de input va una regla que descarta todo lo que no aceptaste antes.
+        en: At the end of input goes a rule that drops everything you did not accept earlier.
+      - es: Las reglas se leen de arriba abajo y gana la primera que coincide. Revisa el orden con `print`.
+        en: Rules are read top to bottom and the first match wins. Check the order with `print`.
+  - id: sin-encerrarte
+    text:
+      es: No te quedes fuera. Con Internet ya cerrado, la PC del técnico sigue entrando al router (192.168.88.1) por Winbox y por SSH.
+      en: Do not lock yourself out. With the Internet already closed, the technician PC still reaches the router (192.168.88.1) over Winbox and SSH.
+    check:
+      all:
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: tcp, port: 8291 }
+        - reachable: { from: PC1, to: 192.168.88.1, protocol: tcp, port: 8291 }
+        - reachable: { from: PC1, to: 192.168.88.1, protocol: tcp, port: 22 }
+    hints:
+      - es: Un drop sin condiciones también descarta lo que llega desde la LAN.
+        en: A drop with no conditions also drops what comes from the LAN.
+      - es: Acepta en input lo que entra por la interfaz de la LAN, y hazlo antes del drop final.
+        en: Accept in input whatever comes in through the LAN interface, and do it before the final drop.
+      - es: La LAN es `bridge1`, no `ether2`; el tráfico de un puerto de bridge entra por el bridge.
+        en: The LAN is `bridge1`, not `ether2`; traffic from a bridge port comes in through the bridge.
+  - id: router-sale
+    text:
+      es: Con Internet ya cerrado, el propio router sigue saliendo; sus pings a 8.8.8.8 reciben respuesta.
+      en: With the Internet already closed, the router itself still gets out; its pings to 8.8.8.8 get answers.
+    check:
+      all:
+        - blocked: { from: ISP, to: 203.0.113.2, protocol: tcp, port: 22 }
+        - reachable: { from: R1, to: 8.8.8.8 }
+    hints:
+      - es: Prueba `/ping 8.8.8.8` desde el router. La respuesta entra por ether1 hacia el propio router.
+        en: Try `/ping 8.8.8.8` from the router. The reply comes in through ether1 towards the router itself.
+      - es: Las respuestas pertenecen a una conexión establecida; la regla que las acepta debe estar por encima del drop.
+        en: Replies belong to an established connection; the rule that accepts them must sit above the drop.
+      - es: Para cambiar el orden existe `move`, y al crear una regla puedes usar `place-before`.
+        en: To change the order there is `move`, and when adding a rule you can use `place-before`.
+  - id: camara
+    text:
+      es: La cámara IP (192.168.88.20) no debe salir a Internet. La PC sigue navegando y sigue viendo la cámara por HTTP.
+      en: The IP camera (192.168.88.20) must not reach the Internet. The PC still browses and still sees the camera over HTTP.
+    check:
+      all:
+        - blocked: { from: CAM, to: 8.8.8.8 }
+        - reachable: { from: PC1, to: 8.8.8.8 }
+        - reachable: { from: PC1, to: 192.168.88.20, protocol: tcp, port: 80 }
+    hints:
+      - es: El tráfico que atraviesa el router no pasa por input. Piensa en qué cadena lo filtra.
+        en: Traffic that crosses the router does not go through input. Think about which chain filters it.
+      - es: Identifica a la cámara por su dirección de origen en la cadena `forward`.
+        en: Match the camera by its source address in the `forward` chain.
+
+explanation:
+  es: >-
+    En IOS aplicas una ACL a una interfaz con `ip access-group` y proteges las líneas vty con
+    `access-class`. RouterOS lo organiza por cadenas: `input` es lo que va dirigido al propio
+    router (como el plano de control), `forward` lo que lo atraviesa y `output` lo que él mismo
+    genera. Como en una ACL, las reglas se leen de arriba abajo y gana la primera que coincide,
+    pero aquí no hay un deny implícito al final: si no pones un drop, todo pasa. Además el
+    firewall es con estado, así que una sola regla de established,related deja volver las
+    respuestas, algo que en IOS exige `reflexive` o un firewall basado en zonas. Por eso el
+    orden importa tanto: un drop antes de los accept te deja fuera a ti y al router.
+  en: >-
+    In IOS you apply an ACL to an interface with `ip access-group` and protect the vty lines
+    with `access-class`. RouterOS organizes this into chains: `input` is traffic aimed at the
+    router itself (like the control plane), `forward` is traffic crossing it and `output` is
+    what the router generates. As with an ACL, rules are read top to bottom and the first match
+    wins, but there is no implicit deny at the end: without a drop, everything passes. The
+    firewall is also stateful, so a single established,related rule lets replies back in,
+    something that in IOS needs `reflexive` ACLs or a zone-based firewall. That is why order
+    matters so much: a drop above the accepts locks out both you and the router.
