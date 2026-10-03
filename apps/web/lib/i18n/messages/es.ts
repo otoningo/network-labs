@@ -87,6 +87,8 @@ export const es = {
     finished: {
       title: 'Lab completado',
       body: 'Todas las tareas se cumplen en la red. Esto es lo que acabas de hacer:',
+      next: 'Siguiente',
+      endOfPath: 'Era el último lab de la ruta.',
     },
     reset: 'Reiniciar lab',
     cancel: 'Cancelar',

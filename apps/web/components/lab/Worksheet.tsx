@@ -1,11 +1,14 @@
 'use client';
 
+import { ArrowRight } from '@phosphor-icons/react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RichText } from '@/components/ui/RichText';
 import { fill } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
 import { useLab } from '@/lib/lab/context';
+import { useLabNav } from '@/lib/lab/nav';
 import { TaskItem } from './worksheet/TaskItem';
 import { useSessionChanges } from './worksheet/useSessionChanges';
 
@@ -64,6 +67,7 @@ export function Worksheet() {
               <p className="mt-4 max-w-[62ch] text-ink text-pretty">
                 <RichText text={lab.explanation[locale]} />
               </p>
+              <NextLab />
             </section>
           )}
         </div>
@@ -90,5 +94,25 @@ function Announcer({ message }: { readonly message: string }) {
       {message}
     </div>,
     target,
+  );
+}
+
+/** Al terminar: el siguiente lab de la ruta, o el aviso de que era el último. */
+function NextLab() {
+  const { locale, messages } = useI18n();
+  const t = messages.lab;
+  const { next } = useLabNav();
+  if (!next) return <p className="mt-6 text-sm text-ink-muted">{t.finished.endOfPath}</p>;
+  return (
+    <Link
+      href={`/${locale}/lab/${next.id}`}
+      className="group mt-6 inline-flex items-baseline gap-2 border-t border-rule pt-4 text-ink no-underline"
+    >
+      <span className="text-sm text-ink-muted">{t.finished.next}</span>
+      <span className="font-medium group-hover:underline">
+        {fill(t.labNumber, { n: next.order })}. {next.title[locale]}
+      </span>
+      <ArrowRight size={15} weight="bold" aria-hidden className="self-center" />
+    </Link>
   );
 }

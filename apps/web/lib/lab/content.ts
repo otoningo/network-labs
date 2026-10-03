@@ -6,6 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { LabDefinition } from '@nos/core';
 import { parseLabYaml } from '@nos/core/lab-yaml';
+import type { LabNav } from './nav';
 
 const ROOT = join(process.cwd(), '../../content/labs');
 
@@ -34,3 +35,14 @@ export function allLabs(): readonly LabDefinition[] {
 
 export const labById = (id: string): LabDefinition | undefined =>
   allLabs().find((lab) => lab.id === id);
+
+/** Labs anterior y siguiente dentro de la misma ruta, por número de orden. */
+export function labNav(id: string): LabNav {
+  const lab = labById(id);
+  if (!lab?.path || lab.order === undefined) return { previous: null, next: null };
+  const siblings = allLabs().filter((l) => l.path === lab.path && l.order !== undefined);
+  const link = (l: LabDefinition | undefined) =>
+    l && l.order !== undefined ? { id: l.id, title: l.title, order: l.order } : null;
+  const index = siblings.findIndex((l) => l.id === id);
+  return { previous: link(siblings[index - 1]), next: link(siblings[index + 1]) };
+}

@@ -85,6 +85,8 @@ export const en: Messages = {
     finished: {
       title: 'Lab complete',
       body: 'Every task holds on the network. Here is what you just did:',
+      next: 'Next',
+      endOfPath: 'That was the last lab of the path.',
     },
     reset: 'Reset lab',
     cancel: 'Cancel',
