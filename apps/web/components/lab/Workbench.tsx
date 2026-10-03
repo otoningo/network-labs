@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/context';
 import { useLab } from '@/lib/lab/context';
 import { useMediaQuery } from '@/lib/ui/useMediaQuery';
 import { Console } from '../terminal/Console';
-import { Figure } from './Figure';
+import { Topology as Figure } from '../topology/Topology';
 import { Worksheet } from './Worksheet';
 
 /**
