@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { BOARDS, type LabDefinition } from '@nos/core';
 import { parseLabYaml } from '@nos/core/lab-yaml';
 import { describe, expect, it } from 'vitest';
-import { buildScene } from './scene';
+import { buildScene, sketchLinks } from './scene';
 import { createLabStore } from './store';
 import {
   arrangeFor,
@@ -17,6 +17,7 @@ import {
   layoutNodes,
   NATURAL,
   type NodeSpec,
+  nodeObstacles,
   nodeRect,
   overlaps,
   parallelOffsets,
@@ -24,8 +25,9 @@ import {
   portBlock,
   roleOf,
   SHAPE,
+  segmentHitsRect,
 } from './topology';
-import { type Rect, rawFitScale } from './viewport';
+import { type Point, type Rect, rawFitScale, ZOOM_MIN } from './viewport';
 
 const labFile = (name: string): LabDefinition => {
   const file = join(import.meta.dirname, '../../../../content/labs/routeros', name);
@@ -39,14 +41,11 @@ const specsOf = (lab: LabDefinition): NodeSpec[] =>
     id: d.id,
     role: roleOf(d.os, BOARDS[d.board]?.ports ?? []),
     position: d.position,
+    label: d.label?.es ?? null,
   }));
 
 const sketchesOf = (lab: LabDefinition): LinkSketch[] =>
-  lab.topology.links.map(([a, b]) => {
-    const [aDevice = '', aPort = ''] = a.split(':');
-    const [bDevice = '', bPort = ''] = b.split(':');
-    return { a: aDevice, aPort, b: bDevice, bPort };
-  });
+  sketchLinks(createLabStore(lab).getState().runtime.net);
 
 /** Pares de rectángulos que se pisan. */
 function clashes(rects: readonly Rect[]): number {
@@ -97,7 +96,7 @@ describe('layoutNodes', () => {
     const pc2 = nodes.find((n) => n.id === 'PC2');
     expect(isp?.y).toBeLessThan(120);
     expect(pc2?.y).toBeGreaterThan(120);
-    expect(clashes(nodes.map(nodeRect))).toBe(0);
+    expect(clashes(nodes.map((n) => nodeRect(n)))).toBe(0);
   });
 });
 
@@ -109,9 +108,13 @@ describe('edgePoint', () => {
     expect(edgePoint(node, { x: 500, y: 0 })).toEqual({ x: 66, y: 0 });
   });
 
-  it('sale por debajo de la etiqueta hacia un equipo de abajo', () => {
-    const p = edgePoint(node, { x: 0, y: 500 });
-    expect(p.y).toBe(node.height / 2 + 20);
+  it('sale por debajo de la forma (y de su etiqueta, si tiene) hacia un equipo de abajo', () => {
+    expect(edgePoint(node, { x: 0, y: 500 }).y).toBe(node.height / 2 + 4);
+    const [labelled] = layoutNodes([
+      { id: 'R1', role: 'router', position: { x: 0, y: 0 }, label: 'Router' },
+    ]);
+    if (!labelled) throw new Error('sin nodo');
+    expect(edgePoint(labelled, { x: 0, y: 500 }, 2).y).toBe(labelled.height / 2 + 40);
   });
 
   it('en diagonal toca el borde, no lo atraviesa', () => {
@@ -124,21 +127,21 @@ describe('edgePoint', () => {
 });
 
 describe('portBlock', () => {
-  it('cable horizontal: nombre encima, direcciones debajo, alejándose del equipo', () => {
+  it('cable horizontal: nombre y direcciones juntos encima, alejándose del equipo', () => {
     const block = portBlock({ x: 100, y: 50 }, { x: 400, y: 50 }, 'ether2', ['10.0.0.1/24']);
     const [name, address] = block.lines;
     expect(name?.anchor).toBe('start');
-    expect(name?.y).toBeLessThan(50);
-    expect(address?.y).toBeGreaterThan(50);
+    expect(name?.dy).toBeLessThan(address?.dy ?? 0);
+    expect(address?.dy).toBeLessThan(0);
     expect(block.rect.x).toBeGreaterThan(100);
   });
 
-  it('la variante escalonada invierte el reparto', () => {
+  it('la variante pone el bloque entero debajo, con el nombre arriba', () => {
     const block = portBlock({ x: 400, y: 50 }, { x: 100, y: 50 }, 'eth0', ['10.0.0.2/24'], true);
     const [name, address] = block.lines;
     expect(name?.anchor).toBe('end');
-    expect(name?.y).toBeGreaterThan(50);
-    expect(address?.y).toBeLessThan(50);
+    expect(name?.dy).toBeGreaterThan(0);
+    expect(address?.dy).toBeGreaterThan(name?.dy ?? 0);
   });
 
   it('cable vertical: el bloque a un lado, debajo del arranque', () => {
@@ -146,10 +149,19 @@ describe('portBlock', () => {
     expect(block.rect.x).toBeGreaterThan(100);
     expect(block.rect.y).toBeGreaterThan(50);
   });
+
+  it('el texto ocupa en el mundo lo que mide en pantalla a la escala de colocación', () => {
+    const at = { x: 0, y: 0 };
+    const toward = { x: 500, y: 0 };
+    const near = portBlock(at, toward, 'ether2', ['10.0.0.1/24'], false, 1);
+    const far = portBlock(at, toward, 'ether2', ['10.0.0.1/24'], false, 2);
+    expect(far.rect.width).toBeCloseTo(near.rect.width * 2);
+    expect(far.lines[0]?.dy).toBe(near.lines[0]?.dy);
+  });
 });
 
 describe('placePortBlocks', () => {
-  it('escalona los dos extremos de un cable corto para que no se pisen', () => {
+  it('reparte los dos extremos de un cable corto a lados opuestos sin pisarse', () => {
     const segment = { from: { x: 0, y: 0 }, to: { x: 190, y: 0 } };
     const { blocks, collisions } = placePortBlocks(
       [
@@ -170,7 +182,7 @@ describe('placePortBlocks', () => {
 
   it('cuenta el choque si no hay sitio en ninguna variante', () => {
     const segment = { from: { x: 0, y: 0 }, to: { x: 40, y: 0 } };
-    const long = ['255.255.255.255/32'];
+    const long = ['255.255.255.255/32', '255.255.255.254/32'];
     const { collisions } = placePortBlocks(
       [
         { key: 'a', segment, name: 'ether1', addresses: long },
@@ -181,11 +193,31 @@ describe('placePortBlocks', () => {
           addresses: long,
         },
       ],
-      [],
+      [{ x: -400, y: -400, width: 800, height: 395 }],
     );
-    expect(collisions).toBe(1);
+    expect(collisions).toBeGreaterThan(0);
   });
 });
+
+/** Marcos de las verificaciones: escritorio por defecto, escritorio amplio y la pestaña del móvil. */
+const FRAMES = {
+  desktop: { width: 880, height: 248 },
+  wide: { width: 1039, height: 290 },
+  phone: { width: 343, height: 600 },
+} as const;
+
+/** Escena tal como se pinta: reparto elegido para el marco y rótulos colocados a la escala de encuadre. */
+function sceneFor(name: string, frame: { width: number; height: number }) {
+  const lab = labFile(name);
+  const specs = specsOf(lab);
+  const nodes = layoutNodes(specs, arrangeFor(specs, sketchesOf(lab), frame));
+  const scene = buildScene(nodes, createLabStore(lab).getState().net, frame);
+  return { nodes, scene };
+}
+
+/** Lado del cable en el que cae un punto: signo del producto vectorial. */
+const sideOf = (from: Point, to: Point, p: Point): number =>
+  Math.sign((to.x - from.x) * (p.y - from.y) - (to.y - from.y) * (p.x - from.x));
 
 describe('arrangeFor', () => {
   it('con sitio de sobra deja el YAML tal cual', () => {
@@ -195,25 +227,38 @@ describe('arrangeFor', () => {
     );
   });
 
-  it('en un panel bajo acerca las filas para que el texto no baje de 11px', () => {
+  it('en un panel bajo acerca las filas: la figura sale más grande', () => {
     const lab = labFile('03-rutas-estaticas.yaml');
-    const frame = { width: 880, height: 248 };
     const specs = specsOf(lab);
-    const chosen = arrangeFor(specs, sketchesOf(lab), frame);
+    const chosen = arrangeFor(specs, sketchesOf(lab), FRAMES.desktop);
     expect(chosen.sy).toBeLessThan(1);
     expect(chosen.transpose).toBe(false);
-    const natural = buildScene(layoutNodes(specs), createLabStore(lab).getState().net);
-    const tight = buildScene(layoutNodes(specs, chosen), createLabStore(lab).getState().net);
-    if (!natural.bounds || !tight.bounds) throw new Error('sin límites');
-    expect(rawFitScale(tight.bounds, frame, 16)).toBeGreaterThan(
-      rawFitScale(natural.bounds, frame, 16),
-    );
+    const net = createLabStore(lab).getState().net;
+    const natural = buildScene(layoutNodes(specs), net, FRAMES.desktop);
+    const tight = buildScene(layoutNodes(specs, chosen), net, FRAMES.desktop);
+    expect(tight.scale).toBeGreaterThan(natural.scale);
   });
 
   it('en la pestaña del móvil traspone una figura apaisada', () => {
-    const lab = labFile('03-rutas-estaticas.yaml');
-    const chosen = arrangeFor(specsOf(lab), sketchesOf(lab), { width: 343, height: 560 });
-    expect(chosen.transpose).toBe(true);
+    for (const name of ['01-acceso-inicial.yaml', '03-rutas-estaticas.yaml']) {
+      const lab = labFile(name);
+      expect(arrangeFor(specsOf(lab), sketchesOf(lab), FRAMES.phone).transpose, name).toBe(true);
+    }
+  });
+
+  it('elige una figura que cabe entera en el marco cuando cabe sin pisar texto', () => {
+    for (const name of CHECKED) {
+      for (const [frameName, frame] of Object.entries(FRAMES)) {
+        // El lab 12 (cuatro equipos en fila con etiquetas largas) no cabe a 12px
+        // en 343px sin pisar texto: ahí la figura se desplaza en vez de amontonarse.
+        if (name === '12-oficina-final.yaml' && frameName === 'phone') continue;
+        const { scene } = sceneFor(name, frame);
+        if (!scene.bounds) throw new Error('sin límites');
+        expect(rawFitScale(scene.bounds, frame, 16), `${name} ${frameName}`).toBeGreaterThanOrEqual(
+          ZOOM_MIN - 0.01,
+        );
+      }
+    }
   });
 
   it('nunca junta los equipos hasta pisarse', () => {
@@ -221,29 +266,64 @@ describe('arrangeFor', () => {
       const lab = labFile(name);
       const specs = specsOf(lab);
       const chosen = arrangeFor(specs, sketchesOf(lab), { width: 700, height: 200 });
-      expect(clashes(layoutNodes(specs, chosen).map(nodeRect))).toBe(0);
+      expect(clashes(layoutNodes(specs, chosen).map((n) => nodeRect(n)))).toBe(0);
     }
   });
 });
 
+const CHECKED = [
+  '01-acceso-inicial.yaml',
+  '03-rutas-estaticas.yaml',
+  '04-bridge-vlans.yaml',
+  '12-oficina-final.yaml',
+] as const;
+
 describe('buildScene', () => {
-  it('dibuja los cables del lab con los rótulos de la red en vivo y sin solapes', () => {
-    for (const name of [
-      '01-acceso-inicial.yaml',
-      '03-rutas-estaticas.yaml',
-      '07-firewall-filter.yaml',
-    ]) {
-      const lab = labFile(name);
-      const net = createLabStore(lab).getState().net;
-      const nodes = layoutNodes(specsOf(lab));
-      const scene = buildScene(nodes, net);
-      expect(scene.wires.length).toBeGreaterThanOrEqual(lab.topology.links.length);
-      const rects = [
-        ...nodes.map(nodeRect),
-        ...scene.wires.flatMap((w) => w.blocks.flatMap((b) => (b ? b.boxes : []))),
-      ];
-      expect(clashes(rects), name).toBe(0);
+  it('cada extremo lleva su nombre y sus direcciones del mismo lado del cable', () => {
+    for (const name of CHECKED) {
+      for (const [frameName, frame] of Object.entries(FRAMES)) {
+        const { scene } = sceneFor(name, frame);
+        for (const { segment, blocks } of scene.wires) {
+          blocks.forEach((block, end) => {
+            if (!block) return;
+            const [from, to] = end === 0 ? [segment.from, segment.to] : [segment.to, segment.from];
+            const sides = new Set(
+              block.boxes.map((b) =>
+                sideOf(from, to, { x: b.x + b.width / 2, y: b.y + b.height / 2 }),
+              ),
+            );
+            expect(sides.size, `${name} ${frameName}`).toBe(1);
+            // Y el nombre va primero: arriba del todo del bloque.
+            const dys = block.lines.map((l) => l.dy);
+            expect(dys[0], `${name} ${frameName}`).toBe(Math.min(...dys));
+          });
+        }
+      }
     }
+  });
+
+  it('a la escala de encuadre ningún rótulo pisa un equipo ni otro rótulo', () => {
+    for (const name of CHECKED) {
+      for (const [frameName, frame] of Object.entries(FRAMES)) {
+        const { nodes, scene } = sceneFor(name, frame);
+        const s = 1 / scene.scale;
+        const rects = [
+          ...nodes.flatMap((n) => nodeObstacles(n, s)),
+          ...scene.wires.flatMap((w) => w.blocks.flatMap((b) => (b ? b.boxes : []))),
+        ];
+        expect(clashes(rects), `${name} ${frameName}`).toBe(0);
+        const crossed = scene.wires
+          .flatMap((w) => w.blocks.flatMap((b) => (b ? b.boxes : [])))
+          .filter((box) => scene.wires.some((w) => segmentHitsRect(w.segment, box)));
+        expect(crossed, `${name} ${frameName}: cable sobre un rótulo`).toEqual([]);
+      }
+    }
+  });
+
+  it('dibuja todos los cables del lab', () => {
+    const lab = labFile('07-firewall-filter.yaml');
+    const scene = buildScene(layoutNodes(specsOf(lab)), createLabStore(lab).getState().net);
+    expect(scene.wires.length).toBeGreaterThanOrEqual(lab.topology.links.length);
   });
 
   it('el portátil sin asociar se dibuja caído hacia el router y se levanta al encender la radio', () => {
@@ -269,6 +349,16 @@ describe('buildScene', () => {
     store.getState().run('/interface disable ether2');
     const [wire] = buildScene(layoutNodes(specsOf(lab)), store.getState().net).wires;
     expect(wire?.wire).toMatchObject({ up: false, reason: { kind: 'disabled' } });
+  });
+});
+
+describe('segmentHitsRect', () => {
+  const box = { x: 10, y: 10, width: 20, height: 10 };
+  it('detecta un tramo que cruza, uno que acaba dentro y uno que pasa de largo', () => {
+    expect(segmentHitsRect({ from: { x: 0, y: 15 }, to: { x: 50, y: 15 } }, box)).toBe(true);
+    expect(segmentHitsRect({ from: { x: 0, y: 0 }, to: { x: 15, y: 12 } }, box)).toBe(true);
+    expect(segmentHitsRect({ from: { x: 0, y: 0 }, to: { x: 50, y: 5 } }, box)).toBe(false);
+    expect(segmentHitsRect({ from: { x: 40, y: 0 }, to: { x: 40, y: 50 } }, box)).toBe(false);
   });
 });
 

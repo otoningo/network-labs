@@ -31,13 +31,17 @@ export function useElementSize(ref: RefObject<HTMLElement | null>): Size | null 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const width = Math.round(entry.contentRect.width);
-      const height = Math.round(entry.contentRect.height);
+    const update = (w: number, h: number) => {
+      const width = Math.round(w);
+      const height = Math.round(h);
       setSize((prev) =>
         prev && prev.width === width && prev.height === height ? prev : { width, height },
       );
+    };
+    // Primera medida ya, sin esperar al observador (que no avisa si la página no pinta).
+    update(element.clientWidth, element.clientHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) update(entry.contentRect.width, entry.contentRect.height);
     });
     observer.observe(element);
     return () => observer.disconnect();

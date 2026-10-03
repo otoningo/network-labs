@@ -2,14 +2,7 @@
 
 import { memo } from 'react';
 import type { SceneWire } from '@/lib/lab/scene';
-import { FOOTER, type NodeBox, TEXT } from '@/lib/lab/topology';
-
-export interface NodeMeta {
-  /** Nombre en vivo, recortado para caber en la forma; null si coincide con el id. */
-  readonly identity: string | null;
-  /** Etiqueta del equipo en el idioma de la interfaz, recortada. */
-  readonly label: string | null;
-}
+import { fitText, type NodeBox, TEXT } from '@/lib/lab/topology';
 
 /** Router: caja con una muesca arriba, como la ranura de un chasis. */
 function routerPath(w: number, h: number): string {
@@ -35,10 +28,12 @@ function Shape({
   node,
   stroke,
   strokeWidth,
+  k,
 }: {
   readonly node: NodeBox;
   readonly stroke: string;
   readonly strokeWidth: number;
+  readonly k: number;
 }) {
   const common = {
     fill: 'var(--color-sheet)',
@@ -47,17 +42,19 @@ function Shape({
     vectorEffect: 'non-scaling-stroke' as const,
   };
   const { width: w, height: h } = node;
+  // 2px de pantalla a cualquier zoom, como todas las esquinas de la interfaz.
+  const rx = 2 / k;
   switch (node.role) {
     case 'router':
       return <path d={routerPath(w, h)} {...common} />;
     case 'cloud':
       return <path d={CLOUD} {...common} />;
     case 'host':
-      return <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={6} {...common} />;
+      return <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={rx} {...common} />;
     case 'wireless-host':
       return (
         <>
-          <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={6} {...common} />
+          <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={rx} {...common} />
           <path
             d={wavesPath(w / 2 - 14, 4)}
             fill="none"
@@ -76,23 +73,36 @@ const DASH = {
   wireless: { up: '6 4', down: '2 4' },
 } as const;
 
+/** Tamaños en rem (respetan el zoom del navegador): 0.75rem y el paso de 13px. */
+const SMALL = `${TEXT.small / 16}rem`;
+const ID = `${TEXT.id / 16}rem`;
+
+/** Alto de forma en pantalla por debajo del cual el nombre en vivo no cabe bajo el id. */
+const TWO_LINES = 38;
+
 /**
- * Lo que se dibuja en el lienzo, en unidades de mundo. Es memo: el zoom y el
- * desplazamiento solo cambian la transformación del grupo que lo contiene.
+ * Lo que se dibuja en el lienzo. Formas y cables en unidades de mundo; el
+ * texto se contraescala (scale 1/k) para medir siempre lo mismo en pantalla.
+ * Es memo: desplazar no lo vuelve a pintar; el zoom sí, por el texto.
  */
 export const SceneGraphic = memo(function SceneGraphic({
   nodes,
-  meta,
+  identities,
   wires,
   active,
   highlighted,
+  k,
 }: {
   readonly nodes: readonly NodeBox[];
-  readonly meta: ReadonlyMap<string, NodeMeta>;
+  /** Nombre en vivo de cada equipo, si difiere de su id. */
+  readonly identities: ReadonlyMap<string, string | null>;
   readonly wires: readonly SceneWire[];
   readonly active: string | null;
   readonly highlighted: string | null;
+  /** Escala actual del lienzo. */
+  readonly k: number;
 }) {
+  const inverse = `scale(${1 / k})`;
   return (
     <>
       {wires.map(({ wire, segment, blocks }) => (
@@ -114,10 +124,12 @@ export const SceneGraphic = memo(function SceneGraphic({
                 {block.lines.map((line) => (
                   <text
                     key={`${line.tone}:${line.text}`}
-                    x={line.x}
-                    y={line.y}
+                    transform={`translate(${line.ax} ${line.ay}) ${inverse}`}
+                    x={line.dx}
+                    y={line.dy}
                     textAnchor={line.anchor}
-                    className={`text-[11px] ${line.tone === 'port' ? 'fill-ink-muted' : 'fill-ink-faint'}`}
+                    className={line.tone === 'port' ? 'fill-ink-muted' : 'fill-ink-faint'}
+                    style={{ fontSize: SMALL }}
                   >
                     {line.text}
                   </text>
@@ -128,40 +140,51 @@ export const SceneGraphic = memo(function SceneGraphic({
         </g>
       ))}
       {nodes.map((node) => {
-        const info = meta.get(node.id);
         const isActive = node.id === active;
         const stroke = isActive
           ? 'var(--color-ink)'
           : node.id === highlighted
             ? 'var(--color-control)'
             : 'var(--color-rule-strong)';
-        const identity = info?.identity ?? null;
-        const shift = node.role === 'cloud' ? 4 : 0;
+        // Medidas de la forma en pantalla: el texto se coloca en píxeles.
+        const boxW = node.width * k;
+        const boxH = node.height * k;
+        const raw = identities.get(node.id) ?? null;
+        const identity = raw && boxH >= TWO_LINES ? fitText(raw, boxW - 12) : null;
+        const shift = node.role === 'cloud' ? 3 * k : 0;
         return (
           <g key={node.id} transform={`translate(${node.x} ${node.y})`}>
-            <Shape node={node} stroke={stroke} strokeWidth={isActive ? 1.5 : 1} />
-            <text
-              y={(identity ? -3 : 4.5) + shift}
-              textAnchor="middle"
-              className="fill-ink font-semibold"
-              style={{ fontSize: TEXT.id }}
-            >
-              {node.id}
-            </text>
-            {identity && (
-              <text y={13 + shift} textAnchor="middle" className="fill-ink-muted text-[11px]">
-                {identity}
-              </text>
-            )}
-            {info?.label && (
+            <Shape node={node} stroke={stroke} strokeWidth={isActive ? 1.5 : 1} k={k} />
+            <g transform={inverse}>
               <text
-                y={node.height / 2 + FOOTER - 6}
+                y={(identity ? -4 : 4.5) + shift}
                 textAnchor="middle"
-                className="fill-ink-faint text-[11px]"
+                className="fill-ink font-semibold"
+                style={{ fontSize: ID }}
               >
-                {info.label}
+                {fitText(node.id, boxW - 8, TEXT.id)}
               </text>
-            )}
+              {identity && (
+                <text
+                  y={14 + shift}
+                  textAnchor="middle"
+                  className="fill-ink-muted"
+                  style={{ fontSize: SMALL }}
+                >
+                  {identity}
+                </text>
+              )}
+              {node.label && (
+                <text
+                  y={boxH / 2 + 15}
+                  textAnchor="middle"
+                  className="fill-ink-faint"
+                  style={{ fontSize: SMALL }}
+                >
+                  {node.label}
+                </text>
+              )}
+            </g>
           </g>
         );
       })}

@@ -6,20 +6,12 @@ import { type KeyboardEvent, type ReactNode, useMemo, useRef, useState } from 'r
 import { fill } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
 import { useLab } from '@/lib/lab/context';
-import { buildScene } from '@/lib/lab/scene';
-import {
-  arrangeFor,
-  fitText,
-  type LinkSketch,
-  layoutNodes,
-  type NodeBox,
-  type NodeSpec,
-  roleOf,
-} from '@/lib/lab/topology';
+import { buildScene, sketchLinks } from '@/lib/lab/scene';
+import { arrangeFor, layoutNodes, type NodeBox, type NodeSpec, roleOf } from '@/lib/lab/topology';
 import { type Rect, ZOOM_MAX, ZOOM_MIN } from '@/lib/lab/viewport';
 import { interfacesOf, liveIdentity } from '@/lib/lab/wiring';
 import { INSPECTOR_ID, Inspector } from './Inspector';
-import { type NodeMeta, SceneGraphic } from './SceneGraphic';
+import { SceneGraphic } from './SceneGraphic';
 import { Summary } from './Summary';
 import { useElementSize, useViewport } from './useViewport';
 
@@ -35,7 +27,8 @@ export function Topology() {
   const t = messages.topology;
   const lab = messages.lab;
   const devices = useLab((s) => s.runtime.lab.topology.devices);
-  const links = useLab((s) => s.runtime.lab.topology.links);
+  // La red al cargar el lab: con ella se prevén los rótulos para el reparto.
+  const initialNet = useLab((s) => s.runtime.net);
   const net = useLab((s) => s.net);
   const consoleDevices = useLab((s) => s.consoleDevices);
   const active = useLab((s) => s.activeDevice);
@@ -44,17 +37,18 @@ export function Topology() {
   const frameRef = useRef<HTMLDivElement>(null);
   const size = useElementSize(frameRef);
 
-  // La colocación solo depende de la topología (y de la orientación del marco).
+  // La colocación solo depende de la topología, del idioma (las etiquetas) y del marco.
   const specs = useMemo<NodeSpec[]>(
     () =>
       devices.map((d) => ({
         id: d.id,
         role: roleOf(d.os, BOARDS[d.board]?.ports ?? []),
         position: d.position,
+        label: d.label?.[locale] ?? null,
       })),
-    [devices],
+    [devices, locale],
   );
-  const sketches = useMemo(() => links.map(sketchOf), [links]);
+  const sketches = useMemo(() => sketchLinks(initialNet), [initialNet]);
   // El reparto se decide con el marco redondeado a 40px: no tiembla al arrastrar el separador.
   const qw = size ? Math.round(size.width / 40) * 40 : 0;
   const qh = size ? Math.round(size.height / 40) * 40 : 0;
@@ -63,24 +57,26 @@ export function Topology() {
     [specs, sketches, qw, qh],
   );
   const nodes = useMemo(() => layoutNodes(specs, arrangement), [specs, arrangement]);
-  // Los rótulos siguen a la red: se rehacen tras cada comando.
-  const scene = useMemo(() => buildScene(nodes, net), [nodes, net]);
+  // Los rótulos siguen a la red (se rehacen tras cada comando) y se colocan para
+  // la escala de encuadre, porque el texto mide lo mismo en pantalla a cualquier zoom.
+  const scene = useMemo(
+    () => buildScene(nodes, net, { width: qw, height: qh }),
+    [nodes, net, qw, qh],
+  );
 
-  const meta = useMemo(() => {
-    const map = new Map<string, NodeMeta>();
-    for (const node of nodes) {
-      const spec = devices.find((d) => d.id === node.id);
-      const identity = liveIdentity(
-        net.devices.find((d) => d.id === node.id),
-        node.id,
-      );
-      map.set(node.id, {
-        identity: identity ? fitText(identity, node.width - 16) : null,
-        label: spec?.label ? fitText(spec.label[locale], node.width + 24) : null,
-      });
-    }
-    return map;
-  }, [nodes, devices, net.devices, locale]);
+  const identities = useMemo(
+    () =>
+      new Map(
+        nodes.map((node) => [
+          node.id,
+          liveIdentity(
+            net.devices.find((d) => d.id === node.id),
+            node.id,
+          ),
+        ]),
+      ),
+    [nodes, net.devices],
+  );
 
   const { view, panning, zoomIn, zoomOut, fit, onKeyDown, pointer } = useViewport(
     frameRef,
@@ -153,10 +149,11 @@ export function Topology() {
             <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
               <SceneGraphic
                 nodes={nodes}
-                meta={meta}
+                identities={identities}
                 wires={scene.wires}
                 active={active}
                 highlighted={shown}
+                k={view.k}
               />
             </g>
           </svg>
@@ -259,13 +256,6 @@ export function Topology() {
       />
     </figure>
   );
-}
-
-/** "R1:ether2" → equipo y puerto, para estimar los rótulos antes de conocer la red. */
-function sketchOf([a, b]: readonly [string, string]): LinkSketch {
-  const [aDevice = '', aPort = ''] = a.split(':');
-  const [bDevice = '', bPort = ''] = b.split(':');
-  return { a: aDevice, aPort, b: bDevice, bPort };
 }
 
 function ControlButton({
