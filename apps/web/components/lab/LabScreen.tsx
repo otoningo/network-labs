@@ -17,7 +17,7 @@ export function LabScreen({ lab }: { readonly lab: LabDefinition }) {
       >
         {messages.app.skipToConsole}
       </a>
-      <div className="grid h-dvh grid-rows-[auto_minmax(0,1fr)] bg-ground">
+      <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] bg-ground">
         <TopBar />
         <Workbench />
       </div>

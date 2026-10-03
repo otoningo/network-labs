@@ -26,7 +26,7 @@ export function TopBar() {
   const pathName = lab.path ? (t.paths as Record<string, string>)[lab.path] : undefined;
 
   return (
-    <header className="flex h-(--bar-height) items-center gap-5 border-b border-rule px-5">
+    <header className="flex h-(--bar-height) items-center gap-3 border-b border-rule px-4 sm:gap-5 sm:px-5">
       <Link
         href={`/${locale}`}
         className="shrink-0 font-semibold tracking-tight text-ink no-underline"
@@ -48,11 +48,11 @@ export function TopBar() {
       </nav>
       <h1 className="min-w-0 truncate text-base font-medium text-ink">{lab.title[locale]}</h1>
 
-      <div className="ml-auto flex shrink-0 items-center gap-5">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-5">
         <div className="flex items-center gap-3">
           <ol
             aria-hidden
-            className="hidden items-center gap-1 sm:flex"
+            className="flex items-center gap-1"
             title={plural(locale, t.progress, lab.objectives.length, {
               done,
               total: lab.objectives.length,
@@ -66,7 +66,7 @@ export function TopBar() {
               />
             ))}
           </ol>
-          <p className="text-sm text-ink-muted">
+          <p className="hidden text-sm text-ink-muted sm:block">
             {plural(locale, t.progress, lab.objectives.length, {
               done,
               total: lab.objectives.length,
