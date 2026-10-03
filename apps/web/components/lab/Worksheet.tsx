@@ -57,7 +57,7 @@ export function Worksheet() {
 
           {finished && (
             <section aria-labelledby="lab-finished-heading" className="mt-10">
-              <h3 id="lab-finished-heading" className="text-md font-semibold text-done">
+              <h3 id="lab-finished-heading" className="text-md font-semibold text-ink">
                 {t.finished.title}
               </h3>
               <p className="mt-2 max-w-[62ch] text-ink-muted text-pretty">{t.finished.body}</p>

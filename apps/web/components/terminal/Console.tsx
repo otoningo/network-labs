@@ -29,6 +29,7 @@ export function Console() {
   const texts = useMemo<SessionTexts>(
     () => ({
       closed: t.closed,
+      intro: t.intro,
       restored: (count) => plural(locale, messages.lab.restored, count),
       separator: (device) => `── ${fill(messages.lab.consoleOf, { device })} ──`,
     }),
@@ -113,10 +114,15 @@ export function Console() {
           </>
         )}
       </header>
-      <div
-        className={`relative min-h-0 flex-1 ${focused ? 'outline-2 -outline-offset-2 outline-(--color-focus)' : ''}`}
-      >
+      <div className="relative min-h-0 flex-1">
         <div ref={bodyRef} className="absolute inset-0 overflow-hidden" />
+        {/* El anillo de foco va por encima del lienzo de xterm, que taparía un outline interior. */}
+        {focused && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-10 outline-2 -outline-offset-2 outline-(--color-focus)"
+          />
+        )}
       </div>
       <p id={keysId} className="sr-only">
         {t.keys}

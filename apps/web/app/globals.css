@@ -14,6 +14,8 @@
   --color-console: #0f1012;
   --color-rule: #2a2e33;
   --color-rule-strong: #3a3f45;
+  /* Borde de controles y casillas vacías: 3,7:1 sobre el fondo (WCAG 1.4.11). */
+  --color-control: #6b737b;
 
   /* Tinta: blanco papel y dos grises para jerarquía. */
   --color-ink: #e3e6e8;
@@ -21,8 +23,8 @@
   --color-ink-faint: #7d858d;
 
   /* Estado. Nada más en la interfaz lleva color. */
-  --color-done: #6cc08a;
-  --color-error: #e5726a;
+  --color-done: #5fae7b;
+  --color-error: #d45b4f;
   --color-warn: #e0b04f;
   --color-done-quiet: #1d2a22;
   --color-error-quiet: #2e1c1b;
@@ -64,6 +66,7 @@
   --color-console: var(--color-console);
   --color-rule: var(--color-rule);
   --color-rule-strong: var(--color-rule-strong);
+  --color-control: var(--color-control);
   --color-ink: var(--color-ink);
   --color-ink-muted: var(--color-ink-muted);
   --color-ink-faint: var(--color-ink-faint);
@@ -124,10 +127,11 @@ a {
   scrollbar-color: var(--color-rule-strong) transparent;
 }
 
-/* Código en línea dentro de textos de lab y pistas: único uso de mono fuera de la consola. */
+/* Lo que se escribe en la consola, citado en tareas y pistas. Sin mono: la mono es solo de la consola. */
 .inline-code {
-  font-family: var(--font-mono);
-  font-size: 0.92em;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.95em;
   padding: 0.05em 0.3em;
   border-radius: var(--radius);
   background: var(--color-rule);
@@ -144,4 +148,9 @@ a {
     /* biome-ignore lint/complexity/noImportantStyles: ídem */
     transition-duration: 0.01ms !important;
   }
+}
+
+/* xterm 6 dibuja su propia barra; la nativa del viewport sobra (y en Windows trae flechas). */
+.xterm .xterm-viewport {
+  scrollbar-width: none;
 }

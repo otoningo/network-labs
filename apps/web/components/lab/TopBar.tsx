@@ -10,9 +10,10 @@ import { useLab } from '@/lib/lab/context';
 import type { ObjectiveState } from '@/lib/lab/store';
 
 const SEGMENT: Record<ObjectiveState, string> = {
-  done: 'bg-done border-done',
-  regressed: 'bg-warn border-warn',
-  pending: 'bg-transparent border-rule-strong',
+  // Monocromo: la casilla de cada tarea es la única que lleva color de estado.
+  done: 'bg-ink-muted border-ink-muted',
+  regressed: 'bg-transparent border-control',
+  pending: 'bg-transparent border-control',
 };
 
 /** Barra superior: dónde estás (ruta, lab), cuánto llevas y los controles globales. */

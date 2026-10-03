@@ -69,7 +69,7 @@ export function TaskItem({
       <span
         aria-hidden
         className={`-mt-1.5 text-right text-numeral leading-none font-light tabular-nums ${
-          state === 'done' ? 'text-done' : 'text-ink-faint'
+          state === 'done' ? 'text-ink-muted' : 'text-ink-faint'
         } ${live ? 'transition-colors duration-[260ms] ease-(--ease-out)' : ''}`}
       >
         {number}

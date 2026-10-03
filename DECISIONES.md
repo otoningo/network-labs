@@ -267,11 +267,19 @@ Cada una cubre algo que no conviene escribir a mano:
 
 - Todos los colores y tamaños de texto son variables CSS en `:root`, expuestas
   a Tailwind con `@theme inline`. Oscuro único en la v1.
-- El acento solo marca estado: verde cumplido, rojo error, ámbar "se cumplía y
-  ya no". El foco usa la tinta, no un acento, para no confundirse con un estado.
-- Geist para la interfaz y Geist Mono para la consola. La única mono fuera de
-  la consola es el `código` en línea de tareas y pistas, porque es literalmente
-  lo que se escribe en la consola.
+- La casilla de cada tarea es lo único que lleva color de estado: verde
+  cumplida, ámbar "se cumplía y ya no". Numerales, barra de progreso, contador
+  de la pestaña y título de lab completado son monocromos. El foco usa la
+  tinta, no un acento, para no confundirse con un estado.
+- No hay estado rojo de objetivo: un objetivo no "falla", solo está pendiente o
+  en regresión. Los errores son del equipo y salen en la consola con su voz. El
+  rojo queda para acciones destructivas (reiniciar el lab).
+- Las casillas vacías y los controles usan `--color-control` (3,7:1 sobre el
+  fondo), por encima del 3:1 de WCAG 1.4.11.
+- Geist para la interfaz; Geist Mono solo en la consola. El código citado en
+  tareas y pistas va en la misma sans con un fondo, sin mono.
+- La ayuda de uso de la consola ("? muestra la ayuda...") es de la interfaz y se
+  traduce; la salida del equipo simulado queda en su idioma, como en el real.
 
 ## D-032 · Progreso: se guarda lo escrito, no la red
 

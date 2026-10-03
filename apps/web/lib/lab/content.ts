@@ -13,7 +13,8 @@ let cache: readonly LabDefinition[] | null = null;
 
 /** Todos los labs, ordenados por ruta y número. Un YAML inválido rompe la compilación con su error. */
 export function allLabs(): readonly LabDefinition[] {
-  if (cache) return cache;
+  // En desarrollo se relee siempre para ver al momento los cambios en el YAML.
+  if (cache && process.env.NODE_ENV === 'production') return cache;
   const labs: LabDefinition[] = [];
   for (const vendor of readdirSync(ROOT, { withFileTypes: true })) {
     if (!vendor.isDirectory()) continue;

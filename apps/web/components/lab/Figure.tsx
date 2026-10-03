@@ -5,6 +5,7 @@ import { deviceId } from '@nos/core';
 import { fill } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
 import { useLab } from '@/lib/lab/context';
+import { type PortLabel, portLabel } from '@/lib/lab/ports';
 
 const BOX_W = 132;
 const BOX_H = 52;
@@ -45,12 +46,13 @@ export function Figure() {
   const { locale, messages } = useI18n();
   const t = messages.lab;
   const topology = useLab((s) => s.runtime.lab.topology);
+  const net = useLab((s) => s.net);
   const consoleDevices = useLab((s) => s.consoleDevices);
   const active = useLab((s) => s.activeDevice);
   const setActive = useLab((s) => s.setActiveDevice);
 
   const placed = place(topology.devices);
-  const byId = new Map(placed.map((p) => [p.spec.id, p]));
+  const byId = new Map<string, Placed>(placed.map((p) => [p.spec.id, p]));
   const xs = placed.map((p) => p.x);
   const ys = placed.map((p) => p.y);
   const minX = Math.min(...xs) - BOX_W / 2 - MARGIN;
@@ -63,43 +65,32 @@ export function Figure() {
       <div className="flex min-h-0 flex-1 items-center justify-center px-5 pt-4">
         <svg
           viewBox={`${minX} ${minY} ${width} ${height}`}
-          width={width}
-          height={height}
+          width={width * 1.5}
+          height={height * 1.5}
           className="h-auto max-h-full w-auto max-w-full"
           role="img"
           aria-labelledby="lab-figure-title"
         >
           <title id="lab-figure-title">{t.figureCaption}</title>
-          {topology.links.map(([a, b]) => {
-            const [devA = '', portA = ''] = a.split(':');
-            const [devB = '', portB = ''] = b.split(':');
-            const from = byId.get(devA);
-            const to = byId.get(devB);
+          {net.links.map((link) => {
+            const from = byId.get(link.a.device);
+            const to = byId.get(link.b.device);
             if (!from || !to) return null;
             const start = edge(from, to);
             const end = edge(to, from);
-            const label = (p: { x: number; y: number }, toward: { x: number; y: number }) => ({
-              x: p.x + (toward.x - p.x) * 0.18,
-              y: p.y + (toward.y - p.y) * 0.18 - 8,
-            });
-            const la = label(start, end);
-            const lb = label(end, start);
             return (
-              <g key={`${a}-${b}`}>
+              <g key={link.id}>
                 <line
                   x1={start.x}
                   y1={start.y}
                   x2={end.x}
                   y2={end.y}
-                  stroke="var(--color-rule-strong)"
+                  stroke={link.up ? 'var(--color-control)' : 'var(--color-rule-strong)'}
                   strokeWidth={1.5}
+                  strokeDasharray={link.up ? undefined : '4 4'}
                 />
-                <text x={la.x} y={la.y} textAnchor="middle" className="fill-ink-faint text-[11px]">
-                  {portA}
-                </text>
-                <text x={lb.x} y={lb.y} textAnchor="middle" className="fill-ink-faint text-[11px]">
-                  {portB}
-                </text>
+                <PortText at={start} toward={end} label={portLabel(net, link.a)} />
+                <PortText at={end} toward={start} label={portLabel(net, link.b)} />
               </g>
             );
           })}
@@ -159,8 +150,35 @@ export function Figure() {
         </svg>
       </div>
       <figcaption id="lab-figure-caption" className="px-5 pb-3 text-xs text-ink-faint">
-        <span className="font-medium text-ink-muted">{t.figure}.</span> {t.figureCaption}
+        <span className="font-medium text-ink-muted">{t.figure}.</span> {t.figureCaption}.{' '}
+        {t.figureNote}
       </figcaption>
     </figure>
+  );
+}
+
+/** Nombre del puerto sobre el cable y sus direcciones debajo, junto al equipo. */
+function PortText({
+  at,
+  toward,
+  label,
+}: {
+  readonly at: { x: number; y: number };
+  readonly toward: { x: number; y: number };
+  readonly label: PortLabel | null;
+}) {
+  if (!label) return null;
+  const rightward = toward.x >= at.x;
+  const x = at.x + (rightward ? 8 : -8);
+  const anchor = rightward ? 'start' : 'end';
+  return (
+    <text x={x} y={at.y - 7} textAnchor={anchor} className="fill-ink-muted text-[11px]">
+      {label.name}
+      {label.addresses.map((address, index) => (
+        <tspan key={address} x={x} y={at.y + 16 + index * 14} className="fill-ink-faint">
+          {address}
+        </tspan>
+      ))}
+    </text>
   );
 }

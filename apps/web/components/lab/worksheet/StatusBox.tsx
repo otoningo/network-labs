@@ -22,7 +22,7 @@ export function StatusBox({
   return (
     <span
       aria-hidden
-      className="relative mt-[3px] block size-[18px] shrink-0 rounded-sm border border-rule-strong"
+      className="relative mt-[3px] block size-[18px] shrink-0 rounded-sm border border-control"
     >
       {/* La key remonta el relleno al cambiar de estado: así cada marca nueva entra con su gesto. */}
       {state !== 'pending' && <Fill key={state} state={state} animate={live && state === 'done'} />}

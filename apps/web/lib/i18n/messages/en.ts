@@ -39,7 +39,7 @@ export const en: Messages = {
     },
     figure: 'Fig. 1',
     figureCaption: 'Lab topology',
-    figureNote: 'Hover a device to see its ports.',
+    figureNote: 'Each port shows its live addresses.',
     console: 'Console',
     consoleOf: '{device} console',
     device: 'Device',
@@ -61,5 +61,6 @@ export const en: Messages = {
     label: '{device} terminal. Type commands and press Enter.',
     keys: 'Tab completes, ? shows help, up and down arrows walk the history, Ctrl+X toggles safe mode and Ctrl+C cancels the line. To leave the terminal press Esc and then Tab, or Shift+Tab.',
     closed: 'Session closed. Press Enter to reconnect.',
+    intro: 'Simulated device. ? shows help and Tab completes.',
   },
 };

@@ -37,7 +37,7 @@ function Panels() {
   const { messages } = useI18n();
   return (
     <Group orientation="horizontal" className="min-h-0">
-      <Panel id="tasks" defaultSize="34%" minSize="300px" maxSize="55%">
+      <Panel id="tasks" defaultSize="400px" minSize="300px" maxSize="55%">
         <section aria-labelledby="lab-tasks-heading" className="h-full overflow-y-auto bg-ground">
           <Worksheet />
         </section>
@@ -128,7 +128,7 @@ function Tabs() {
           >
             {t.views[id]}
             {id === 'tasks' && (
-              <span className={done === states.length ? 'text-done' : 'text-ink-faint'}>
+              <span className="text-ink-faint">
                 {done}/{states.length}
               </span>
             )}

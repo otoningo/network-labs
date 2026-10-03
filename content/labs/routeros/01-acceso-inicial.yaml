@@ -23,7 +23,7 @@ topology:
       os: host
       board: sim-host
       label: { es: PC del técnico, en: Technician PC }
-      position: { x: 480, y: 120 }
+      position: { x: 560, y: 120 }
       host:
         ip: 192.168.88.10/24
         gateway: 192.168.88.1

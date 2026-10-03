@@ -41,7 +41,7 @@ export const es = {
     },
     figure: 'Fig. 1',
     figureCaption: 'Topología del lab',
-    figureNote: 'Pasa el puntero por un equipo para ver sus puertos.',
+    figureNote: 'Las direcciones de cada puerto siguen a la red en vivo.',
     console: 'Consola',
     consoleOf: 'Consola de {device}',
     device: 'Equipo',
@@ -63,5 +63,6 @@ export const es = {
     label: 'Terminal de {device}. Escribe comandos y pulsa Enter.',
     keys: 'Tab completa, ? muestra ayuda, flechas arriba y abajo recorren el historial, Ctrl+X activa el modo seguro y Ctrl+C cancela la línea. Para salir de la terminal pulsa Esc y después Tab, o Mayús+Tab.',
     closed: 'Sesión cerrada. Pulsa Enter para volver a conectar.',
+    intro: 'Equipo simulado. ? muestra la ayuda y Tab completa.',
   },
 } as const;

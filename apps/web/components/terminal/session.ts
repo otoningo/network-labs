@@ -55,6 +55,8 @@ export function loadXterm(): Promise<XtermModules> {
 /** Textos propios de la terminal (no del equipo), ya en el idioma activo. */
 export interface SessionTexts {
   readonly closed: string;
+  /** Línea nuestra tras el banner del equipo: qué es esto y cómo pedir ayuda. */
+  readonly intro: string;
   readonly restored: (count: number) => string;
   readonly separator: (device: string) => string;
 }
@@ -320,6 +322,7 @@ export class ConsoleSession {
   private boot(): void {
     this.mode = 'booting';
     this.block(this.state.banner());
+    this.note(this.texts.intro);
     if (this.state.hydrated) this.afterHydration();
   }
 
@@ -660,6 +663,7 @@ export class ConsoleSession {
     this.closedDevices.delete(this.device);
     this.state.reconnect();
     this.block(this.state.banner());
+    this.note(this.texts.intro);
     this.showPrompt();
   }
 
