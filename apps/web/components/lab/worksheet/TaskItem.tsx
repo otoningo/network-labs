@@ -68,9 +68,7 @@ export function TaskItem({
     <li className="col-span-full grid grid-cols-subgrid items-start border-t border-rule py-5">
       <span
         aria-hidden
-        className={`-mt-1.5 text-right text-numeral leading-none font-light tabular-nums ${
-          state === 'done' ? 'text-ink-muted' : 'text-ink-faint'
-        } ${live ? 'transition-colors duration-[260ms] ease-(--ease-out)' : ''}`}
+        className="-mt-1.5 text-right text-numeral leading-none font-light tabular-nums text-ink-faint"
       >
         {number}
       </span>

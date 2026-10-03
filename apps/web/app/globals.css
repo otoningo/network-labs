@@ -14,8 +14,9 @@
   --color-console: #0f1012;
   --color-rule: #2a2e33;
   --color-rule-strong: #3a3f45;
-  /* Borde de controles y casillas vacías: 3,7:1 sobre el fondo (WCAG 1.4.11). */
-  --color-control: #6b737b;
+  /* Borde de controles y casillas vacías: 5,2:1 sobre el fondo, para que el
+     filete de 1px (que el navegador suaviza) quede por encima de 3:1 (WCAG 1.4.11). */
+  --color-control: #8a929a;
 
   /* Tinta: blanco papel y dos grises para jerarquía. */
   --color-ink: #e3e6e8;

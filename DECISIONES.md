@@ -274,8 +274,9 @@ Cada una cubre algo que no conviene escribir a mano:
 - No hay estado rojo de objetivo: un objetivo no "falla", solo está pendiente o
   en regresión. Los errores son del equipo y salen en la consola con su voz. El
   rojo queda para acciones destructivas (reiniciar el lab).
-- Las casillas vacías y los controles usan `--color-control` (3,7:1 sobre el
-  fondo), por encima del 3:1 de WCAG 1.4.11.
+- Las casillas vacías y los controles usan `--color-control` (5,2:1 sobre el
+  fondo): el filete de 1px se suaviza al pintarse y debe seguir por encima del
+  3:1 de WCAG 1.4.11. Los numerales de tarea tienen un solo tono en todo estado.
 - Geist para la interfaz; Geist Mono solo en la consola. El código citado en
   tareas y pistas va en la misma sans con un fondo, sin mono.
 - La ayuda de uso de la consola ("? muestra la ayuda...") es de la interfaz y se

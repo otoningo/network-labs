@@ -38,7 +38,7 @@ export const routeros: VendorDriver<RouterosSession, RosView, RosSessionChange, 
   platform: ROUTEROS_PLATFORM,
   session: (device, options) => newSession(device, options),
   // Solo la línea del sistema: la ayuda de uso la pone la interfaz, en el idioma del usuario.
-  banner: () => '\n  RouterOS 7\n',
+  banner: () => '\nRouterOS 7\n',
   parse: (input, ctx) => parseLine(input, parseCtx(ctx)),
   apply: (intent, ctx) => applyIntent(intent, ctx),
   render: (view, ctx) => renderView(view, ctx).text,
