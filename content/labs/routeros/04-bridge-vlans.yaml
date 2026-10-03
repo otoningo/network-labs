@@ -1,0 +1,149 @@
+# Ruta "MikroTik desde cero", lab 4. El switch (SW, otro RouterOS) ya está
+# configurado con las VLAN 10 y 20 y un troncal hacia R1; falta todo en R1.
+id: ros-04-bridge-vlans
+vendor: routeros
+path: mikrotik-desde-cero
+order: 4
+title:
+  es: Bridge y VLANs
+  en: Bridge and VLANs
+summary:
+  es: Convierte R1 en switch con VLANs y en el router que las une, a través de un troncal.
+  en: Turn R1 into a VLAN-aware switch and into the router that joins the VLANs, over a trunk.
+difficulty: intermediate
+minutes: 20
+
+topology:
+  devices:
+    - id: R1
+      os: routeros
+      board: sim-r5
+      label: { es: Router planta baja, en: Downstairs router }
+      position: { x: 200, y: 120 }
+    - id: SW
+      os: routeros
+      board: sim-r5
+      label: { es: Switch planta alta, en: Upstairs switch }
+      position: { x: 590, y: 120 }
+      # Switch ya configurado: ether1 es el troncal (10 y 20 etiquetadas),
+      # ether2 acceso a la VLAN 10 y ether3 acceso a la VLAN 20.
+      startup: |
+        /system identity set name=SW
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether1
+        /interface bridge port add bridge=bridge1 interface=ether2 pvid=10
+        /interface bridge port add bridge=bridge1 interface=ether3 pvid=20
+        /interface bridge vlan add bridge=bridge1 vlan-ids=10,20 tagged=ether1
+        /interface bridge set bridge1 vlan-filtering=yes
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: Admin · VLAN 10, en: Admin · VLAN 10 }
+      position: { x: 100, y: 340 }
+      host:
+        ip: 10.0.10.11/24
+        gateway: 10.0.10.1
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: Ventas · VLAN 20, en: Sales · VLAN 20 }
+      position: { x: 300, y: 340 }
+      host:
+        ip: 10.0.20.12/24
+        gateway: 10.0.20.1
+    - id: PC3
+      os: host
+      board: sim-host
+      label: { es: Admin · VLAN 10, en: Admin · VLAN 10 }
+      position: { x: 490, y: 340 }
+      host:
+        ip: 10.0.10.13/24
+        gateway: 10.0.10.1
+    - id: PC4
+      os: host
+      board: sim-host
+      label: { es: Ventas · VLAN 20, en: Sales · VLAN 20 }
+      position: { x: 700, y: 340 }
+      host:
+        ip: 10.0.20.14/24
+        gateway: 10.0.20.1
+  links:
+    - [R1:ether5, SW:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+    - [SW:ether2, PC3:eth0]
+    - [SW:ether3, PC4:eth0]
+
+objectives:
+  - id: vlan10
+    text:
+      es: Las dos PCs de administración (VLAN 10) se ven a través del troncal, una en cada planta.
+      en: The two admin PCs (VLAN 10) see each other across the trunk, one on each floor.
+    check:
+      reachable: { from: PC1, to: PC3 }
+    hints:
+      - es: En RouterOS un switch se arma con un bridge y sus puertos. Mira `/interface bridge`.
+        en: In RouterOS a switch is built from a bridge and its ports. Look at `/interface bridge`.
+      - es: El switch de la planta alta espera las tramas del troncal etiquetadas. Sin `vlan-filtering`, el bridge de R1 ignora las VLAN.
+        en: The upstairs switch expects tagged frames on the trunk. Without `vlan-filtering`, R1's bridge ignores VLANs.
+      - es: Cada puerto de acceso toma su VLAN con `pvid` en `/interface bridge port`; el troncal se declara en `/interface bridge vlan` con `vlan-ids` y `tagged`.
+        en: Each access port takes its VLAN with `pvid` in `/interface bridge port`; the trunk is declared in `/interface bridge vlan` with `vlan-ids` and `tagged`.
+  - id: vlan20
+    text:
+      es: Las dos PCs de ventas (VLAN 20) también se ven a través del troncal.
+      en: The two sales PCs (VLAN 20) also see each other across the trunk.
+    check:
+      reachable: { from: PC2, to: PC4 }
+    hints:
+      - es: Lo que hiciste para la VLAN 10, ahora para la 20.
+        en: What you did for VLAN 10, now for VLAN 20.
+      - es: Revisa con `/interface bridge vlan print` qué VLAN lleva el troncal y en qué puertos.
+        en: Check with `/interface bridge vlan print` which VLANs the trunk carries and on which ports.
+  - id: gw10
+    text:
+      es: Las PCs de la VLAN 10, en las dos plantas, llegan a su gateway 10.0.10.1 en R1.
+      en: The VLAN 10 PCs, on both floors, reach their gateway 10.0.10.1 on R1.
+    check:
+      all:
+        - reachable: { from: PC1, to: 10.0.10.1 }
+        - reachable: { from: PC3, to: 10.0.10.1 }
+    hints:
+      - es: El router necesita una interfaz dentro de la VLAN 10. Busca en `/interface vlan`.
+        en: The router needs an interface inside VLAN 10. Look in `/interface vlan`.
+      - es: La interfaz VLAN cuelga del bridge, y la dirección va en ella, no en un puerto.
+        en: The VLAN interface hangs off the bridge, and the address goes on it, not on a port.
+      - es: Si la interfaz existe y aun así no hay respuesta, el propio bridge debe ser miembro etiquetado de esa VLAN en `/interface bridge vlan`.
+        en: If the interface exists and there is still no answer, the bridge itself must be a tagged member of that VLAN in `/interface bridge vlan`.
+  - id: inter-vlan
+    text:
+      es: R1 enruta entre las VLAN, de modo que administración y ventas se comunican en las dos plantas.
+      en: R1 routes between the VLANs, so admin and sales can talk to each other on both floors.
+    check:
+      all:
+        - reachable: { from: PC3, to: PC4 }
+        - reachable: { from: PC2, to: PC1 }
+    hints:
+      - es: Las PCs de ventas usan 10.0.20.1 como gateway.
+        en: The sales PCs use 10.0.20.1 as their gateway.
+      - es: Repite para la VLAN 20 lo que hiciste en la 10, incluido el bridge como miembro etiquetado.
+        en: Repeat for VLAN 20 what you did for VLAN 10, including the bridge as a tagged member.
+
+explanation:
+  es: >-
+    Un bridge de RouterOS es lo que en Cisco sería el switch entero. Con `vlan-filtering=yes`
+    se vuelve consciente de las VLAN: el `pvid` de un puerto equivale a
+    `switchport access vlan`, y la lista `tagged` de `/interface bridge vlan` hace de
+    `switchport trunk allowed vlan`. Lo que no tiene equivalente directo es que el propio bridge
+    es un puerto más, el que va hacia la CPU del router: para que una interfaz de
+    `/interface vlan` (tu SVI o subinterfaz `encapsulation dot1q`) reciba tráfico, el bridge
+    tiene que figurar como miembro etiquetado de esa VLAN. Olvidarlo es el error más común:
+    la interfaz aparece como running y nadie le contesta.
+  en: >-
+    A RouterOS bridge is what the whole switch would be on a Cisco box. With
+    `vlan-filtering=yes` it becomes VLAN-aware: a port's `pvid` is the equivalent of
+    `switchport access vlan`, and the `tagged` list in `/interface bridge vlan` plays the role of
+    `switchport trunk allowed vlan`. What has no direct equivalent is that the bridge itself is
+    one more port, the one towards the router's CPU: for a `/interface vlan` interface (your SVI
+    or `encapsulation dot1q` subinterface) to receive traffic, the bridge must be listed as a
+    tagged member of that VLAN. Forgetting it is the most common mistake: the interface shows as
+    running and nobody answers.

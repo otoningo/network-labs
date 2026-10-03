@@ -1,0 +1,129 @@
+# Ruta "MikroTik desde cero", lab 6. Las dos LANs ya tienen dirección; falta
+# la WAN por DHCP y el NAT para que salgan a Internet.
+id: ros-06-nat-masquerade
+vendor: routeros
+path: mikrotik-desde-cero
+order: 6
+title:
+  es: NAT y masquerade
+  en: NAT and masquerade
+summary:
+  es: Conecta el router al proveedor por DHCP y saca a las dos LANs a Internet con la IP pública.
+  en: Connect the router to the provider over DHCP and take both LANs to the Internet with the public IP.
+difficulty: intermediate
+minutes: 15
+
+topology:
+  devices:
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de la oficina, en: Office PC }
+      position: { x: 100, y: 120 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+        dns: [1.1.1.1]
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: Portátil de invitados, en: Guest laptop }
+      position: { x: 100, y: 340 }
+      host:
+        ip: 192.168.90.10/24
+        gateway: 192.168.90.1
+        dns: [1.1.1.1]
+    - id: R1
+      os: routeros
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 230 }
+      startup: |
+        /ip address add address=192.168.88.1/24 interface=ether2 comment=Oficina
+        /ip address add address=192.168.90.1/24 interface=ether3 comment=Invitados
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 660, y: 230 }
+      internet:
+        address: 203.0.113.1/24
+        dhcp:
+          pool: 203.0.113.10-203.0.113.20
+          dns: [1.1.1.1]
+        dns:
+          example.com: 93.184.216.34
+  links:
+    - [R1:ether1, ISP:eth0]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+
+objectives:
+  - id: wan
+    text:
+      es: El router obtiene su dirección pública del proveedor y desde él se llega a 8.8.8.8.
+      en: The router gets its public address from the provider and can reach 8.8.8.8.
+    check:
+      all:
+        - leaseBound: { server: ISP, client: R1 }
+        - reachable: { from: R1, to: 8.8.8.8 }
+    hints:
+      - es: El proveedor reparte direcciones por DHCP; esta vez el router es el cliente.
+        en: The provider hands out addresses over DHCP; this time the router is the client.
+      - es: Mira `/ip dhcp-client`. Solo hace falta indicar la interfaz que va al proveedor.
+        en: Look at `/ip dhcp-client`. You only need to give the interface facing the provider.
+      - es: Con `/ip dhcp-client print` comprueba que el estado es bound; la ruta por defecto la añade el propio cliente.
+        en: With `/ip dhcp-client print` check that the status is bound; the client adds the default route itself.
+  - id: oficina
+    text:
+      es: La PC de la oficina llega a 8.8.8.8 saliendo con la IP pública del router, pero hacia la red de invitados conserva su propia IP.
+      en: The office PC reaches 8.8.8.8 using the router's public IP, but towards the guest network it keeps its own IP.
+    check:
+      all:
+        - natSourceIs: { from: PC1, to: 8.8.8.8, expect: { addressOf: "R1:ether1" } }
+        - natSourceIs: { from: PC1, to: PC2, expect: 192.168.88.10 }
+    hints:
+      - es: Si el router ya sale y la PC no, piensa en la vuelta. ¿A quién responde Internet?
+        en: If the router gets out and the PC does not, think about the way back. Who does the Internet reply to?
+      - es: Las direcciones privadas no se enrutan en Internet; hay que traducir el origen de lo que sale. Busca en `/ip firewall nat`.
+        en: Private addresses are not routed on the Internet; the source of outgoing traffic must be translated. Look in `/ip firewall nat`.
+      - es: Una regla en la cadena `srcnat` con `action=masquerade`. Sin `out-interface` traduce también el tráfico entre tus LANs.
+        en: A rule in the `srcnat` chain with `action=masquerade`. Without `out-interface` it also translates traffic between your LANs.
+  - id: invitados
+    text:
+      es: El portátil de invitados abre https://example.com por nombre, también con la IP pública.
+      en: The guest laptop opens https://example.com by name, also with the public IP.
+    check:
+      all:
+        - resolves: { from: PC2, name: example.com, to: 93.184.216.34 }
+        - natSourceIs:
+            from: PC2
+            to: 93.184.216.34
+            protocol: tcp
+            port: 443
+            expect: { addressOf: "R1:ether1" }
+    hints:
+      - es: El portátil usa 1.1.1.1 como DNS, que está en Internet.
+        en: The laptop uses 1.1.1.1 as its DNS server, which lives on the Internet.
+      - es: Si tu regla de NAT filtra por la dirección de origen, solo cubre a una de las LANs. Revisa `/ip firewall nat print`.
+        en: If your NAT rule matches on the source address, it only covers one of the LANs. Check `/ip firewall nat print`.
+
+explanation:
+  es: >-
+    El masquerade de RouterOS es el `ip nat inside source list 1 interface Gi0/0 overload` de
+    IOS: traduce el origen a la dirección que tenga en ese momento la interfaz de salida, por
+    eso sirve con una IP pública dinámica. No hay que marcar interfaces `ip nat inside` y
+    `ip nat outside`; lo que decide qué se traduce son las condiciones de la regla de `srcnat`.
+    Por eso importa tanto el `out-interface`: sin él también se traduce el tráfico entre tus
+    LANs, y con un `src-address` demasiado estrecho alguna LAN se queda fuera. El cliente DHCP
+    de la WAN equivale a `ip address dhcp` y, además de la dirección, instala la ruta por
+    defecto y los DNS del proveedor.
+  en: >-
+    RouterOS masquerade is IOS's `ip nat inside source list 1 interface Gi0/0 overload`: it
+    translates the source to whatever address the outgoing interface has right now, which is why
+    it works with a dynamic public IP. There is no `ip nat inside` and `ip nat outside` marking;
+    what gets translated is decided by the conditions of the `srcnat` rule. That is why
+    `out-interface` matters so much: without it, traffic between your LANs gets translated too,
+    and with a `src-address` that is too narrow some LAN is left out. The WAN DHCP client is the
+    equivalent of `ip address dhcp` and, besides the address, it installs the default route and
+    the provider's DNS servers.

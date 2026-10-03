@@ -1,0 +1,133 @@
+# Ruta "MikroTik desde cero", lab 5. La LAN ya está en un bridge (como en la
+# configuración de fábrica); falta el servidor DHCP completo.
+id: ros-05-dhcp-server
+vendor: routeros
+path: mikrotik-desde-cero
+order: 5
+title:
+  es: Servidor DHCP
+  en: DHCP server
+summary:
+  es: Reparte direcciones en la LAN con pool, servidor y red, y reserva una IP fija para la impresora.
+  en: Hand out addresses on the LAN with a pool, a server and a network, and reserve a fixed IP for the printer.
+difficulty: intermediate
+minutes: 18
+
+topology:
+  devices:
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de la oficina, en: Office PC }
+      position: { x: 100, y: 120 }
+      host:
+        ip: dhcp
+    - id: IMP
+      os: host
+      board: sim-host
+      label: { es: Impresora, en: Printer }
+      position: { x: 100, y: 340 }
+      host:
+        ip: dhcp
+    - id: R1
+      os: routeros
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 230 }
+      startup: |
+        /interface bridge add name=bridge1
+        /interface bridge port add bridge=bridge1 interface=ether2
+        /interface bridge port add bridge=bridge1 interface=ether3
+        /ip address add address=192.168.88.1/24 interface=bridge1
+        /ip address add address=10.10.10.1/24 interface=ether5
+    - id: SRV
+      os: host
+      board: sim-host
+      label: { es: Servidor de archivos, en: File server }
+      position: { x: 660, y: 230 }
+      host:
+        ip: 10.10.10.10/24
+        gateway: 10.10.10.1
+  links:
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, IMP:eth0]
+    - [R1:ether5, SRV:eth0]
+
+objectives:
+  - id: lease
+    text:
+      es: La PC y la impresora obtienen del router una dirección de 192.168.88.0/24.
+      en: The PC and the printer get an address in 192.168.88.0/24 from the router.
+    check:
+      all:
+        - leaseBound: { server: R1, client: PC1, within: 192.168.88.0/24 }
+        - leaseBound: { server: R1, client: IMP, within: 192.168.88.0/24 }
+    hints:
+      - es: El servidor DHCP necesita de dónde sacar direcciones. Empieza por `/ip pool`.
+        en: The DHCP server needs somewhere to take addresses from. Start with `/ip pool`.
+      - es: El servidor va en la interfaz que tiene la dirección de la LAN. ¿Es un puerto o el bridge?
+        en: The server goes on the interface that holds the LAN address. Is it a port or the bridge?
+      - es: En `/ip dhcp-server` indica `interface` y `address-pool`. Si aparece con la flag I, está en la interfaz equivocada.
+        en: In `/ip dhcp-server` give `interface` and `address-pool`. If it shows the I flag, it is on the wrong interface.
+  - id: gateway
+    text:
+      es: La PC de la oficina llega al servidor de archivos, 10.10.10.10, que está en otra red.
+      en: The office PC reaches the file server, 10.10.10.10, which is on another network.
+    check:
+      reachable: { from: PC1, to: 10.10.10.10 }
+    hints:
+      - es: La PC tiene dirección, pero ¿sabe a quién mandar lo que no es de su red?
+        en: The PC has an address, but does it know where to send what is not on its network?
+      - es: Pool y servidor no bastan; el gateway y el DNS se anuncian en `/ip dhcp-server network`.
+        en: A pool and a server are not enough; the gateway and DNS are announced in `/ip dhcp-server network`.
+      - es: Esa entrada lleva `address` (la red completa, con prefijo) y `gateway`.
+        en: That entry takes `address` (the whole network, with its prefix) and `gateway`.
+  - id: dns
+    text:
+      es: El DHCP anuncia al propio router, 192.168.88.1, como servidor DNS de la LAN.
+      en: DHCP announces the router itself, 192.168.88.1, as the LAN's DNS server.
+    check:
+      exists:
+        device: R1
+        collection: dhcpNetworks
+        where:
+          prefix: { prefix: 192.168.88.0/24 }
+          dnsServers: { includes: { ip: 192.168.88.1 } }
+    hints:
+      - es: Va en el mismo sitio que el gateway.
+        en: It goes in the same place as the gateway.
+      - es: En `/ip dhcp-server network`, el argumento es `dns-server`. Puedes cambiar la entrada existente con `set`.
+        en: In `/ip dhcp-server network`, the argument is `dns-server`. You can change the existing entry with `set`.
+  - id: reserva
+    text:
+      es: La impresora recibe siempre 192.168.88.50, para que las PCs la encuentren en la misma dirección.
+      en: The printer always gets 192.168.88.50, so the PCs find it at the same address.
+    check:
+      all:
+        - leaseBound: { server: R1, client: IMP }
+        - hasAddress: { device: IMP, iface: eth0, prefix: 192.168.88.50/24 }
+    hints:
+      - es: Una reserva DHCP ata una IP a una MAC. La MAC de la impresora ya está en los leases del router.
+        en: A DHCP reservation ties an IP to a MAC. The printer's MAC is already in the router's leases.
+      - es: En `/ip dhcp-server lease` puedes volver estático un lease dinámico y después cambiar su `address`, o crear uno con `mac-address` y `address`.
+        en: In `/ip dhcp-server lease` you can make a dynamic lease static and then change its `address`, or create one with `mac-address` and `address`.
+
+explanation:
+  es: >-
+    En IOS todo cabe en un `ip dhcp pool`: `network`, `default-router` y `dns-server` van
+    juntos, y las exclusiones se hacen con `ip dhcp excluded-address`. RouterOS lo reparte en
+    tres piezas: el pool (`/ip pool`) es solo un rango de direcciones, el servidor
+    (`/ip dhcp-server`) une un pool con una interfaz, y la red (`/ip dhcp-server network`)
+    dice qué opciones recibe el cliente. Si falta la red, los clientes reciben dirección pero
+    no gateway ni DNS: en la LAN todo parece funcionar y fuera no llegan. La reserva equivale a
+    un pool de `host` en IOS, pero aquí basta con convertir el lease dinámico en estático.
+    Anunciar el router como DNS no lo convierte en servidor DNS; eso llega en un lab posterior.
+  en: >-
+    In IOS everything fits in an `ip dhcp pool`: `network`, `default-router` and `dns-server`
+    go together, and exclusions use `ip dhcp excluded-address`. RouterOS splits it into three
+    pieces: the pool (`/ip pool`) is just a range of addresses, the server (`/ip dhcp-server`)
+    ties a pool to an interface, and the network (`/ip dhcp-server network`) says which options
+    the client receives. Without the network, clients get an address but no gateway or DNS:
+    everything seems to work on the LAN and nothing gets out. The reservation is the equivalent
+    of a `host` pool in IOS, but here you just turn the dynamic lease into a static one.
+    Announcing the router as DNS does not make it a DNS server; that comes in a later lab.

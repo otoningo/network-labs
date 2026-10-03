@@ -1,0 +1,145 @@
+# Ruta "MikroTik desde cero", lab 2. El router llega con el trabajo a medias de
+# otro técnico: una dirección sin máscara, otra en el puerto equivocado y un
+# puerto deshabilitado.
+id: ros-02-interfaces-direcciones
+vendor: routeros
+path: mikrotik-desde-cero
+order: 2
+title:
+  es: Interfaces y direcciones IP
+  en: Interfaces and IP addresses
+summary:
+  es: Nombra la WAN, enciende puertos y corrige las direcciones que dejó otro técnico.
+  en: Name the WAN, bring ports up and fix the addresses another technician left behind.
+difficulty: beginner
+minutes: 12
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 220 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: routeros
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 220 }
+      # Lo que dejó el técnico anterior.
+      startup: |
+        /interface disable ether3
+        /ip address add address=192.168.10.1 interface=ether2
+        /ip address add address=192.168.20.1/24 interface=ether4
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de administración, en: Admin PC }
+      position: { x: 660, y: 100 }
+      host:
+        ip: 192.168.10.10/24
+        gateway: 192.168.10.1
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de ventas, en: Sales PC }
+      position: { x: 660, y: 340 }
+      host:
+        ip: 192.168.20.10/24
+        gateway: 192.168.20.1
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+
+objectives:
+  - id: wan-name
+    text:
+      es: El puerto que va al proveedor se llama ether1-wan y lleva un comentario que lo explique.
+      en: The port facing the provider is named ether1-wan and carries a comment explaining it.
+    check:
+      exists:
+        device: R1
+        collection: interfaces
+        where: { name: ether1-wan, comment: { exists: true } }
+    hints:
+      - es: Las interfaces físicas se gestionan en un menú propio, fuera de `/ip`.
+        en: Physical interfaces are managed in their own menu, outside `/ip`.
+      - es: En `/interface` puedes cambiar el `name` de un puerto con `set`. Para el comentario, prueba `comment`.
+        en: In `/interface` you can change a port's `name` with `set`. For the comment, try `comment`.
+  - id: wan-ip
+    text:
+      es: El proveedor te asignó 203.0.113.2/24. El router debe llegar a su gateway, 203.0.113.1.
+      en: The provider assigned you 203.0.113.2/24. The router must reach its gateway, 203.0.113.1.
+    check:
+      all:
+        - hasAddress: { device: R1, iface: ether1, prefix: 203.0.113.2/24 }
+        - reachable: { from: R1, to: 203.0.113.1 }
+    hints:
+      - es: Prueba con `/ping 203.0.113.1` antes y después para ver la diferencia.
+        en: Try `/ping 203.0.113.1` before and after to see the difference.
+      - es: Las direcciones se añaden en `/ip address`, indicando `address` con su prefijo e `interface`. Si renombraste el puerto, usa el nombre nuevo.
+        en: Addresses are added in `/ip address`, giving `address` with its prefix and `interface`. If you renamed the port, use the new name.
+  - id: pc1
+    text:
+      es: La PC de administración (ether2) no llega a su gateway 192.168.10.1. Averigua por qué y corrígelo.
+      en: The admin PC (ether2) cannot reach its gateway 192.168.10.1. Find out why and fix it.
+    check:
+      reachable: { from: PC1, to: 192.168.10.1 }
+    hints:
+      - es: Mira con atención la columna NETWORK de `/ip address print`.
+        en: Look carefully at the NETWORK column of `/ip address print`.
+      - es: Una dirección escrita sin prefijo queda como /32 y el router no ve la LAN como red conectada.
+        en: An address written without a prefix becomes a /32 and the router does not see the LAN as connected.
+      - es: Puedes corregirla en el sitio con `set` y el número que muestra `print`, o quitarla con `remove` y volver a añadirla.
+        en: You can fix it in place with `set` and the number shown by `print`, or `remove` it and add it again.
+  - id: pc2
+    text:
+      es: La PC de ventas (ether3) llega a su gateway 192.168.20.1.
+      en: The sales PC (ether3) reaches its gateway 192.168.20.1.
+    check:
+      reachable: { from: PC2, to: 192.168.20.1 }
+    hints:
+      - es: En `/interface print`, la letra que precede al nombre del puerto dice mucho.
+        en: In `/interface print`, the letter in front of the port name says a lot.
+      - es: Un puerto con X está deshabilitado; en `/interface` hay un comando para habilitarlo.
+        en: A port flagged X is disabled; `/interface` has a command to enable it.
+      - es: ¿Está la dirección 192.168.20.1/24 en el puerto donde de verdad está conectada la PC?
+        en: Is the 192.168.20.1/24 address on the port the PC is actually plugged into?
+  - id: cleanup
+    text:
+      es: No queda ninguna dirección en ether4, que no tiene nada conectado.
+      en: No address is left on ether4, which has nothing plugged in.
+    check:
+      not:
+        exists:
+          device: R1
+          collection: addresses
+          where: { iface: { iface: ether4 }, disabled: { exists: true } }
+    hints:
+      - es: Deshabilitar una dirección no la borra; sigue en la configuración.
+        en: Disabling an address does not delete it; it stays in the configuration.
+      - es: En `/ip address` puedes mover una dirección a otro puerto con `set` o borrarla con `remove`.
+        en: In `/ip address` you can move an address to another port with `set` or delete it with `remove`.
+
+explanation:
+  es: >-
+    En IOS la dirección vive dentro de la interfaz (`ip address` en el modo de interfaz) y
+    cada puerto arranca en `shutdown`. En RouterOS es al revés: los puertos vienen habilitados,
+    `/interface disable` hace de `shutdown`, y las direcciones son una lista aparte en
+    `/ip address` que solo apunta a una interfaz. Por eso una interfaz puede tener varias
+    direcciones sin `secondary`, renombrar un puerto no rompe nada y una dirección puede quedar
+    en el puerto equivocado. La máscara se escribe como prefijo: si la olvidas, RouterOS no da
+    error, asume /32 y la LAN deja de ser una red conectada. El `comment` cumple el papel de
+    `description`.
+  en: >-
+    In IOS the address lives inside the interface (`ip address` in interface mode) and every
+    port starts in `shutdown`. RouterOS works the other way round: ports come enabled,
+    `/interface disable` plays the role of `shutdown`, and addresses are a separate list in
+    `/ip address` that merely points to an interface. That is why an interface can hold several
+    addresses without `secondary`, renaming a port breaks nothing, and an address can end up on
+    the wrong port. The mask is written as a prefix: if you forget it, RouterOS does not
+    complain, it assumes /32 and the LAN stops being a connected network. `comment` plays the
+    role of `description`.

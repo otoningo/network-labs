@@ -1,0 +1,125 @@
+# Ruta "MikroTik desde cero", lab 3. Las direcciones ya están; faltan las rutas
+# para que las dos sedes se vean y para que el tráfico desconocido salga hacia el ISP.
+id: ros-03-rutas-estaticas
+vendor: routeros
+path: mikrotik-desde-cero
+order: 3
+title:
+  es: Rutas estáticas
+  en: Static routes
+summary:
+  es: Dos routers, dos LANs y un proveedor. Escribe las rutas para que todo el mundo sepa volver.
+  en: Two routers, two LANs and a provider. Write the routes so everyone knows the way back.
+difficulty: beginner
+minutes: 15
+
+topology:
+  devices:
+    - id: R1
+      os: routeros
+      board: sim-r5
+      label: { es: Router de la sede A, en: Site A router }
+      position: { x: 200, y: 140 }
+      startup: |
+        /system identity set name=R1
+        /ip address add address=10.0.12.1/30 interface=ether1
+        /ip address add address=192.168.1.1/24 interface=ether2
+    - id: R2
+      os: routeros
+      board: sim-r5
+      label: { es: Router de la sede B, en: Site B router }
+      position: { x: 480, y: 140 }
+      startup: |
+        /system identity set name=R2
+        /ip address add address=10.0.12.2/30 interface=ether1
+        /ip address add address=192.168.2.1/24 interface=ether2
+        /ip address add address=203.0.113.2/24 interface=ether3
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 760, y: 140 }
+      internet:
+        address: 203.0.113.1/24
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de la sede A, en: Site A PC }
+      position: { x: 200, y: 340 }
+      host:
+        ip: 192.168.1.10/24
+        gateway: 192.168.1.1
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de la sede B, en: Site B PC }
+      position: { x: 480, y: 340 }
+      host:
+        ip: 192.168.2.10/24
+        gateway: 192.168.2.1
+  links:
+    - [R1:ether1, R2:ether1]
+    - [R2:ether3, ISP:eth0]
+    - [R1:ether2, PC1:eth0]
+    - [R2:ether2, PC2:eth0]
+
+objectives:
+  - id: sedes
+    text:
+      es: La PC de la sede A llega a la PC de la sede B, y la respuesta vuelve.
+      en: The site A PC reaches the site B PC, and the reply comes back.
+    check:
+      reachable: { from: PC1, to: PC2 }
+    hints:
+      - es: Cada router solo conoce sus redes conectadas. Míralo en `/ip route print`.
+        en: Each router only knows its connected networks. Check it in `/ip route print`.
+      - es: Que la ida llegue no basta; el router de la otra sede también tiene que saber volver.
+        en: Getting there is not enough; the router at the other site must also know the way back.
+      - es: Las rutas se añaden en `/ip route` con `dst-address` y `gateway`. El gateway es la IP del vecino al otro lado de la /30.
+        en: Routes are added in `/ip route` with `dst-address` and `gateway`. The gateway is the neighbour's IP across the /30.
+  - id: salida
+    text:
+      es: R2 es la salida a Internet. Desde R2, un ping a 8.8.8.8 recibe respuesta.
+      en: R2 is the way out to the Internet. From R2, a ping to 8.8.8.8 gets a reply.
+    check:
+      reachable: { from: R2, to: 8.8.8.8 }
+    hints:
+      - es: No vas a escribir una ruta por cada red de Internet.
+        en: You are not going to write one route per Internet network.
+      - es: Una ruta por defecto cubre todo lo que no tiene una ruta más específica. Su gateway es el router del proveedor.
+        en: A default route covers everything without a more specific route. Its gateway is the provider's router.
+      - es: En RouterOS, una ruta añadida sin `dst-address` es una ruta por defecto (0.0.0.0/0).
+        en: In RouterOS, a route added without `dst-address` is a default route (0.0.0.0/0).
+  - id: defecto
+    text:
+      es: R1 manda a R2 todo lo que no conoce, de modo que la PC de la sede A llega a la IP pública de R2 (203.0.113.2).
+      en: R1 sends everything it does not know to R2, so the site A PC reaches R2's public IP (203.0.113.2).
+    check:
+      all:
+        - routeActive: { device: R1, dst: 0.0.0.0/0, via: 10.0.12.2 }
+        - reachable: { from: PC1, to: 203.0.113.2 }
+    hints:
+      - es: R1 tiene un solo camino hacia fuera; no necesita conocer cada red de detrás de R2.
+        en: R1 has a single way out; it does not need to know every network behind R2.
+      - es: Una ruta por defecto en R1 hacia la IP de R2 en la /30. Comprueba que aparece con la flag A en `/ip route print`.
+        en: A default route on R1 towards R2's IP on the /30. Check it shows the A flag in `/ip route print`.
+
+explanation:
+  es: >-
+    Es la misma idea que `ip route` en IOS, con otra forma de escribirla: en vez de
+    `ip route 192.168.2.0 255.255.255.0 10.0.12.2` escribes `dst-address` con prefijo y
+    `gateway`. Si omites `dst-address` RouterOS entiende 0.0.0.0/0, la ruta por defecto. Las
+    flags de `/ip route print` te dicen si la ruta es estática (s), conectada (c) y, sobre todo,
+    si está activa (A): una ruta con un gateway inalcanzable queda inactiva sin dar error. Y
+    como en cualquier red, el enrutamiento va en los dos sentidos: un ping desde el router puede
+    funcionar mientras las PCs no se ven. Las PCs todavía no navegan: Internet no sabe volver a
+    una red privada; eso lo resuelve el NAT del lab 6.
+  en: >-
+    It is the same idea as `ip route` in IOS, written differently: instead of
+    `ip route 192.168.2.0 255.255.255.0 10.0.12.2` you give `dst-address` with a prefix and
+    `gateway`. If you leave out `dst-address`, RouterOS assumes 0.0.0.0/0, the default route. The
+    flags in `/ip route print` tell you whether a route is static (s), connected (c) and, above
+    all, whether it is active (A): a route whose gateway is unreachable stays inactive without
+    any error. And as in any network, routing goes both ways: a ping from the router can work
+    while the PCs still cannot see each other. The PCs cannot browse yet: the Internet does not
+    know how to return to a private network; lab 6 fixes that with NAT.
