@@ -2,11 +2,12 @@
 
 import type { LabDefinition } from '@nos/core';
 import { Lightbulb } from '@phosphor-icons/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { RichText } from '@/components/ui/RichText';
 import { fill } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
-import { useLab } from '@/lib/lab/context';
+import { useLab, useLabStoreApi } from '@/lib/lab/context';
+import { describeEvidence, evidenceOf } from '@/lib/lab/evidence';
 import { ICON_WEIGHT, StatusBox } from './StatusBox';
 
 type Objective = LabDefinition['objectives'][number];
@@ -34,6 +35,17 @@ export function TaskItem({
   const state = useLab((s) => s.objectives[objective.id] ?? 'pending');
   const shown = useLab((s) => s.hints[objective.id] ?? 0);
   const revealHint = useLab((s) => s.revealHint);
+  const net = useLab((s) => s.net);
+  const store = useLabStoreApi();
+  const verified = state !== 'pending';
+  // Solo se calcula para tareas cumplidas o en regresión, y de nuevo cuando cambia la red.
+  const report = useMemo(
+    () =>
+      verified && net
+        ? evidenceOf(store.getState(), objective.id).map((e) => describeEvidence(e, messages))
+        : [],
+    [verified, net, store, objective.id, messages],
+  );
   const total = objective.hints.length;
   const task = fill(t.taskNumber, { n: number });
 
@@ -79,6 +91,16 @@ export function TaskItem({
           <RichText text={objective.text[locale]} />
         </p>
         {state === 'regressed' && <p className="mt-1.5 text-xs text-warn">{t.regressedNote}</p>}
+        {report.length > 0 && (
+          <dl className="mt-2 text-xs text-ink-faint">
+            <dt className="sr-only">{t.evidence.label}</dt>
+            {report.map((line) => (
+              <dd key={line} className="tabular-nums text-pretty">
+                {line}
+              </dd>
+            ))}
+          </dl>
+        )}
 
         {shown > 0 && (
           <ol className="mt-3 space-y-2 text-sm text-ink-muted">

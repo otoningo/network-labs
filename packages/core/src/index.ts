@@ -24,5 +24,6 @@ export * from './net/mac';
 export * from './net/ports';
 export * from './ops/apply';
 export { type CollectionSpec, type ItemRef, itemsOf, REGISTRY, specOf } from './ops/registry';
-export * from './validate/evaluate';
+export { deepEqual, type EvalContext, evaluate } from './validate/evaluate';
+export * from './validate/evidence';
 export * from './validate/predicates';

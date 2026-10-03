@@ -23,9 +23,9 @@ export interface EvalContext {
   readonly startup: ReadonlyMap<DeviceId, DeviceConfig>;
 }
 
-// ── Utilidades ──────────────────────────────────────────────────────────────
+// ── Utilidades (exportadas para evidence.ts; no salen del paquete) ───────────
 
-function resolveIface(device: Device, ref: IfRef): ItemId | undefined {
+export function resolveIface(device: Device, ref: IfRef): ItemId | undefined {
   if ('id' in ref)
     return device.config.interfaces.some((i) => i.id === ref.id) ? ref.id : undefined;
   return interfaceByName(device.config, ref.name)?.id;
@@ -36,7 +36,7 @@ function targetIp(net: Network, target: Target): Ipv4 | undefined {
   return addressesOf(net, target.device)[0]?.address.ip;
 }
 
-function runFlow(net: Network, spec: FlowSpec) {
+export function runFlow(net: Network, spec: FlowSpec) {
   const dst = targetIp(net, spec.to);
   if (dst === undefined) return undefined;
   return trace(net, {
@@ -50,7 +50,7 @@ function runFlow(net: Network, spec: FlowSpec) {
 const isPrefix = (v: unknown): v is Ipv4Prefix =>
   typeof v === 'object' && v !== null && 'ip' in v && 'len' in v;
 
-function valueAt(value: unknown, path: readonly string[]): unknown {
+export function valueAt(value: unknown, path: readonly string[]): unknown {
   let current: unknown = value;
   for (const key of path) {
     if (typeof current !== 'object' || current === null) return undefined;
@@ -117,7 +117,11 @@ function globMatches(pattern: string, name: string): boolean {
   return new RegExp(`^${escaped}$`).test(name);
 }
 
-function itemsWhere(device: Device, coll: CollectionKey, where: readonly WhereClause[]): number {
+export function itemsWhere(
+  device: Device,
+  coll: CollectionKey,
+  where: readonly WhereClause[],
+): number {
   const spec: CollectionSpec<CollectionKey> = specOf(coll);
   const invalid = new Set(device.oper.invalid.filter((i) => i.coll === coll).map((i) => i.id));
   const mentionsDisabled = where.some((w) => w.path[0] === 'disabled');
