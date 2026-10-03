@@ -190,7 +190,13 @@ describe('evidence', () => {
       ],
     };
     const [count, setting, iface, neighbor] = of(n, p);
-    expect(count).toEqual({ kind: 'count', device: 'R1', coll: 'natRules', count: 1 });
+    expect(count).toEqual({
+      kind: 'count',
+      device: 'R1',
+      coll: 'natRules',
+      where: [{ field: 'action', op: 'is', value: 'masquerade' }],
+      count: 1,
+    });
     expect(setting).toEqual({
       kind: 'setting',
       device: 'R1',
@@ -225,5 +231,46 @@ describe('evidence', () => {
       iface: 'e',
       addresses: [],
     });
+  });
+
+  it('las condiciones de un conteo salen con nombre legible y relación', () => {
+    const [count] = of(n, {
+      kind: 'exists',
+      device: R1,
+      coll: 'addresses',
+      where: [
+        { path: ['iface'], match: { iface: { name: 'bridge1' } } },
+        { path: ['address'], match: { within: prefix('192.168.0.0/16') } },
+        { path: ['address'], match: { prefix: prefix('192.168.88.1/24') } },
+        { path: ['comment'], match: { exists: false } },
+        { path: ['disabled'], match: { exists: true } },
+      ],
+      count: { op: '>=', n: 1 },
+    });
+    expect(count?.kind === 'count' && count.where).toEqual([
+      { field: 'iface', op: 'is', value: 'bridge1' },
+      { field: 'address', op: 'within', value: '192.168.0.0/16' },
+      { field: 'address', op: 'is', value: '192.168.88.1/24' },
+      { field: 'comment', op: 'absent', value: '' },
+      { field: 'disabled', op: 'exists', value: '' },
+    ]);
+    const [rules] = of(n, {
+      kind: 'exists',
+      device: R1,
+      coll: 'dhcpNetworks',
+      where: [
+        { path: ['dnsServers'], match: { includes: { ip: ipv4('192.168.88.1') } } },
+        { path: ['gateway'], match: { ip: ipv4('192.168.88.1') } },
+        { path: ['match', 'connectionState'], match: { includes: 'established' } },
+        { path: ['x'], match: { includes: { iface: { name: 'ether2' } } } },
+      ],
+      count: { op: '>=', n: 1 },
+    });
+    expect(rules?.kind === 'count' && rules.where).toEqual([
+      { field: 'dnsServers', op: 'includes', value: '192.168.88.1' },
+      { field: 'gateway', op: 'is', value: '192.168.88.1' },
+      { field: 'connectionState', op: 'includes', value: 'established' },
+      { field: 'x', op: 'includes', value: 'ether2' },
+    ]);
   });
 });

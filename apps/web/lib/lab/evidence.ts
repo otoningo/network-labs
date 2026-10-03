@@ -3,7 +3,7 @@
  * Se muestra bajo una tarea cumplida (o que dejó de cumplirse) como la línea
  * de verificación de una guía de prácticas.
  */
-import { type Evidence, evidence, type FlowOutcome } from '@nos/core';
+import { type Evidence, evidence, type FlowOutcome, type WhereFact } from '@nos/core';
 import { fill, type Messages } from '../i18n';
 import type { LabState } from './store';
 
@@ -33,6 +33,14 @@ const REASON: Record<Exclude<FlowOutcome, 'ok'>, keyof EvidenceMessages['reasons
   'no-reply': 'noReply',
   'no-target': 'noTarget',
 };
+
+/** Una condición de búsqueda con el campo traducido: "grupo read", "con contraseña". */
+function describeFact(t: EvidenceMessages, w: WhereFact): string {
+  const field = (t.fields as Record<string, string>)[w.field] ?? w.field;
+  if (w.op === 'is' && w.value === 'true') return fill(t.where.exists, { field });
+  if (w.op === 'is' && w.value === 'false') return fill(t.where.absent, { field });
+  return fill(t.where[w.op], { field, value: w.value });
+}
 
 /** Una frase por evidencia: corta, con los datos tal como los muestra el equipo. */
 export function describeEvidence(e: Evidence, messages: Messages): string {
@@ -78,8 +86,12 @@ export function describeEvidence(e: Evidence, messages: Messages): string {
       const snapshot = e.snapshot ?? t.startup;
       return fill(e.matches ? t.configSame : t.configDiffers, { device: e.device, snapshot });
     }
-    case 'count':
-      return fill(t.count, { device: e.device, coll: e.coll, count: e.count });
+    case 'count': {
+      const coll = (t.collections as Record<string, string>)[e.coll] ?? e.coll;
+      const facts = e.where.map((w) => describeFact(t, w));
+      const where = facts.length > 0 ? ` (${facts.join(', ')})` : '';
+      return fill(t.count, { device: e.device, coll, where, count: e.count });
+    }
     case 'setting':
       return fill(t.setting, { device: e.device, field: e.field, value: e.value || '""' });
     case 'interface':

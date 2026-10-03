@@ -29,7 +29,9 @@ describe('evidencia redactada', () => {
     run('/ip service disable telnet');
     expect(report(store, 'identity')).toEqual(['R1: identity = R1-Oficina']);
     expect(report(store, 'lan')).toEqual(['ping PC1 → 192.168.88.1: llega']);
-    expect(report(store, 'user')).toEqual(['R1: 1 en users']);
+    expect(report(store, 'user')).toEqual([
+      'R1 · usuarios (nombre soporte, grupo read, con contraseña): 1',
+    ]);
     expect(report(store, 'telnet')).toEqual([
       'ping PC1 → 192.168.88.1: llega',
       'tcp/23 PC1 → 192.168.88.1: no llega, puerto cerrado en R1',

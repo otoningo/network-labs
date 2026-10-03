@@ -18,7 +18,14 @@ import {
   sameConfig,
   valueAt,
 } from './evaluate';
-import type { FlowSpec, IfRef, Predicate, Target } from './predicates';
+import type { FlowSpec, IfRef, Predicate, Target, WhereClause } from './predicates';
+
+/** Una condición de un `exists` en forma legible: campo, relación y valor. */
+export interface WhereFact {
+  readonly field: string;
+  readonly op: 'is' | 'within' | 'includes' | 'exists' | 'absent';
+  readonly value: string;
+}
 
 /** Cómo terminó un flujo: llegó, o dónde y por qué se quedó. */
 export type FlowOutcome =
@@ -89,6 +96,8 @@ export type Evidence =
       readonly kind: 'count';
       readonly device: string;
       readonly coll: CollectionKey;
+      /** Condiciones con las que se contó, para nombrar qué se buscó. */
+      readonly where: readonly WhereFact[];
       readonly count: number;
     }
   | {
@@ -159,6 +168,36 @@ function show(value: unknown): string {
   }
   if (Array.isArray(value)) return value.map(show).join(',');
   return String(value);
+}
+
+const TECHNICAL_LEVELS = new Set(['kind', 'value', 'match']);
+
+/**
+ * Nombre del campo sin los niveles técnicos del modelo: `action.kind` se lee
+ * `action` y `match.connectionState`, `connectionState`.
+ */
+function fieldName(path: readonly string[]): string {
+  const meaningful = path.filter((p) => !TECHNICAL_LEVELS.has(p));
+  return meaningful.at(-1) ?? path.at(-1) ?? '';
+}
+
+function whereFact(device: Device | undefined, clause: WhereClause): WhereFact {
+  const field = fieldName(clause.path);
+  const m = clause.match;
+  if ('eq' in m) return { field, op: 'is', value: show(m.eq) };
+  if ('ip' in m) return { field, op: 'is', value: formatIpv4(m.ip) };
+  if ('prefix' in m) return { field, op: 'is', value: formatPrefix(m.prefix) };
+  if ('within' in m) return { field, op: 'within', value: formatPrefix(m.within) };
+  if ('iface' in m) return { field, op: 'is', value: ifaceName(device, m.iface) };
+  if ('exists' in m) return { field, op: m.exists ? 'exists' : 'absent', value: '' };
+  const wanted = m.includes;
+  const value =
+    typeof wanted === 'object'
+      ? 'ip' in wanted
+        ? formatIpv4(wanted.ip)
+        : ifaceName(device, wanted.iface)
+      : String(wanted);
+  return { field, op: 'includes', value };
 }
 
 /** Evidencia de cada hoja del predicado, en orden. `not` y los compuestos se aplanan. */
@@ -281,7 +320,8 @@ export function evidence(predicate: Predicate, ctx: EvalContext): Evidence[] {
     case 'exists': {
       const d = device(predicate.device);
       const count = d ? itemsWhere(d, predicate.coll, predicate.where) : 0;
-      return [{ kind: 'count', device: predicate.device, coll: predicate.coll, count }];
+      const where = predicate.where.map((w) => whereFact(d, w));
+      return [{ kind: 'count', device: predicate.device, coll: predicate.coll, where, count }];
     }
 
     case 'setting': {
