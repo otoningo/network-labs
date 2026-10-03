@@ -208,11 +208,9 @@ describe('lab 10 · respaldo y restauración', () => {
     expect(b.pending()).toEqual(['export', 'restaurado']);
   });
 
-  // BUG: configMatches compara la configuración con sus ids internos. Importar el .rsc tras
-  // el reset deja la misma configuración que el .backup (mismos nombres, valores y orden),
-  // pero cada ítem recibe ids nuevos y el objetivo nunca se cumple. Por eso el lab pide el
-  // respaldo binario.
-  it.fails('importar el export tras el reset también debería contar como restaurado', () => {
+  // configMatches ignora los ids internos: importar el .rsc tras el reset deja la misma
+  // configuración que el .backup aunque cada ítem reciba ids nuevos.
+  it('importar el export tras el reset también cuenta como restaurado', () => {
     const b = bench(FILE);
     const r1 = b.on('R1');
     r1.ok('/system backup save name=oficina');

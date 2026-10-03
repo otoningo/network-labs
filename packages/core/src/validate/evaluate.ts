@@ -1,7 +1,7 @@
 import { resolveName } from '../engine/runtime';
 import { addressesOf, trace } from '../engine/trace';
 import type { DeviceId, ItemId } from '../model/brand';
-import type { CollectionKey } from '../model/collections';
+import { COLLECTION_KEYS, type CollectionKey } from '../model/collections';
 import type { DeviceConfig } from '../model/config';
 import { getDevice, interfaceByName } from '../model/lookup';
 import type { Device, Network } from '../model/network';
@@ -109,6 +109,70 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   return (
     keys.length === Object.keys(rb).length && keys.every((k) => k in rb && deepEqual(ra[k], rb[k]))
   );
+}
+
+// ── Comparación de configuraciones ──────────────────────────────────────────
+
+/** Claves cuyo valor numérico es el id de otro ítem (ver los `refs` del registro). */
+const REF_KEYS = new Set([
+  'parent',
+  'list',
+  'iface',
+  'bridge',
+  'tagged',
+  'untagged',
+  'next',
+  'pool',
+  'server',
+]);
+/** `value` solo es un id dentro de estas coincidencias (`Neg<ItemId>`). */
+const REF_VALUE_PARENTS = new Set(['inInterface', 'outInterface']);
+
+const sortedEntries = (value: object): [string, unknown][] =>
+  Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+
+/**
+ * Copia de la configuración con cada id cambiado por su colección y posición.
+ * Los ids son internos: una configuración importada desde un export queda
+ * con otros ids pero es la misma configuración para quien la mira.
+ */
+function canonicalConfig(config: DeviceConfig): DeviceConfig {
+  // Cada id pasa a "colección#posición": añadir un ítem en otra colección no mueve nada.
+  const ids = new Map<number, string>();
+  for (const coll of COLLECTION_KEYS) {
+    specOf(coll)
+      .get(config)
+      .forEach((item, index) => {
+        ids.set(item.id, `${coll}#${index}`);
+      });
+  }
+  const mapId = (n: unknown) => (typeof n === 'number' ? (ids.get(n) ?? n) : n);
+  const rewrite = (value: unknown, parentKey: string): unknown => {
+    if (Array.isArray(value)) {
+      return REF_KEYS.has(parentKey) ? value.map(mapId) : value.map((v) => rewrite(v, ''));
+    }
+    if (typeof value !== 'object' || value === null) return value;
+    const out: Record<string, unknown> = {};
+    for (const [key, inner] of sortedEntries(value)) {
+      const isRef =
+        key === 'id' || REF_KEYS.has(key) || (key === 'value' && REF_VALUE_PARENTS.has(parentKey));
+      out[key] = isRef && !Array.isArray(inner) ? mapId(inner) : rewrite(inner, key);
+    }
+    return out;
+  };
+  return rewrite(config, '') as DeviceConfig;
+}
+
+/** Misma configuración salvo los ids internos; con `scope`, solo esas colecciones. */
+export function sameConfig(
+  a: DeviceConfig,
+  b: DeviceConfig,
+  scope?: readonly CollectionKey[],
+): boolean {
+  const ca = canonicalConfig(a);
+  const cb = canonicalConfig(b);
+  if (!scope) return deepEqual(ca, cb);
+  return scope.every((coll) => deepEqual(specOf(coll).get(ca), specOf(coll).get(cb)));
 }
 
 function globMatches(pattern: string, name: string): boolean {
@@ -236,11 +300,7 @@ export function evaluate(predicate: Predicate, ctx: EvalContext): boolean {
         reference = file?.payload.kind === 'backup' ? file.payload.config : undefined;
       }
       if (!reference) return false;
-      const ref = reference;
-      if (!predicate.scope) return deepEqual(d.config, ref);
-      return predicate.scope.every((coll) =>
-        deepEqual(specOf(coll).get(d.config), specOf(coll).get(ref)),
-      );
+      return sameConfig(d.config, reference, predicate.scope);
     }
 
     case 'exists': {

@@ -11,11 +11,11 @@ import { getDevice } from '../model/lookup';
 import type { Device, Network } from '../model/network';
 import { formatIpv4, formatPrefix, type Ipv4 } from '../net/ipv4';
 import {
-  deepEqual,
   type EvalContext,
   itemsWhere,
   resolveIface,
   runFlow,
+  sameConfig,
   valueAt,
 } from './evaluate';
 import type { FlowSpec, IfRef, Predicate, Target } from './predicates';
@@ -273,7 +273,7 @@ export function evidence(predicate: Predicate, ctx: EvalContext): Evidence[] {
             : file?.payload.kind === 'backup'
               ? file.payload.config
               : undefined;
-        matches = reference !== undefined && deepEqual(d.config, reference);
+        matches = reference !== undefined && sameConfig(d.config, reference);
       }
       return [{ kind: 'config', device: predicate.device, snapshot, matches }];
     }
