@@ -1,60 +1,51 @@
 /**
  * Los labs publicados en content/labs/routeros: cada uno carga, arranca sin
- * objetivos cumplidos y se resuelve por la CLI. La fase 4 añade el resto.
+ * objetivos cumplidos y se resuelve por la CLI. Cada grupo de labs tiene su
+ * propio archivo (content-02-06.test.ts, content-07-12.test.ts).
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { evaluateObjectives, type LabRuntime, loadLab } from '@nos/core';
-import { parseLabYaml } from '@nos/core/lab-yaml';
+import { evaluateObjectives } from '@nos/core';
 import { describe, expect, it } from 'vitest';
-import { routerosStartup } from './driver';
-import { ROUTEROS_PLATFORM } from './platform';
-import { Terminal } from './terminal';
-
-const DIR = join(import.meta.dirname, '../../../../content/labs/routeros');
-
-function load(file: string): LabRuntime {
-  const parsed = parseLabYaml(readFileSync(join(DIR, file), 'utf8'));
-  if (!parsed.ok) throw new Error(`${file}: ${parsed.error}`);
-  const runtime = loadLab(parsed.value, {
-    platforms: { routeros: ROUTEROS_PLATFORM },
-    runStartup: routerosStartup,
-  });
-  if (!runtime.ok) throw new Error(`${file}: ${JSON.stringify(runtime.error)}`);
-  return runtime.value;
-}
-
-const pending = (runtime: LabRuntime, t: Terminal): string[] =>
-  [...evaluateObjectives(runtime, t.net)].filter(([, done]) => !done).map(([id]) => id);
+import { Bench, labFiles, loadLabFile } from './content-kit';
 
 describe('content/labs/routeros', () => {
   it('todos los archivos cargan y ninguno arranca resuelto', () => {
-    const files = readdirSync(DIR).filter((f) => f.endsWith('.yaml'));
+    const files = labFiles();
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
-      const runtime = load(file);
+      const runtime = loadLabFile(file);
       const done = [...evaluateObjectives(runtime).values()].filter(Boolean);
       expect(done, file).toHaveLength(0);
     }
   });
 
+  it('los ids y el orden de la ruta son únicos y consecutivos', () => {
+    const labs = labFiles().map((file) => loadLabFile(file).lab);
+    const ids = labs.map((lab) => lab.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const orders = labs
+      .filter((lab) => lab.path === 'mikrotik-desde-cero')
+      .map((lab) => lab.order)
+      .sort((a, b) => (a ?? 0) - (b ?? 0));
+    expect(orders).toEqual(orders.map((_, index) => index + 1));
+  });
+
   it('lab 1: cada objetivo se cumple por el estado, en el orden en que se resuelve', () => {
-    const runtime = load('01-acceso-inicial.yaml');
-    const t = new Terminal(runtime.net, 'R1');
-    t.ok('/system identity set name=R1-Oficina');
-    expect(pending(runtime, t)).toEqual(['lan', 'user', 'telnet']);
-    t.ok('/ip address add address=192.168.88.1/24 interface=ether2');
-    expect(pending(runtime, t)).toEqual(['user', 'telnet']);
-    t.ok('/user add name=soporte group=read password=Clave123');
-    expect(pending(runtime, t)).toEqual(['telnet']);
-    t.ok('/ip service disable telnet');
-    expect(pending(runtime, t)).toEqual([]);
+    const bench = new Bench(loadLabFile('01-acceso-inicial.yaml'));
+    const r1 = bench.on('R1');
+    r1.ok('/system identity set name=R1-Oficina');
+    expect(bench.pending()).toEqual(['lan', 'user', 'telnet']);
+    r1.ok('/ip address add address=192.168.88.1/24 interface=ether2');
+    expect(bench.pending()).toEqual(['user', 'telnet']);
+    r1.ok('/user add name=soporte group=read password=Clave123');
+    expect(bench.pending()).toEqual(['telnet']);
+    r1.ok('/ip service disable telnet');
+    expect(bench.pending()).toEqual([]);
+    expect(r1.prompt).toBe('[admin@R1-Oficina] > ');
   });
 
   it('lab 1: deshabilitar telnet sin dirección en la LAN no cuenta', () => {
-    const runtime = load('01-acceso-inicial.yaml');
-    const t = new Terminal(runtime.net, 'R1');
-    t.ok('/ip service disable telnet');
-    expect(pending(runtime, t)).toContain('telnet');
+    const bench = new Bench(loadLabFile('01-acceso-inicial.yaml'));
+    bench.on('R1').ok('/ip service disable telnet');
+    expect(bench.pending()).toContain('telnet');
   });
 });
