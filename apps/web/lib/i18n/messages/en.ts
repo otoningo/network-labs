@@ -192,6 +192,88 @@ export const en: Messages = {
       done: 'Path progress cleared.',
     },
   },
+  landing: {
+    meta: {
+      title: 'Practice the MikroTik RouterOS CLI from what you know of IOS · nos-labs',
+      description:
+        'Short browser labs to practice the CLI of MikroTik RouterOS, then Huawei VRP and VyOS, starting from Cisco IOS. Tasks are checked against the state of the simulated network.',
+    },
+    hero: {
+      title:
+        'Practice the MikroTik RouterOS CLI in your browser, starting from what you know of IOS.',
+      later: 'Huawei VRP and VyOS come next.',
+      lead: 'Tasks are checked against what the simulated network does, not against the commands you type.',
+      start: 'Start lab 1',
+      resume: 'Continue: Lab {n}. {title}',
+      first: 'Open lab 1',
+      path: 'See the {n} labs on the path',
+      note: 'No account, nothing to install. Progress is saved in this browser.',
+    },
+    demo: {
+      label: 'Demo of the lab engine',
+      described: 'On the {device} console, {command} is typed and Enter is pressed.',
+      result: 'Task done. The network reports {evidence}.',
+      replay: 'Replay',
+      replayLabel: 'Replay the demo',
+      figure: 'Fig. 1.',
+      caption:
+        'The lab 1 engine, live. The box gets ticked because the router now has that name, not because the command matched an expected one.',
+    },
+    compare: {
+      title: 'What you already know from IOS',
+      lead: 'Everyday tasks, written on each system. The underlying difference: RouterOS has no configuration mode, and every command applies when you press Enter.',
+      ios: 'Cisco IOS',
+      routeros: 'MikroTik RouterOS v7',
+      rows: {
+        hostname: {
+          task: 'Rename the device',
+          note: 'The name is not a standalone command: it lives in the `/system identity` menu.',
+        },
+        address: {
+          task: 'Put an IP address on an interface',
+          note: 'The address is written with a prefix length and assigned from `/ip address`, naming the interface. Ethernet ports come up enabled.',
+        },
+        route: {
+          task: 'Add a default route',
+          note: 'The destination is written as a prefix and the next hop goes in `gateway`.',
+        },
+        table: {
+          task: 'Show the routing table',
+          note: '`print` lists the contents of any menu, and `where` filters what it shows.',
+        },
+      },
+    },
+    path: {
+      lead: '{n} labs of {min} to {max} minutes each, from first contact with a router fresh out of the box to the full network of an office.',
+      done: 'finished',
+      upcomingTitle: 'Coming paths',
+      upcoming: 'In preparation',
+      os: { vrp: 'Huawei VRP', vyos: 'VyOS' },
+    },
+    how: {
+      title: 'What a lab looks like',
+      zones: {
+        tasks: {
+          name: 'Tasks',
+          text: 'What has to be achieved, phrased the way the office would ask for it. The box ticks itself when the network does it, by whatever route you choose.',
+        },
+        figure: {
+          name: 'Topology',
+          text: 'The devices and cables of the lab, with each port address read from the live network.',
+        },
+        console: {
+          name: 'Console',
+          text: 'The device CLI with its own prompt and errors. `?` shows help and Tab completes.',
+        },
+      },
+      hints:
+        'If you get stuck, hints arrive one at a time, from subtle to explicit, and none of them hands you the whole command.',
+      progress:
+        'Progress stays in this browser, with no account. When you come back, the lab is restored by running what you typed again.',
+      figure: 'Fig. 2.',
+      caption: 'The three zones of a lab. On a phone they become tabs.',
+    },
+  },
   terminal: {
     label: '{device} terminal. Type commands and press Enter.',
     keys: 'Tab completes, ? shows help, up and down arrows walk the history, Ctrl+X toggles safe mode and Ctrl+C cancels the line. To leave the terminal press Esc and then Tab, or Shift+Tab.',

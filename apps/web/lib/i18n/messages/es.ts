@@ -195,6 +195,88 @@ export const es = {
       done: 'Progreso de la ruta borrado.',
     },
   },
+  landing: {
+    meta: {
+      title: 'Practica el CLI de MikroTik RouterOS desde lo que sabes de IOS · nos-labs',
+      description:
+        'Labs cortos en el navegador para practicar el CLI de MikroTik RouterOS, y después Huawei VRP y VyOS, partiendo de Cisco IOS. Las tareas se comprueban contra el estado de la red simulada.',
+    },
+    hero: {
+      title:
+        'Practica en el navegador el CLI de MikroTik RouterOS, partiendo de lo que ya sabes de IOS.',
+      later: 'Después, Huawei VRP y VyOS.',
+      lead: 'Las tareas se comprueban contra lo que hace la red simulada, no contra los comandos que escribes.',
+      start: 'Empezar el lab 1',
+      resume: 'Continuar: Lab {n}. {title}',
+      first: 'Abrir el lab 1',
+      path: 'Ver los {n} labs de la ruta',
+      note: 'Sin cuenta ni instalación. El progreso se guarda en este navegador.',
+    },
+    demo: {
+      label: 'Demostración del motor de los labs',
+      described: 'En la consola de {device} se escribe {command} y se pulsa Enter.',
+      result: 'Tarea cumplida. La red reporta {evidence}.',
+      replay: 'Repetir',
+      replayLabel: 'Repetir la demostración',
+      figure: 'Fig. 1.',
+      caption:
+        'El motor del lab 1, en vivo. La casilla se marca porque el router ya se llama así, no porque el comando coincida con uno esperado.',
+    },
+    compare: {
+      title: 'Lo que ya sabes de IOS',
+      lead: 'Las tareas de todos los días, escritas en cada sistema. La diferencia de fondo: RouterOS no tiene modo de configuración y cada comando se aplica al pulsar Enter.',
+      ios: 'Cisco IOS',
+      routeros: 'MikroTik RouterOS v7',
+      rows: {
+        hostname: {
+          task: 'Cambiar el nombre del equipo',
+          note: 'El nombre no es un comando suelto: vive en el menú `/system identity`.',
+        },
+        address: {
+          task: 'Poner una dirección IP en una interfaz',
+          note: 'La dirección se escribe con prefijo y se asigna desde `/ip address`, nombrando la interfaz. Los puertos ethernet ya vienen habilitados.',
+        },
+        route: {
+          task: 'Añadir una ruta por defecto',
+          note: 'El destino se escribe como prefijo y el siguiente salto va en `gateway`.',
+        },
+        table: {
+          task: 'Ver la tabla de rutas',
+          note: '`print` lista el contenido de cualquier menú, y `where` filtra lo que muestra.',
+        },
+      },
+    },
+    path: {
+      lead: '{n} labs de entre {min} y {max} minutos, del primer acceso a un router recién sacado de la caja hasta la red completa de una oficina.',
+      done: 'terminado',
+      upcomingTitle: 'Próximas rutas',
+      upcoming: 'En preparación',
+      os: { vrp: 'Huawei VRP', vyos: 'VyOS' },
+    },
+    how: {
+      title: 'Cómo es un lab',
+      zones: {
+        tasks: {
+          name: 'Tareas',
+          text: 'Lo que hay que conseguir, dicho como lo pediría la oficina. La casilla se marca sola cuando la red lo cumple, por el camino que elijas.',
+        },
+        figure: {
+          name: 'Topología',
+          text: 'Los equipos y los cables del lab, con las direcciones de cada puerto leídas de la red en vivo.',
+        },
+        console: {
+          name: 'Consola',
+          text: 'El CLI del equipo con su prompt y sus errores. `?` muestra la ayuda y Tab completa.',
+        },
+      },
+      hints:
+        'Si te atascas, las pistas llegan de una en una, de sutiles a explícitas, y ninguna te da el comando entero.',
+      progress:
+        'El progreso se queda en este navegador, sin cuenta. Al volver, el lab se restaura ejecutando de nuevo lo que escribiste.',
+      figure: 'Fig. 2.',
+      caption: 'Las tres zonas de un lab. En el teléfono pasan a pestañas.',
+    },
+  },
   terminal: {
     label: 'Terminal de {device}. Escribe comandos y pulsa Enter.',
     keys: 'Tab completa, ? muestra ayuda, flechas arriba y abajo recorren el historial, Ctrl+X activa el modo seguro y Ctrl+C cancela la línea. Para salir de la terminal pulsa Esc y después Tab, o Mayús+Tab.',
