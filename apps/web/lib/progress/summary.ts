@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { browserRepository, type LabProgress, type ProgressRepository } from './repository';
 
 /** Estado de un lab visto desde fuera: para listas, portada y "continuar". */
@@ -44,8 +44,13 @@ export function summarize(list: readonly LabProgress[]): Omit<ProgressSummary, '
 
 const EMPTY: ProgressSummary = { loaded: false, byLab: new Map(), resume: null };
 
-/** Progreso de todos los labs guardados en este navegador. */
-export function useProgressSummary(repository?: ProgressRepository): ProgressSummary {
+/**
+ * Progreso de todos los labs guardados en este navegador. `refresh` lo vuelve
+ * a leer (por ejemplo, tras borrar progreso) sin pasar otra vez por `loaded: false`.
+ */
+export function useProgressSummary(
+  repository?: ProgressRepository,
+): ProgressSummary & { readonly refresh: () => void } {
   const [summary, setSummary] = useState<ProgressSummary>(EMPTY);
   useEffect(() => {
     let cancelled = false;
@@ -57,5 +62,10 @@ export function useProgressSummary(repository?: ProgressRepository): ProgressSum
       cancelled = true;
     };
   }, [repository]);
-  return summary;
+  const refresh = useCallback(() => {
+    void (repository ?? browserRepository())
+      .list()
+      .then((list) => setSummary({ loaded: true, ...summarize(list) }));
+  }, [repository]);
+  return { ...summary, refresh };
 }

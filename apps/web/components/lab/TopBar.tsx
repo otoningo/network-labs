@@ -37,7 +37,12 @@ export function TopBar() {
       <nav aria-label={t.tasks} className="hidden min-w-0 items-center gap-2 text-sm md:flex">
         {pathName && (
           <>
-            <span className="truncate text-ink-faint">{pathName}</span>
+            <Link
+              href={`/${locale}/rutas/${lab.path}`}
+              className="truncate text-ink-faint no-underline hover:text-ink hover:underline"
+            >
+              {pathName}
+            </Link>
             <span aria-hidden className="text-ink-faint">
               /
             </span>

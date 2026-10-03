@@ -158,6 +158,43 @@ export const es = {
     resizeFigure: 'Redimensionar topología y consola',
     loadError: 'El lab no pudo cargar: {detail}',
   },
+  paths: {
+    meta: {
+      title: 'Rutas · nos-labs',
+      description:
+        'Rutas de labs cortos para practicar en el navegador el CLI de sistemas operativos de red.',
+      pathTitle: '{title} · nos-labs',
+    },
+    title: 'Rutas',
+    intro:
+      'Cada ruta es una serie de labs cortos sobre un mismo sistema, en orden. El progreso se guarda en este navegador, sin cuenta.',
+    os: { routeros: 'MikroTik RouterOS v7', vrp: 'Huawei VRP', vyos: 'VyOS', ios: 'Cisco IOS' },
+    practise: 'Se practica en {os}',
+    titles: { 'vrp-desde-cero': 'Huawei VRP desde cero', 'vyos-desde-cero': 'VyOS desde cero' },
+    descriptions: {
+      'mikrotik-desde-cero':
+        'Al terminar sabrás configurar desde cero el router de una oficina pequeña: direcciones, rutas, VLAN, DHCP, NAT, firewall, wifi y DNS, con su respaldo.',
+    },
+    labCount: { one: '{n} lab', other: '{n} labs' },
+    minutes: '{n} min en total',
+    finished: { one: '{done} de {n} lab terminado', other: '{done} de {n} labs terminados' },
+    upcoming: 'En preparación',
+    labs: 'Labs',
+    objectives: { one: '{n} tarea', other: '{n} tareas' },
+    inProgress: 'En curso: {done} de {total}',
+    status: { done: 'Terminado', notStarted: 'Sin empezar' },
+    start: 'Empezar',
+    continue: 'Continuar: {lab}',
+    review: 'Repasar: {lab}',
+    reset: {
+      action: 'Borrar mi progreso en esta ruta',
+      confirm:
+        '¿Borrar el progreso de todos los labs de esta ruta en este navegador? No se puede deshacer.',
+      confirmButton: 'Borrar progreso',
+      cancel: 'Cancelar',
+      done: 'Progreso de la ruta borrado.',
+    },
+  },
   terminal: {
     label: 'Terminal de {device}. Escribe comandos y pulsa Enter.',
     keys: 'Tab completa, ? muestra ayuda, flechas arriba y abajo recorren el historial, Ctrl+X activa el modo seguro y Ctrl+C cancela la línea. Para salir de la terminal pulsa Esc y después Tab, o Mayús+Tab.',

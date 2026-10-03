@@ -156,6 +156,42 @@ export const en: Messages = {
     resizeFigure: 'Resize topology and console',
     loadError: 'The lab could not load: {detail}',
   },
+  paths: {
+    meta: {
+      title: 'Paths · nos-labs',
+      description: 'Paths of short browser labs to practice the CLI of network operating systems.',
+      pathTitle: '{title} · nos-labs',
+    },
+    title: 'Paths',
+    intro:
+      'Each path is a series of short labs on one system, in order. Progress is saved in this browser, with no account.',
+    os: { routeros: 'MikroTik RouterOS v7', vrp: 'Huawei VRP', vyos: 'VyOS', ios: 'Cisco IOS' },
+    practise: 'Practiced on {os}',
+    titles: { 'vrp-desde-cero': 'Huawei VRP from scratch', 'vyos-desde-cero': 'VyOS from scratch' },
+    descriptions: {
+      'mikrotik-desde-cero':
+        'By the end you can set up a small office router from scratch: addresses, routes, VLANs, DHCP, NAT, firewall, wifi and DNS, with a backup of it all.',
+    },
+    labCount: { one: '{n} lab', other: '{n} labs' },
+    minutes: '{n} min in total',
+    finished: { one: '{done} of {n} lab finished', other: '{done} of {n} labs finished' },
+    upcoming: 'In preparation',
+    labs: 'Labs',
+    objectives: { one: '{n} task', other: '{n} tasks' },
+    inProgress: 'In progress: {done} of {total}',
+    status: { done: 'Finished', notStarted: 'Not started' },
+    start: 'Start',
+    continue: 'Continue: {lab}',
+    review: 'Review: {lab}',
+    reset: {
+      action: 'Clear my progress on this path',
+      confirm:
+        'Clear the progress of every lab on this path in this browser? This cannot be undone.',
+      confirmButton: 'Clear progress',
+      cancel: 'Cancel',
+      done: 'Path progress cleared.',
+    },
+  },
   terminal: {
     label: '{device} terminal. Type commands and press Enter.',
     keys: 'Tab completes, ? shows help, up and down arrows walk the history, Ctrl+X toggles safe mode and Ctrl+C cancels the line. To leave the terminal press Esc and then Tab, or Shift+Tab.',
