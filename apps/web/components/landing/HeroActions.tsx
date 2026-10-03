@@ -43,9 +43,19 @@ export function HeroActions({
     <div className="mt-8">
       <Link
         href={href(primary.id)}
+        aria-label={label}
         className="inline-flex h-11 max-w-full items-center gap-2 rounded-sm bg-ink px-4 font-medium text-ground no-underline transition-colors hover:bg-ink-muted"
       >
-        <span className="truncate">{label}</span>
+        {resumed ? (
+          // En el teléfono el título del lab no cabe en un botón: se acorta la
+          // etiqueta visible; el nombre accesible del enlace conserva el título completo.
+          <span>
+            <span className="sm:hidden">{fill(t.resumeShort, { n: resumed.order })}</span>
+            <span className="hidden sm:inline">{label}</span>
+          </span>
+        ) : (
+          <span>{label}</span>
+        )}
         <ArrowRight size={15} weight={ICON_WEIGHT} aria-hidden className="shrink-0" />
       </Link>
 

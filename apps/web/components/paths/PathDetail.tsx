@@ -1,6 +1,5 @@
 'use client';
 
-import { ArrowRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { StatusBox } from '@/components/lab/worksheet/StatusBox';
@@ -12,6 +11,7 @@ import { finishedCount, hasPathProgress, labRowState, pathAction } from '@/lib/p
 import { browserRepository } from '@/lib/progress/repository';
 import { useProgressSummary } from '@/lib/progress/summary';
 import { Dot } from './Dot';
+import { PathActionLink } from './PathActionLink';
 
 /**
  * Cuerpo de la página de una ruta: la acción principal (empezar o continuar),
@@ -28,14 +28,6 @@ export function PathDetail({ path }: { readonly path: LearningPath }) {
   const actionRef = useRef<HTMLAnchorElement>(null);
   const [message, setMessage] = useState('');
 
-  const labLabel = (lab: LabSummary) =>
-    `${fill(messages.lab.labNumber, { n: lab.order })}. ${lab.title[locale]}`;
-  const actionText = !action
-    ? ''
-    : action.kind === 'start'
-      ? t.start
-      : fill(action.kind === 'continue' ? t.continue : t.review, { lab: labLabel(action.lab) });
-
   const clearPath = async () => {
     const repo = browserRepository();
     await Promise.all(labs.map((lab) => repo.clear(lab.id)));
@@ -49,19 +41,7 @@ export function PathDetail({ path }: { readonly path: LearningPath }) {
     <>
       {action && (
         <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <Link
-            ref={actionRef}
-            href={`/${locale}/lab/${action.lab.id}`}
-            // Hasta leer el progreso no se sabe si es "Empezar" o "Continuar": ocupa su sitio sin verse.
-            aria-hidden={loaded ? undefined : true}
-            tabIndex={loaded ? undefined : -1}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-sm border border-control px-4 py-2 font-medium text-ink no-underline transition-colors hover:border-ink hover:bg-rule ${
-              loaded ? '' : 'invisible'
-            }`}
-          >
-            <span className="text-pretty">{actionText}</span>
-            <ArrowRight size={15} weight="bold" aria-hidden className="shrink-0" />
-          </Link>
+          <PathActionLink ref={actionRef} labs={labs} byLab={byLab} loaded={loaded} />
           <p className={`text-sm text-ink-muted tabular-nums ${loaded ? '' : 'invisible'}`}>
             {plural(locale, t.finished, labs.length, {
               done: loaded ? finishedCount(labs, byLab) : 0,
@@ -130,7 +110,7 @@ function LabRow({
           {state.kind === 'in-progress' && (
             <>
               <Dot />
-              <span className="text-ink-muted">
+              <span className="whitespace-nowrap text-ink-muted">
                 {fill(t.inProgress, { done: state.completed, total: state.total })}
               </span>
             </>

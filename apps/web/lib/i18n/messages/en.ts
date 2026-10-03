@@ -205,6 +205,7 @@ export const en: Messages = {
       lead: 'Tasks are checked against what the simulated network does, not against the commands you type.',
       start: 'Start lab 1',
       resume: 'Continue: Lab {n}. {title}',
+      resumeShort: 'Continue: Lab {n}',
       first: 'Open lab 1',
       path: 'See the {n} labs on the path',
       note: 'No account, nothing to install. Progress is saved in this browser.',

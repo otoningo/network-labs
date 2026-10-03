@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { PathFinished } from '@/components/paths/PathFinished';
+import { PathIndexAction } from '@/components/paths/PathIndexAction';
 import { PathMeta } from '@/components/paths/PathMeta';
 import { SiteShell } from '@/components/site/SiteShell';
 import { fill, isLocale, LOCALES, messagesFor } from '@/lib/i18n';
@@ -37,15 +37,12 @@ export default async function PathsPage({ params }: PageProps<'/[locale]/rutas'>
             {learningPaths().map((path) => {
               const description = pathDescription(messages, path.id);
               return (
-                <li
-                  key={path.id}
-                  className="grid gap-x-8 gap-y-3 border-t border-rule py-6 sm:grid-cols-[minmax(0,1fr)_auto]"
-                >
+                <li key={path.id} className="border-t border-rule py-6">
                   <div className="min-w-0">
                     <h2 className="text-md font-semibold text-ink text-balance">
                       <Link
                         href={`/${locale}/rutas/${path.id}`}
-                        className="no-underline hover:underline"
+                        className="underline decoration-control underline-offset-4 hover:decoration-ink"
                       >
                         {pathTitle(messages, path.id)}
                       </Link>
@@ -56,11 +53,8 @@ export default async function PathsPage({ params }: PageProps<'/[locale]/rutas'>
                       </p>
                     )}
                     <PathMeta locale={locale} path={path} className="mt-2" />
+                    <PathIndexAction labs={path.labs} />
                   </div>
-                  <PathFinished
-                    labs={path.labs}
-                    className="text-sm text-ink-muted sm:mt-1 sm:text-right"
-                  />
                 </li>
               );
             })}

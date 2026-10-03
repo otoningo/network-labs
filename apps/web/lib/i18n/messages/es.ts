@@ -208,6 +208,7 @@ export const es = {
       lead: 'Las tareas se comprueban contra lo que hace la red simulada, no contra los comandos que escribes.',
       start: 'Empezar el lab 1',
       resume: 'Continuar: Lab {n}. {title}',
+      resumeShort: 'Continuar: Lab {n}',
       first: 'Abrir el lab 1',
       path: 'Ver los {n} labs de la ruta',
       note: 'Sin cuenta ni instalación. El progreso se guarda en este navegador.',

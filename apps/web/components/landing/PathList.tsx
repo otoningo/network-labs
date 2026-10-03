@@ -18,7 +18,10 @@ export function PathList({ labs }: { readonly labs: readonly LabSummary[] }) {
   return (
     <ol className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] gap-x-4 border-b border-rule">
       {labs.map((lab) => {
-        const finished = byLab.get(lab.id)?.finished === true;
+        const status = byLab.get(lab.id);
+        const finished = status?.finished === true;
+        // A medias: el mismo aviso que en la página de la ruta, para que cuadre con "Continuar".
+        const inProgress = status !== undefined && !finished;
         return (
           <li
             key={lab.id}
@@ -38,7 +41,15 @@ export function PathList({ labs }: { readonly labs: readonly LabSummary[] }) {
               {lab.title[locale]}
               {finished && <span className="sr-only">{`, ${messages.landing.path.done}`}</span>}
             </Link>
-            <span className="text-xs text-ink-faint">
+            <span className="text-right text-xs whitespace-nowrap text-ink-faint">
+              {inProgress && (
+                <span className="mr-2 text-ink-muted">
+                  {fill(messages.paths.inProgress, {
+                    done: status.completed,
+                    total: lab.objectives,
+                  })}
+                </span>
+              )}
               {fill(messages.lab.minutes, { n: lab.minutes })}
             </span>
             <span className="self-center">
