@@ -64,7 +64,7 @@ export const es = {
       startup: 'la configuración inicial',
       configSame: '{device}: igual a {snapshot}',
       configDiffers: '{device}: distinta de {snapshot}',
-      count: '{device} · {coll}{where}: {count}',
+      count: '{device}: {coll}{where} = {count}',
       where: {
         is: '{field} {value}',
         within: '{field} dentro de {value}',

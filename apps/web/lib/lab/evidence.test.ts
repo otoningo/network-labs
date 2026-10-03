@@ -30,7 +30,7 @@ describe('evidencia redactada', () => {
     expect(report(store, 'identity')).toEqual(['R1: identity = R1-Oficina']);
     expect(report(store, 'lan')).toEqual(['ping PC1 → 192.168.88.1: llega']);
     expect(report(store, 'user')).toEqual([
-      'R1 · usuarios (nombre soporte, grupo read, con contraseña): 1',
+      'R1: usuarios (nombre soporte, grupo read, con contraseña) = 1',
     ]);
     expect(report(store, 'telnet')).toEqual([
       'ping PC1 → 192.168.88.1: llega',

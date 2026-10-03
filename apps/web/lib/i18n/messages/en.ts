@@ -62,7 +62,7 @@ export const en: Messages = {
       startup: 'the initial configuration',
       configSame: '{device}: same as {snapshot}',
       configDiffers: '{device}: differs from {snapshot}',
-      count: '{device} · {coll}{where}: {count}',
+      count: '{device}: {coll}{where} = {count}',
       where: {
         is: '{field} {value}',
         within: '{field} within {value}',
