@@ -17,6 +17,11 @@ export const es = {
     disclaimer:
       'Proyecto independiente con fines educativos. No está afiliado a MikroTik, Huawei, Cisco ni a ningún otro fabricante; los nombres de productos pertenecen a sus dueños.',
   },
+  site: {
+    skipToContent: 'Saltar al contenido',
+    nav: 'Navegación principal',
+    paths: 'Rutas',
+  },
   lab: {
     paths: { 'mikrotik-desde-cero': 'MikroTik desde cero' },
     labNumber: 'Lab {n}',

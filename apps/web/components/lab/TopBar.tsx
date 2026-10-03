@@ -2,9 +2,9 @@
 
 import { ArrowCounterClockwise } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { fill, LOCALES, plural } from '@/lib/i18n';
+import { LanguageSwitch } from '@/components/ui/LanguageSwitch';
+import { fill, plural } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
 import { useLab } from '@/lib/lab/context';
 import type { ObjectiveState } from '@/lib/lab/store';
@@ -78,34 +78,6 @@ export function TopBar() {
         <ResetButton />
       </div>
     </header>
-  );
-}
-
-function LanguageSwitch() {
-  const { locale, messages } = useI18n();
-  const pathname = usePathname();
-  const rest = pathname.split('/').slice(2).join('/');
-  return (
-    <nav aria-label={messages.app.language}>
-      <ul className="flex items-center gap-1 text-sm">
-        {LOCALES.map((code) => (
-          <li key={code}>
-            <Link
-              href={`/${code}/${rest}`}
-              hrefLang={code}
-              lang={code}
-              aria-current={code === locale ? 'true' : undefined}
-              aria-label={messages.app.languageNames[code]}
-              className={`rounded-sm px-1.5 py-0.5 uppercase no-underline ${
-                code === locale ? 'text-ink' : 'text-ink-faint hover:text-ink-muted'
-              }`}
-            >
-              {code}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
   );
 }
 

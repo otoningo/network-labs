@@ -15,6 +15,11 @@ export const en: Messages = {
     disclaimer:
       'Independent educational project. Not affiliated with MikroTik, Huawei, Cisco or any other vendor; product names belong to their owners.',
   },
+  site: {
+    skipToContent: 'Skip to content',
+    nav: 'Main navigation',
+    paths: 'Paths',
+  },
   lab: {
     paths: { 'mikrotik-desde-cero': 'MikroTik from scratch' },
     labNumber: 'Lab {n}',
