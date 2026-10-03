@@ -102,11 +102,13 @@ function LabRow({
           <RichText text={lab.summary[locale]} />
         </p>
         <p className="mt-2 text-xs text-ink-faint">
-          {messages.lab.difficulty[lab.difficulty]}
+          <span className="whitespace-nowrap">{messages.lab.difficulty[lab.difficulty]}</span>
           <Dot />
-          {fill(messages.lab.minutes, { n: lab.minutes })}
+          <span className="whitespace-nowrap">
+            {fill(messages.lab.minutes, { n: lab.minutes })}
+          </span>
           <Dot />
-          {plural(locale, t.objectives, lab.objectives)}
+          <span className="whitespace-nowrap">{plural(locale, t.objectives, lab.objectives)}</span>
           {state.kind === 'in-progress' && (
             <>
               <Dot />

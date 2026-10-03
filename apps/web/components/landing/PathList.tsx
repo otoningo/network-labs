@@ -40,10 +40,18 @@ export function PathList({ labs }: { readonly labs: readonly LabSummary[] }) {
               <span className="sr-only">{`${fill(messages.lab.labNumber, { n: lab.order })}. `}</span>
               {lab.title[locale]}
               {finished && <span className="sr-only">{`, ${messages.landing.path.done}`}</span>}
+              {inProgress && (
+                <span className="block text-xs font-normal text-ink-muted sm:hidden">
+                  {fill(messages.paths.inProgress, {
+                    done: status.completed,
+                    total: lab.objectives,
+                  })}
+                </span>
+              )}
             </Link>
             <span className="text-right text-xs whitespace-nowrap text-ink-faint">
               {inProgress && (
-                <span className="mr-2 text-ink-muted">
+                <span className="mr-2 hidden text-ink-muted sm:inline">
                   {fill(messages.paths.inProgress, {
                     done: status.completed,
                     total: lab.objectives,
