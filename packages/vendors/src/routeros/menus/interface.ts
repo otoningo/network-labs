@@ -5,9 +5,12 @@ import {
   type FrameTypes,
   formatIpv4,
   type Interface,
+  type IpProtocol,
   type ItemId,
   type NewItem,
   ok,
+  parsePrefix,
+  type TorchFilter,
   torch,
   type WifiAuth,
   type WifiBand,
@@ -687,9 +690,68 @@ export const interfaceListMemberMenu: MenuDef = collectionMenu({
 
 // ── /tool torch ─────────────────────────────────────────────────────────────
 
+const TORCH_PROTOCOLS: Readonly<Record<string, IpProtocol>> = {
+  icmp: 'icmp',
+  tcp: 'tcp',
+  udp: 'udp',
+  '1': 'icmp',
+  '6': 'tcp',
+  '17': 'udp',
+};
+
+const TORCH_PORTS: Readonly<Record<string, number>> = {
+  ftp: 21,
+  ssh: 22,
+  telnet: 23,
+  smtp: 25,
+  dns: 53,
+  domain: 53,
+  http: 80,
+  www: 80,
+  ntp: 123,
+  https: 443,
+  winbox: 8291,
+};
+
+/**
+ * Valores de los clasificadores: además de pedir la columna, filtran
+ * (`0.0.0.0/0`, `any` o sin valor = todo). `null` si nada puede coincidir.
+ */
+function torchFilter(args: Props): TorchFilter | null {
+  const address = (name: string) => {
+    const text = opt(args, name);
+    return text === undefined ? undefined : (parsePrefix(text) ?? undefined);
+  };
+  const srcAddress = address('src-address');
+  const dstAddress = address('dst-address');
+  const protoText = opt(args, 'ip-protocol')?.toLowerCase();
+  const portText = opt(args, 'port')?.toLowerCase();
+  const protocol =
+    protoText === undefined || protoText === 'any' ? undefined : TORCH_PROTOCOLS[protoText];
+  const port =
+    portText === undefined || portText === 'any'
+      ? undefined
+      : /^\d+$/.test(portText)
+        ? Number(portText)
+        : TORCH_PORTS[portText];
+  // Un protocolo o puerto que el simulador no conoce no coincide con ningún flujo.
+  if (
+    (protoText !== undefined && protoText !== 'any' && protocol === undefined) ||
+    (portText !== undefined && portText !== 'any' && port === undefined)
+  )
+    return null;
+  return {
+    ...(srcAddress === undefined ? {} : { srcAddress }),
+    ...(dstAddress === undefined ? {} : { dstAddress }),
+    ...(protocol === undefined ? {} : { protocol }),
+    ...(port === undefined ? {} : { port }),
+  };
+}
+
 /** Torch: solo desglosa por los clasificadores que se piden, como en el equipo real. */
 export function torchView(ctx: MenuCtx, args: Props) {
   const iface = ifaceId(ctx, get(args, 'interface'));
+  const filter = torchFilter(args);
   const classifiers = ['ip-protocol', 'src-address', 'port', 'dst-address'].filter((c) =>
     args.has(c),
   );
@@ -705,7 +767,7 @@ export function torchView(ctx: MenuCtx, args: Props) {
     'RX-PACKETS',
   ];
   return (net: MenuCtx['net']): string => {
-    const entries = torch(net, ctx.device.id, iface);
+    const entries = filter === null ? [] : torch(net, ctx.device.id, iface, filter);
     const groups = new Map<string, { cells: string[]; tx: number; rx: number }>();
     for (const e of entries) {
       const cells = [

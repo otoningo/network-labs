@@ -130,11 +130,16 @@ function table(menu: MenuDef, printed: readonly Printed[], columns: readonly str
     `${'#'.padEnd(numWidth)}${flagColumn('')} ${format(headers)}`,
   ];
   printed.forEach((p, i) => {
-    if (p.row.comment) lines.push(`;;; ${p.row.comment}`);
+    for (const head of heads(p.row)) lines.push(`;;; ${head}`);
     const number = String(p.number ?? '').padEnd(numWidth);
     lines.push(`${number}${flagColumn(p.flags)} ${format(cells[i] ?? [])}`);
   });
   return lines;
+}
+
+/** Líneas ;;; de una fila: primero la explicación del sistema, luego el comentario. */
+function heads(row: Row): string[] {
+  return [row.note, row.comment].filter((h): h is string => h !== undefined && h !== '');
 }
 
 // ── Detalle y terse ─────────────────────────────────────────────────────────
@@ -170,9 +175,10 @@ function detail(menu: MenuDef, printed: readonly Printed[]): string[] {
     const prefix = `${String(p.number ?? '').padStart(2)} ${p.flags.padEnd(flagWidth)} `;
     const indent = ' '.repeat(prefix.length);
     const items = pairs(menu, p.row);
-    if (!p.row.comment) return wrapPairs(prefix, items, indent);
-    const head = `${prefix};;; ${p.row.comment}`;
-    return items.length === 0 ? [head] : [head, ...wrapPairs(indent, items, indent)];
+    const [first, ...rest] = heads(p.row);
+    if (first === undefined) return wrapPairs(prefix, items, indent);
+    const head = [`${prefix};;; ${first}`, ...rest.map((h) => `${indent};;; ${h}`)];
+    return items.length === 0 ? head : [...head, ...wrapPairs(indent, items, indent)];
   });
   return [
     ...legend(menu.flags, printed),

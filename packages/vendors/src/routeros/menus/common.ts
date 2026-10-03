@@ -137,10 +137,14 @@ export interface CollectionMenuSpec<K extends CollectionKey> {
   readonly filter?: (item: ItemOf<K>, ctx: MenuCtx) => boolean;
   toProps(item: ItemOf<K>, ctx: MenuCtx): Props;
   flagsOf(item: ItemOf<K>, ctx: MenuCtx): string;
+  /** Explicación del sistema para la fila (por ejemplo, por qué es inválida). */
+  noteOf?(item: ItemOf<K>, ctx: MenuCtx): string | undefined;
   fromProps(p: Props, ctx: MenuCtx, current: ItemOf<K> | undefined): Result<NewItem<K>, Fault>;
   /** Filas que no son ítems de configuración (dinámicas). */
   extraRows?(ctx: MenuCtx): readonly Row[];
 }
+
+const withNote = (note: string | undefined) => (note === undefined ? {} : { note });
 
 export function itemRow<K extends CollectionKey>(
   spec: CollectionMenuSpec<K>,
@@ -154,6 +158,7 @@ export function itemRow<K extends CollectionKey>(
     props: spec.toProps(item, ctx),
     flags: spec.flagsOf(item, ctx),
     ...(item.comment === undefined ? {} : { comment: item.comment }),
+    ...withNote(spec.noteOf?.(item, ctx)),
   };
 }
 

@@ -13,6 +13,7 @@ import type {
   Op,
   PlatformSpec,
   Result,
+  SingletonKey,
   SyntaxFault,
 } from '@nos/core';
 import type { RouterosSession } from './session';
@@ -92,6 +93,8 @@ export interface Row {
   /** Letras de flags activas. */
   readonly flags: string;
   readonly comment?: string;
+  /** Explicación del sistema (por qué un ítem es inválido). Solo se imprime: no se exporta ni se edita. */
+  readonly note?: string;
 }
 
 export interface MenuCtx {
@@ -165,7 +168,7 @@ export interface MenuDef {
   /** Propiedad por la que se puede nombrar un ítem en lugar de su número. */
   readonly nameProp?: string;
   /** Colección del modelo que respalda el menú (para logs y move). */
-  readonly coll?: CollectionKey | 'system' | 'dns' | 'discovery';
+  readonly coll?: CollectionKey | SingletonKey;
   rows(ctx: MenuCtx): readonly Row[];
   /** add: recibe argumentos con los valores por defecto ya aplicados. */
   readonly add?: (props: Props, ctx: MenuCtx) => Result<readonly Op[], Fault>;

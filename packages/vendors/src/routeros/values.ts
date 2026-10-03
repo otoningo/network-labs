@@ -127,8 +127,11 @@ export function parseVlanIds(text: string): number[] | null {
   return ids;
 }
 
-/** Comillas al estilo de export/print cuando el valor tiene espacios o caracteres especiales. */
+/**
+ * Comillas al estilo de export/print cuando el valor tiene espacios o caracteres
+ * especiales. `%` no cuenta: v7 muestra `immediate-gw=10.0.12.2%ether1` sin comillas.
+ */
 export function quote(value: string): string {
-  if (value !== '' && /^[A-Za-z0-9_.,:/*!@+-]+$/.test(value)) return value;
+  if (value !== '' && /^[A-Za-z0-9_.,:/*!@+%-]+$/.test(value)) return value;
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }

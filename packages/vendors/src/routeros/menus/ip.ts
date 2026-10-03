@@ -1,4 +1,10 @@
 import {
+  type AddressListEntry,
+  type CheckGateway,
+  type ConnNatState,
+  converge,
+  type Device,
+  type DhcpLease,
   type DiscoveryProtocol,
   err,
   type FilterAction,
@@ -15,27 +21,39 @@ import {
   type Neg,
   type Network,
   networkOf,
+  type Op,
   ok,
+  type Pool,
   parseIpv4,
   parsePortSet,
   parsePrefix,
   parseRange,
   prefix,
   type RejectWith,
+  rangeContains,
   type ServiceName,
 } from '@nos/core';
 import { ifaceName, refIdLoose, refName } from '../refs';
 import {
+  type ActionCtx,
   type ActionDef,
   fault,
   type MenuCtx,
   type MenuDef,
   type Props,
   prop,
+  type Row,
   ro,
   T,
 } from '../schema';
-import { formatCount, formatDuration, formatKib, parseDuration, parseKib } from '../values';
+import {
+  formatCount,
+  formatDateTime,
+  formatDuration,
+  formatKib,
+  parseDuration,
+  parseKib,
+} from '../values';
 import {
   addOp,
   baseFrom,
@@ -115,6 +133,7 @@ export const routeMenu: MenuDef = collectionMenu({
     prop('dst-address', T.prefix, { default: '0.0.0.0/0' }),
     prop('gateway', T.gateway, { default: '' }),
     ro('immediate-gw'),
+    prop('check-gateway', T.enumOf('ping', 'arp', 'none'), { default: '' }),
     prop('distance', T.int(1, 255), { default: '1' }),
     prop('blackhole', T.flag, { default: 'no' }),
     prop('routing-table', T.name, { default: 'main' }),
@@ -156,6 +175,7 @@ export const routeMenu: MenuDef = collectionMenu({
       ['dst-address', formatPrefix(r.dst)],
       ['gateway', gateway],
       ['immediate-gw', immediate],
+      ['check-gateway', r.checkGateway],
       ['distance', String(r.distance)],
       ['blackhole', yn(gw.kind === 'blackhole')],
       ['routing-table', r.table],
@@ -190,11 +210,15 @@ export const routeMenu: MenuDef = collectionMenu({
       const ip = parseIpv4(text);
       gateway = ip === null ? { kind: 'iface', iface: ifaceId(ctx, text) } : { kind: 'ip', ip };
     }
+    const check = opt(p, 'check-gateway');
+    const checkGateway: CheckGateway | undefined =
+      check === 'ping' || check === 'arp' ? check : undefined;
     return ok({
       dst: prefix(get(p, 'dst-address')),
       gateway,
       distance: Number(get(p, 'distance')),
       table: get(p, 'routing-table'),
+      ...(checkGateway === undefined ? {} : { checkGateway }),
       ...baseFrom(p),
     });
   },
@@ -275,6 +299,48 @@ export const poolMenu: MenuDef = collectionMenu({
     });
   },
 });
+
+/** Pool de la cadena (pool y sus `next-pool`) del que salió una dirección. */
+function poolHolding(device: Device, start: ItemId, ip: DhcpLease['ip']): Pool | undefined {
+  const seen = new Set<ItemId>();
+  let id: ItemId | undefined = start;
+  while (id !== undefined && !seen.has(id)) {
+    seen.add(id);
+    const pool = device.config.dhcpServer.pools.find((p) => p.id === id);
+    if (!pool) return undefined;
+    if (pool.ranges.some((r) => rangeContains(r, ip))) return pool;
+    id = pool.next;
+  }
+  return undefined;
+}
+
+export const poolUsedMenu: MenuDef = {
+  path: 'ip/pool/used',
+  help: 'Addresses handed out from pools',
+  props: [ro('pool'), ro('address'), ro('owner'), ro('info')],
+  flags: [],
+  style: 'table',
+  columns: ['pool', 'address', 'owner', 'info'],
+  rows: (ctx) =>
+    ctx.device.oper.dhcpLeases.flatMap((l) => {
+      const server = ctx.device.config.dhcpServer.servers.find((s) => s.id === l.server);
+      if (!l.dynamic || !server || server.pool === 'static-only') return [];
+      const pool = poolHolding(ctx.device, server.pool, l.ip);
+      if (!pool) return [];
+      return [
+        dynamicRow(
+          `u${l.server}:${l.ip}`,
+          props([
+            ['pool', pool.name],
+            ['address', formatIpv4(l.ip)],
+            ['owner', l.mac],
+            ['info', server.name],
+          ]),
+          '',
+        ),
+      ];
+    }),
+};
 
 // ── /ip dhcp-server ─────────────────────────────────────────────────────────
 
@@ -384,7 +450,7 @@ const makeStatic: ActionDef = {
   },
 };
 
-export const dhcpLeaseMenu: MenuDef = collectionMenu({
+const leaseMenu: MenuDef = collectionMenu({
   path: 'ip/dhcp-server/lease',
   help: 'DHCP leases',
   coll: 'staticLeases',
@@ -447,6 +513,31 @@ export const dhcpLeaseMenu: MenuDef = collectionMenu({
       ),
   actions: { 'make-static': makeStatic },
 });
+
+/**
+ * Borrar un lease estático quita su configuración; uno dinámico solo se libera
+ * en el servidor, y el cliente vuelve a pedir dirección enseguida.
+ */
+export const dhcpLeaseMenu: MenuDef = {
+  ...leaseMenu,
+  removeOther: (rows, ctx) => {
+    const ops: Op[] = [];
+    const freed = new Set<string>();
+    for (const row of rows) {
+      if (row.id === undefined)
+        freed.add(`${get(row.props, 'mac-address')}|${get(row.props, 'address')}`);
+      else ops.push({ op: 'remove', coll: 'staticLeases', id: row.id });
+    }
+    if (freed.size === 0) return ok({ ops });
+    const released = updateOper(ctx.net, ctx.device.id, (oper) => ({
+      ...oper,
+      dhcpLeases: oper.dhcpLeases.filter(
+        (l) => !(l.dynamic && freed.has(`${l.mac}|${formatIpv4(l.ip)}`)),
+      ),
+    }));
+    return ok({ net: converge(released), ops });
+  },
+};
 
 // ── /ip dhcp-client ─────────────────────────────────────────────────────────
 
@@ -870,6 +961,8 @@ function negRead<T>(p: Props, name: string, read: (text: string) => T): Neg<T> |
   return { negate, value: read(negate ? text.slice(1) : text) };
 }
 
+const NAT_STATES: readonly ConnNatState[] = ['srcnat', 'dstnat'];
+
 const MATCH_PROPS = [
   prop('src-address', T.neg(T.address), { default: '' }),
   prop('dst-address', T.neg(T.address), { default: '' }),
@@ -885,6 +978,7 @@ const MATCH_PROPS = [
   prop('connection-state', T.enumList('established', 'related', 'new', 'invalid', 'untracked'), {
     default: '',
   }),
+  prop('connection-nat-state', T.neg(T.enumList(...NAT_STATES)), { default: '' }),
 ];
 
 function matchProps(m: Match, ctx: MenuCtx): (readonly [string, string | undefined])[] {
@@ -902,6 +996,7 @@ function matchProps(m: Match, ctx: MenuCtx): (readonly [string, string | undefin
     ['in-interface-list', negShow(m.inInterfaceList, String)],
     ['out-interface-list', negShow(m.outInterfaceList, String)],
     ['connection-state', m.connectionState?.join(',')],
+    ['connection-nat-state', negShow(m.connectionNatState, (states) => states.join(','))],
   ];
 }
 
@@ -923,10 +1018,30 @@ function matchFrom(p: Props, ctx: MenuCtx): Match {
     ['inInterfaceList', negRead(p, 'in-interface-list', String)],
     ['outInterfaceList', negRead(p, 'out-interface-list', String)],
   ];
+  const natStates = negRead(p, 'connection-nat-state', (text) =>
+    text.split(',').filter((x): x is ConnNatState => (NAT_STATES as readonly string[]).includes(x)),
+  );
+  entries.push(['connectionNatState', natStates]);
   const match: Record<string, unknown> = {};
   for (const [key, value] of entries) if (value !== undefined) match[key] = value;
   const states = opt(p, 'connection-state');
   return (states === undefined ? match : { ...match, connectionState: states.split(',') }) as Match;
+}
+
+/** Mensaje de RouterOS cuando una regla usa como in/out-interface un puerto esclavo de un bridge. */
+function slaveNote(match: Match, ctx: MenuCtx): string | undefined {
+  for (const cond of [match.inInterface, match.outInterface]) {
+    if (!cond) continue;
+    const port = ctx.device.config.bridging.ports.find(
+      (p) => !p.disabled && p.iface === cond.value,
+    );
+    if (port) {
+      const slave = ifaceName(ctx, cond.value);
+      const master = ifaceName(ctx, port.bridge);
+      return `in/out-interface matcher not possible when interface (${slave}) is slave - use master instead (${master})`;
+    }
+  }
+  return undefined;
 }
 
 function counters(ctx: MenuCtx, id: ItemId): (readonly [string, string])[] {
@@ -942,21 +1057,30 @@ const COUNTER_PROPS = [
   { ...ro('packets'), hidden: true },
 ];
 
+/** Pone a cero los contadores de esas filas (las reglas de un solo menú). */
+function zeroCounters(ctx: ActionCtx, rows: readonly Row[]): Network {
+  const ids = new Set(rows.map((r) => r.id));
+  return updateOper(ctx.net, ctx.device.id, (oper) => ({
+    ...oper,
+    ruleCounters: oper.ruleCounters.filter((c) => !ids.has(c.rule)),
+  }));
+}
+
 const resetCounters: ActionDef = {
   help: 'Reset rule counters',
   args: [],
   takesNumbers: true,
-  run: (_args, ctx) => {
-    const ids = new Set(ctx.rows.map((r) => r.id));
-    const all = ctx.rows.length === 0;
-    return ok({
-      net: updateOper(ctx.net, ctx.device.id, (oper) => ({
-        ...oper,
-        ruleCounters: oper.ruleCounters.filter((c) => !all && !ids.has(c.rule)),
-      })),
-    });
-  },
+  run: (_args, ctx) =>
+    ok({ net: zeroCounters(ctx, ctx.rows.length === 0 ? ctx.menu.rows(ctx) : ctx.rows) }),
 };
+
+const resetCountersAll: ActionDef = {
+  help: 'Reset counters of all rules',
+  args: [],
+  run: (_args, ctx) => ok({ net: zeroCounters(ctx, ctx.menu.rows(ctx)) }),
+};
+
+const COUNTER_ACTIONS = { 'reset-counters': resetCounters, 'reset-counters-all': resetCountersAll };
 
 const FILTER_ACTIONS = [
   'accept',
@@ -986,6 +1110,7 @@ export const filterMenu: MenuDef = collectionMenu({
   props: [
     prop('chain', T.name, { required: true }),
     prop('action', T.enumOf(...FILTER_ACTIONS), { default: 'accept' }),
+    prop('hw-offload', T.bool, { default: '' }),
     ...MATCH_PROPS,
     prop('jump-target', T.name, { default: '' }),
     prop('reject-with', T.enumOf(...REJECT_WITH), { default: '' }),
@@ -1004,6 +1129,7 @@ export const filterMenu: MenuDef = collectionMenu({
     props([
       ['chain', r.chain],
       ['action', filterAction(r.action)],
+      ['hw-offload', r.hwOffload === undefined ? undefined : yn(r.hwOffload)],
       ...matchProps(r.match, ctx),
       ['jump-target', r.action.kind === 'jump' ? r.action.target : undefined],
       ['reject-with', r.action.kind === 'reject' ? r.action.with : undefined],
@@ -1013,6 +1139,7 @@ export const filterMenu: MenuDef = collectionMenu({
       ...baseProps(r),
     ]),
   flagsOf: (r, ctx) => flags(['X', r.disabled], ['I', isInvalid(ctx, 'filterRules', r.id)]),
+  noteOf: (r, ctx) => slaveNote(r.match, ctx),
   fromProps: (p, ctx) => {
     const kind = get(p, 'action');
     let action: FilterAction;
@@ -1039,16 +1166,18 @@ export const filterMenu: MenuDef = collectionMenu({
         action = { kind: kind as 'accept' | 'drop' | 'return' | 'passthrough' };
     }
     const logPrefix = opt(p, 'log-prefix');
+    const hwOffload = opt(p, 'hw-offload');
     return ok({
       chain: get(p, 'chain'),
       match: matchFrom(p, ctx),
       action,
       log: kind === 'log' || isYes(p.get('log')),
       ...(logPrefix === undefined ? {} : { logPrefix }),
+      ...(hwOffload === undefined ? {} : { hwOffload: isYes(hwOffload) }),
       ...baseFrom(p),
     });
   },
-  actions: { 'reset-counters': resetCounters },
+  actions: COUNTER_ACTIONS,
 });
 
 const NAT_ACTIONS = ['accept', 'masquerade', 'src-nat', 'dst-nat', 'redirect', 'netmap'];
@@ -1065,9 +1194,10 @@ export const natMenu: MenuDef = collectionMenu({
   props: [
     prop('chain', T.enumOf('srcnat', 'dstnat'), { required: true }),
     prop('action', T.enumOf(...NAT_ACTIONS), { default: 'accept' }),
-    ...MATCH_PROPS,
+    // v7 muestra la traducción justo después de la acción.
     prop('to-addresses', T.address, { default: '' }),
     prop('to-ports', T.ports, { default: '' }),
+    ...MATCH_PROPS,
     prop('place-before', T.string, { addOnly: true }),
     ...COUNTER_PROPS,
     ...COMMON_PROPS,
@@ -1079,19 +1209,26 @@ export const natMenu: MenuDef = collectionMenu({
   export: { order: 84, style: 'add' },
   toProps: (r, ctx) => {
     const a = r.action;
-    const to = 'to' in a ? ('len' in a.to ? formatPrefix(a.to) : formatRange(a.to)) : undefined;
+    const target = 'to' in a ? a.to : undefined;
+    const to =
+      target === undefined
+        ? undefined
+        : 'len' in target
+          ? formatPrefix(target)
+          : formatRange(target);
     const toPorts = 'toPorts' in a && a.toPorts ? formatPortSet(a.toPorts) : undefined;
     return props([
       ['chain', r.chain],
       ['action', natAction(a)],
-      ...matchProps(r.match, ctx),
       ['to-addresses', to],
       ['to-ports', toPorts],
+      ...matchProps(r.match, ctx),
       ...counters(ctx, r.id),
       ...baseProps(r),
     ]);
   },
   flagsOf: (r, ctx) => flags(['X', r.disabled], ['I', isInvalid(ctx, 'natRules', r.id)]),
+  noteOf: (r, ctx) => slaveNote(r.match, ctx),
   fromProps: (p, ctx) => {
     const kind = get(p, 'action');
     const toText = opt(p, 'to-addresses');
@@ -1105,11 +1242,17 @@ export const natMenu: MenuDef = collectionMenu({
       case 'masquerade':
         action = { kind: 'masquerade', ...withPorts };
         break;
-      case 'src-nat':
-      case 'dst-nat': {
+      case 'src-nat': {
         const to = needTo();
         if (!to) return err(fault('missing-args', undefined, { args: 'to-addresses' }));
-        action = { kind: kind === 'src-nat' ? 'srcNat' : 'dstNat', to, ...withPorts };
+        action = { kind: 'srcNat', to, ...withPorts };
+        break;
+      }
+      case 'dst-nat': {
+        // Con solo to-ports se traduce el puerto y se conserva la dirección de destino.
+        const to = needTo();
+        if (!to && !toPorts) return err(fault('missing-args', undefined, { args: 'to-addresses' }));
+        action = { kind: 'dstNat', ...(to ? { to } : {}), ...withPorts };
         break;
       }
       case 'redirect':
@@ -1132,7 +1275,7 @@ export const natMenu: MenuDef = collectionMenu({
       ...baseFrom(p),
     });
   },
-  actions: { 'reset-counters': resetCounters },
+  actions: COUNTER_ACTIONS,
 });
 
 export const addressListMenu: MenuDef = collectionMenu({
@@ -1148,27 +1291,47 @@ export const addressListMenu: MenuDef = collectionMenu({
   ],
   flags: [[F.disabled], [F.dynamic]],
   style: 'table',
-  columns: ['list', 'address', 'creation-time'],
+  columns: ['list', 'address', 'creation-time', 'timeout'],
   export: { order: 80, style: 'add' },
-  toProps: (a) =>
+  toProps: (a, ctx) =>
     props([
       ['list', a.list],
       ['address', showAddress(a.address)],
-      ['timeout', a.timeoutS === undefined ? '' : formatDuration(a.timeoutS)],
-      ['creation-time', ''],
+      ['timeout', a.timeoutS === undefined ? '' : formatDuration(remaining(a, ctx))],
+      [
+        'creation-time',
+        a.createdAt === undefined ? '' : formatDateTime(ctx.clockBase, a.createdAt),
+      ],
       ...baseProps(a),
     ]),
-  flagsOf: (a) => flags(['X', a.disabled]),
-  fromProps: (p) => {
+  // Las entradas con timeout son temporales: dinámicas, no se exportan y caducan solas.
+  flagsOf: (a) => flags(['X', a.disabled], ['D', a.timeoutS !== undefined]),
+  fromProps: (p, ctx, current) => {
+    const createdAt = current?.createdAt ?? ctx.net.now;
     const timeout = opt(p, 'timeout');
+    let timeoutS: number | undefined;
+    if (timeout !== undefined) {
+      // timeout muestra lo que falta: si no cambia se conserva el plazo; si cambia se
+      // reinicia desde ahora (el modelo cuenta el plazo desde la creación).
+      const wanted = seconds(timeout);
+      const kept = current?.timeoutS !== undefined && wanted === remaining(current, ctx);
+      timeoutS = kept ? current?.timeoutS : ctx.net.now - createdAt + wanted;
+    }
     return ok({
       list: get(p, 'list'),
       address: parseAddress(get(p, 'address')),
-      ...(timeout === undefined ? {} : { timeoutS: seconds(timeout) }),
+      ...(timeoutS === undefined ? {} : { timeoutS }),
+      createdAt,
       ...baseFrom(p),
     });
   },
 });
+
+/** Segundos que le quedan a una entrada temporal. */
+function remaining(a: AddressListEntry, ctx: MenuCtx): number {
+  const timeout = a.timeoutS ?? 0;
+  return a.createdAt === undefined ? timeout : Math.max(0, a.createdAt + timeout - ctx.net.now);
+}
 
 export const connectionMenu: MenuDef = {
   path: 'ip/firewall/connection',
@@ -1217,6 +1380,7 @@ export const IP_MENUS: readonly MenuDef[] = [
   addressMenu,
   routeMenu,
   poolMenu,
+  poolUsedMenu,
   dhcpServerMenu,
   dhcpNetworkMenu,
   dhcpLeaseMenu,

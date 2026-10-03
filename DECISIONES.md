@@ -220,3 +220,30 @@ cuando haya interfaz que los use, en lugar de en la fase 1 como decía el plan.
 - Con `;`, cada comando se analiza al ejecutarse, con el estado que dejó el
   anterior (por ejemplo, crear un bridge y añadirle puertos en la misma línea).
   Import y los scripts de arranque de los labs siguen el mismo camino.
+
+## D-026 · Permisos por grupo de usuario
+
+- `read` solo consulta (print, ping, :resolve, torch, traceroute, export sin
+  archivo); `write` cambia la configuración salvo usuarios, reset y carga de
+  backup; `full` lo puede todo. El error es `failure: not enough permissions (9)`.
+- Un usuario que no existe en `/user` tiene acceso total: así funcionan las
+  pruebas y los scripts de arranque de los labs, que no inician sesión.
+- Diferencia conocida: en RouterOS real el grupo `read` puede reiniciar; aquí no.
+
+## D-027 · DNS por DHCP cuando la red no define servidores
+
+- Rasgo de plataforma `dhcpDnsFallback`: si una red DHCP no tiene
+  `dns-server`, el servidor entrega sus propios DNS (configurados y
+  dinámicos). RouterOS lo activa; hosts, Internet y la plataforma de pruebas no.
+
+## D-028 · Acceso de gestión por capa 2 como ajuste neutral
+
+- `l2Access` guarda qué lista de interfaces admite gestión por MAC (consola y
+  herramienta gráfica). En RouterOS se ve como `/tool mac-server` y
+  `/tool mac-server mac-winbox`; otros fabricantes pueden mapearlo o ignorarlo.
+
+## D-029 · Notas del sistema en print
+
+- Una fila puede llevar una `note` (por qué un ítem es inválido) que print
+  muestra como `;;;` antes del comentario. No se exporta ni se edita, para no
+  mezclarse con el comentario del usuario.

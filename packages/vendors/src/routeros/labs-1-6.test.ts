@@ -184,8 +184,7 @@ describe('Lab 1: acceso inicial y CLI', () => {
     expect(tab(t, '/ip service set ')).toEqual(['address=', 'disabled=', 'port=']);
   });
 
-  // BUG: Tab no propone los nombres de los ítems en la posición `numbers` de set/disable.
-  it.fails('Tab tras set/disable propone los nombres de los ítems', () => {
+  it('Tab tras set/disable propone los nombres de los ítems', () => {
     const t = new Terminal(lab1(), 'R1');
     expect(tab(t, '/interface set e')).toEqual(['ether1', 'ether2', 'ether3', 'ether4', 'ether5']);
     expect(tab(t, '/ip service disable t')).toEqual(['telnet']);
@@ -239,8 +238,7 @@ describe('Lab 1: acceso inicial y CLI', () => {
     expect(t.device.config.system.users.map((u) => u.name)).toEqual(['admin', 'pepe']);
   });
 
-  // BUG: no se aplican los permisos de los grupos; un usuario `read` puede cambiar la configuración.
-  it.fails('un usuario del grupo read no puede cambiar la configuración', () => {
+  it('un usuario del grupo read no puede cambiar la configuración', () => {
     const network = cli(lab1(), 'R1', ['/user add name=soporte group=read password=Secreto123']);
     const s = new Terminal(network, 'R1', { user: 'soporte' });
     expect(s.prompt).toBe('[soporte@MikroTik] > ');
@@ -523,8 +521,7 @@ describe('Lab 2: interfaces y direcciones IP', () => {
     expect(t.prompt).toBe('[admin@MikroTik] > ');
   });
 
-  // BUG: la respuesta de un vecino directo llega con TTL 63; un host a un salto responde con 64.
-  it.fails('ping a una PC conectada directamente muestra TTL 64', () => {
+  it('ping a una PC conectada directamente muestra TTL 64', () => {
     const t = new Terminal(lab2(), 'R1');
     t.ok('/ip address add address=192.168.88.1/24 interface=ether2');
     const reply = t.ok('/ping 192.168.88.10 count=1').split('\n')[1] ?? '';
@@ -706,8 +703,7 @@ describe('Lab 3: rutas estáticas', () => {
     expect(outOfR1()).toBe(ifaceIdOf(t.net, 'R1', 'ether1'));
   });
 
-  // BUG: `check-gateway=ping` no existe; sin él la ruta principal sigue activa aunque el gateway no responda.
-  it.fails('check-gateway=ping desactiva la ruta cuyo gateway no responde', () => {
+  it('check-gateway=ping desactiva la ruta cuyo gateway no responde', () => {
     // El enlace sigue arriba pero R2 ya no tiene la 10.0.12.2: nadie contesta en ese gateway.
     const network = cli(lab3(), 'R2', ['/ip address remove [find address="10.0.12.2/30"]']);
     const t = new Terminal(network, 'R1');
@@ -767,8 +763,7 @@ describe('Lab 3: rutas estáticas', () => {
     expect(icmp(t.net, 'PC1', '192.168.2.10').ok).toBe(false);
   });
 
-  // BUG: traceroute ignora count y siempre informa SENT=3.
-  it.fails('traceroute con count=1 envía una sola sonda por salto', () => {
+  it('traceroute con count=1 envía una sola sonda por salto', () => {
     const t = new Terminal(lab3Routed(), 'R1');
     const lines = t.ok('/tool traceroute 192.168.2.10 count=1').split('\n');
     expect(lines[2]).toMatch(/^1\s+10\.0\.12\.2\s+0%\s+1\s/);
@@ -1167,24 +1162,21 @@ describe('Lab 5: servidor DHCP', () => {
     expect(addressOf(t.net, 'PC3')).toBe('192.168.88.110/24');
   });
 
-  // BUG: cuando el pool se agota no se registra nada en el log.
-  it.fails('el log avisa cuando el pool se agota', () => {
+  it('el log avisa cuando el pool se agota', () => {
     const t = new Terminal(lab5(), 'R1').script(dhcpLan('192.168.88.100-192.168.88.101'));
     expect(t.ok('/log print')).toContain(
       'dhcp1 failed to give out IP address: pool <pool-lan> is empty',
     );
   });
 
-  // BUG: falta el submenú /ip pool used (direcciones entregadas por pool).
-  it.fails('/ip pool used print muestra las direcciones entregadas', () => {
+  it('/ip pool used print muestra las direcciones entregadas', () => {
     const t = new Terminal(lab5(), 'R1').script(dhcpLan('192.168.88.100-192.168.88.101'));
     const out = t.ok('/ip pool used print');
     expect(out).toContain('pool-lan');
     expect(out).toContain('192.168.88.101');
   });
 
-  // BUG: los leases dinámicos no se pueden borrar ("can not change dynamic"); en RouterOS sí.
-  it.fails('se puede borrar un lease dinámico para que el cliente pida otro', () => {
+  it('se puede borrar un lease dinámico para que el cliente pida otro', () => {
     const t = new Terminal(lab5(), 'R1').script(dhcpLan('192.168.88.10-192.168.88.254'));
     t.ok('/ip dhcp-server lease print');
     t.ok('/ip dhcp-server lease remove [find host-name=PC1]');

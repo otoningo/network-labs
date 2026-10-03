@@ -9,9 +9,17 @@ import type { Completion, CompletionCandidate } from '@nos/core';
 import { matchPrefix } from './codec';
 import { lexLine, splitArg, type Token } from './lexer';
 import { refNames } from './refs';
-import { type MenuCtx, type PropDef, type RefTarget, T, type ValueType } from './schema';
+import {
+  type MenuCtx,
+  type MenuDef,
+  type PropDef,
+  type RefTarget,
+  T,
+  type ValueType,
+} from './schema';
 import type { RouterosSession } from './session';
 import { menuAt, namesAt, pathKey } from './tree';
+import { quote } from './values';
 
 export interface CompleteCtx {
   readonly menuCtx: MenuCtx;
@@ -343,6 +351,51 @@ function givenNames(args: readonly Token[], pool: readonly ArgSpec[]): Set<strin
   return given;
 }
 
+/** Comandos genéricos cuyo primer argumento sin nombre son los ítems (`numbers`). */
+const NUMBERED_COMMANDS: ReadonlySet<string> = new Set([
+  'set',
+  'enable',
+  'disable',
+  'remove',
+  'comment',
+  'unset',
+  'move',
+]);
+
+function takesNumbers(menu: MenuDef, command: string): boolean {
+  const actions = menu.actions;
+  const action = actions && Object.hasOwn(actions, command) ? actions[command] : undefined;
+  if (action) return action.takesNumbers === true;
+  // En los menús de un solo ítem (`/system identity`) set no lleva números.
+  return menu.style !== 'singleton' && menu.style !== 'none' && NUMBERED_COMMANDS.has(command);
+}
+
+/** Ya se escribió `numbers`: una palabra suelta que no es flag, `[find ...]` o `numbers=`. */
+function numbersGiven(args: readonly Token[], pool: readonly ArgSpec[]): boolean {
+  const names = [...pool.map((s) => s.name), 'numbers'];
+  return args.some((token) => {
+    const kv = splitArg(token);
+    if (kv) return kv.key !== '' && matchPrefix(kv.key, names).match === 'numbers';
+    return findSpec(pool, token.text)?.word !== true;
+  });
+}
+
+/**
+ * Nombres de los ítems del menú (interfaces, servicios...) que empiezan por
+ * `prefix`, listos para escribir: entre comillas si llevan espacios, aunque el
+ * usuario haya empezado a teclearlos sin ellas.
+ */
+function itemNames(menu: MenuDef, ctx: MenuCtx, prefix: string): CompletionCandidate[] {
+  const key = menu.nameProp;
+  if (key === undefined) return [];
+  return menu.rows(ctx).flatMap((row) => {
+    const name = row.props.get(key);
+    if (name === undefined || name === '') return [];
+    const text = quote(name);
+    return name.startsWith(prefix) || text.startsWith(prefix) ? [{ text }] : [];
+  });
+}
+
 function completeArgs(
   path: string,
   command: string,
@@ -373,6 +426,14 @@ function completeArgs(
   const list = pool
     .filter((s) => !given.has(s.name))
     .map((s) => candidate(s.word ? s.name : `${s.name}=`, s.help ?? s.about));
+
+  // Primer argumento sin nombre de set/disable/remove...: los ítems del menú.
+  // Con la palabra vacía se listan solo si el comando no tiene argumentos que
+  // proponer (así `set ` sigue mostrando `name=`, `mtu=`...).
+  if (!where && menu && takesNumbers(menu, command) && !numbersGiven(args, pool)) {
+    const items = word === '' && list.length > 0 ? [] : itemNames(menu, ctx, word);
+    return { replaceFrom: from, candidates: finish([...items, ...finish(list, word)], '') };
+  }
   return { replaceFrom: from, candidates: finish(list, word) };
 }
 

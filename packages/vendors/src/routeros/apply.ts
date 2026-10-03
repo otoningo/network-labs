@@ -25,8 +25,9 @@ import {
   readScript,
   resolveName,
   saveScript,
+  type UserGroup,
 } from '@nos/core';
-import { describeError } from './errors';
+import { describeScriptError } from './errors';
 import { renderExport } from './exporter';
 import { evalExpr } from './expr';
 import type { PrintView, RosAction, RosIntent, RosSessionChange } from './intent';
@@ -71,6 +72,64 @@ function deviceIn(net: Network, id: Device['id'], fallback: Device): Device {
   return net.devices.find((d) => d.id === id) ?? fallback;
 }
 
+// ── Permisos ────────────────────────────────────────────────────────────────
+
+/**
+ * Grupos de `/user`: `read` solo consulta, `write` cambia la configuración
+ * salvo los usuarios y `full` lo puede todo.
+ */
+const RANK: Readonly<Record<UserGroup, number>> = { read: 0, write: 1, full: 2 };
+
+/** Acciones de menú que solo miran (diagnóstico): las demás cambian algo. */
+const READ_ACTIONS: ReadonlySet<string> = new Set(['torch', 'traceroute', 'monitor-traffic']);
+
+/** Acciones que reemplazan la configuración entera: solo el grupo `full`. */
+const FULL_ACTIONS: ReadonlySet<string> = new Set([
+  'system/reset-configuration',
+  'system/backup/load',
+]);
+
+/** Un usuario que no está en `/user` (pruebas, arranque de labs) tiene acceso total. */
+function groupOf(device: Device, user: string): UserGroup {
+  return device.config.system.users.find((u) => u.name === user)?.group ?? 'full';
+}
+
+const permitted = (device: Device, session: RouterosSession, need: UserGroup): boolean =>
+  RANK[groupOf(device, session.user)] >= RANK[need];
+
+const denied = (): Outcome => err(vendor('not-enough-permissions'));
+
+/** Los cambios en `/user` piden `full`; el resto de la configuración, `write`. */
+function opNeeds(op: Op): UserGroup {
+  if (op.op === 'restore') return 'write';
+  const scope = op.op === 'setSingleton' ? op.key : op.coll;
+  return scope === 'users' ? 'full' : 'write';
+}
+
+function actionNeeds(action: RosAction): UserGroup {
+  switch (action.kind) {
+    case 'menu-action': {
+      const id = `${action.path}/${action.name}`;
+      if (FULL_ACTIONS.has(id) || action.path === 'user' || action.path.startsWith('user/'))
+        return 'full';
+      return READ_ACTIONS.has(action.name) ? 'read' : 'write';
+    }
+    case 'export':
+      return action.file === undefined ? 'read' : 'write';
+    case 'ping':
+    case 'resolve':
+    case 'put':
+    // Cada línea del script pasa por su propia comprobación.
+    case 'script':
+      return 'read';
+    case 'remove-other':
+    case 'import':
+    case 'undo':
+    case 'redo':
+      return 'write';
+  }
+}
+
 // ── Configuración ───────────────────────────────────────────────────────────
 
 function changeLog(op: Op, by: string, at: Network['now']): LogEntry | undefined {
@@ -96,6 +155,7 @@ function applyConfig(
   session: RouterosSession,
 ): Outcome {
   if (ops.length === 0) return done(net, session);
+  if (!ops.every((op) => permitted(device, session, opNeeds(op)))) return denied();
   const result = applyOps(device, ops, ROUTEROS_POLICY);
   if (!result.ok) return err({ kind: 'core', error: result.error.error });
   const entries = ops.flatMap((op) => changeLog(op, session.user, net.now) ?? []);
@@ -277,6 +337,10 @@ export function scriptLines(text: string): string[] {
   return lines;
 }
 
+/** Error de una línea de script, ya redactado con su número de línea. */
+const scriptError = (error: DriverError, line: number): DriverError =>
+  vendor('script-error', describeScriptError(error, line));
+
 /** Ejecuta líneas en orden; cada una ve el estado que dejó la anterior. */
 function runLines(lines: readonly string[], ctx: Ctx, numberErrors: boolean): Outcome {
   let net = ctx.net;
@@ -287,16 +351,13 @@ function runLines(lines: readonly string[], ctx: Ctx, numberErrors: boolean): Ou
     const device = deviceIn(net, ctx.device.id, ctx.device);
     const step: Ctx = { net, device, session };
     const parsed = parseLine(line, { menuCtx: menuCtxOf(net, device, session), session });
-    const lineNo = numberErrors ? index + 1 : 1;
-    if (!parsed.ok)
-      return err(
-        vendor('script-error', describeError({ kind: 'syntax', fault: parsed.error }, lineNo)),
-      );
+    if (!parsed.ok) {
+      const error: DriverError = { kind: 'syntax', fault: parsed.error };
+      return err(numberErrors ? scriptError(error, index + 1) : error);
+    }
     const applied = applyIntent(parsed.value, step);
     if (!applied.ok)
-      return err(
-        numberErrors ? vendor('script-error', describeError(applied.error, lineNo)) : applied.error,
-      );
+      return err(numberErrors ? scriptError(applied.error, index + 1) : applied.error);
     net = applied.value.net;
     session = applied.value.session;
     if (applied.value.output !== '') outputs.push(applied.value.output);
@@ -306,6 +367,7 @@ function runLines(lines: readonly string[], ctx: Ctx, numberErrors: boolean): Ou
 
 function runVendor(action: RosAction, ctx: Ctx): Outcome {
   const { net, device, session } = ctx;
+  if (!permitted(device, session, actionNeeds(action))) return denied();
   switch (action.kind) {
     case 'menu-action': {
       const menu = menuAt(action.path);

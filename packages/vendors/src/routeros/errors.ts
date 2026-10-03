@@ -95,6 +95,8 @@ function describeCode(
       return 'failure: nothing to redo';
     case 'no-such-file':
       return 'failure: no such file';
+    case 'not-enough-permissions':
+      return 'failure: not enough permissions (9)';
     case 'dns-nxdomain':
       return 'failure: dns name does not exist';
     case 'dns-timeout':
@@ -153,6 +155,7 @@ const FIELD_NAMES: Readonly<Partial<Record<ErrorScope, Readonly<Record<string, s
   system: { identity: 'name', timezone: 'time-zone-name' },
   dns: { cacheSizeKiB: 'cache-size' },
   discovery: { interfaceList: 'discover-interface-list' },
+  l2Access: { cli: 'allowed-interface-list', gui: 'allowed-interface-list' },
 };
 
 /** Campos con el mismo nombre en todas las colecciones. */
@@ -196,6 +199,7 @@ const NOUNS: Readonly<Record<ErrorScope, string>> = {
   system: 'system setting',
   dns: 'dns setting',
   discovery: 'discovery setting',
+  l2Access: 'mac server setting',
   storage: 'file',
 };
 
@@ -270,4 +274,16 @@ export function describeError(error: DriverError, line = 1): string {
     case 'core':
       return describeCore(error.error);
   }
+}
+
+/**
+ * Error de la línea `line` de un script (import). Los que ya dicen dónde
+ * (`(line N column M)`) y los de un import anidado quedan igual; al resto se
+ * le añade `(line N)` para saber qué línea falló.
+ */
+export function describeScriptError(error: DriverError, line: number): string {
+  const text = describeError(error, line);
+  if (error.kind === 'vendor' && error.code === 'script-error') return text;
+  const where = error.kind === 'syntax' ? position(error.fault.at, line) : '';
+  return where !== '' && text.endsWith(where) ? text : `${text} (line ${line})`;
 }

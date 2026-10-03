@@ -15,11 +15,12 @@ const SERVICES: readonly (readonly [ServiceName, number, boolean])[] = [
 /**
  * RouterOS v7: puertos ether1..N y radios wifi1..N (paquete `wifi`, ver D-021),
  * identidad "MikroTik", usuario admin sin contraseña y el pool DHCP repartido
- * desde la dirección más alta, como hace el equipo real.
+ * desde la dirección más alta, como hace el equipo real. Una red DHCP sin
+ * `dns-server` entrega a los clientes los DNS del propio router.
  */
 export const ROUTEROS_PLATFORM: PlatformSpec = {
   os: 'routeros',
-  traits: { forwards: true, poolAllocation: 'highest' },
+  traits: { forwards: true, poolAllocation: 'highest', dhcpDnsFallback: true },
   defaultMtu: 1500,
   interfaceName: (port) => (port.kind === 'ethernet' ? `ether${port.index}` : `wifi${port.index}`),
   defaultIdentity: () => 'MikroTik',
@@ -27,7 +28,13 @@ export const ROUTEROS_PLATFORM: PlatformSpec = {
     {
       op: 'add',
       coll: 'users',
-      item: { name: 'admin', group: 'full', hasPassword: false, disabled: false },
+      item: {
+        name: 'admin',
+        group: 'full',
+        hasPassword: false,
+        disabled: false,
+        comment: 'system default user',
+      },
     },
     ...SERVICES.map(
       ([name, port, disabled]): Op => ({

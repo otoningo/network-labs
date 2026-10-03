@@ -91,6 +91,7 @@ const NOUNS: Readonly<Record<CollectionKey | SingletonKey, string>> = {
   system: 'system identity',
   dns: 'dns settings',
   discovery: 'neighbor discovery settings',
+  l2Access: 'mac server settings',
 };
 
 function protoText(event: Extract<LogEvent, { kind: 'firewall' }>): string {
@@ -161,6 +162,9 @@ const reboot: ActionDef = {
   },
 };
 
+/** Backup que RouterOS deja antes de volver a fábrica (salvo con `skip-backup=yes`). */
+export const AUTO_BACKUP = 'auto-before-reset.backup';
+
 const resetConfiguration: ActionDef = {
   help: 'Reset the configuration to factory defaults',
   args: [
@@ -177,8 +181,12 @@ const resetConfiguration: ActionDef = {
       ? ctx.device.config.system.users
       : fresh.value.config.system.users;
     const config = { ...fresh.value.config, system: { ...fresh.value.config.system, users } };
+    // Antes de borrar guarda la configuración actual; los archivos no son configuración y quedan.
+    const saved = isYes(args.get('skip-backup'))
+      ? ctx.device
+      : saveBackup(ctx.device, AUTO_BACKUP, ctx.net.now);
     const device = rebooted({
-      ...ctx.device,
+      ...saved,
       config,
       nextId: Math.max(ctx.device.nextId, fresh.value.nextId),
     });
@@ -418,36 +426,77 @@ const torchAction: ActionDef = {
   },
 };
 
+const TRACEROUTE_COLUMNS = [
+  'ADDRESS',
+  'LOSS',
+  'SENT',
+  'LAST',
+  'AVG',
+  'BEST',
+  'WORST',
+  'STD-DEV',
+  'STATUS',
+];
+
+/** Columnas alineadas a la izquierda (#, ADDRESS y STATUS); las numéricas van a la derecha. */
+const LEFT_ALIGNED = new Set([0, 1, 9]);
+
+/**
+ * Tiempos sintéticos de las `count` sondas de un salto: oscilan ±0.1 ms
+ * alrededor de `base` y la última es siempre `base`, así LAST, AVG, BEST,
+ * WORST y STD-DEV son coherentes entre sí.
+ */
+function probeTimes(base: number, count: number): string[] {
+  const offsets = [0, -0.1, 0.1];
+  const times = Array.from(
+    { length: count },
+    (_, i) => base + (offsets[(count - 1 - i) % offsets.length] ?? 0),
+  );
+  const avg = times.reduce((a, b) => a + b, 0) / count;
+  const variance = times.reduce((a, t) => a + (t - avg) ** 2, 0) / count;
+  return [
+    `${base.toFixed(1)}ms`,
+    avg.toFixed(1),
+    Math.min(...times).toFixed(1),
+    Math.max(...times).toFixed(1),
+    Math.sqrt(variance).toFixed(1),
+    '',
+  ];
+}
+
 function traceroute(args: Props, ctx: MenuCtx): string {
   const dst = parseIpv4(get(args, 'address'));
   if (dst === null) return '';
+  const count = Number(opt(args, 'count') ?? '3');
+  const sent = String(count);
   const rows: string[][] = [];
   for (let ttl = 1; ttl <= 30; ttl++) {
     const result = trace(ctx.net, { from: ctx.device.id, dst, protocol: 'icmp', ttl });
     const end = result.forward.end;
-    const ms = `${(0.4 * ttl + (end.kind === 'delivered' && end.emulated ? 14 : 0)).toFixed(1)}ms`;
+    const base = 0.4 * ttl + (end.kind === 'delivered' && end.emulated ? 14 : 0);
     if (end.kind === 'ttl-exceeded') {
       const hop = result.forward.hops.at(-1);
       const address = addressesOf(ctx.net, end.device).find((a) => a.iface === hop?.inIface)
         ?.address.ip;
-      rows.push([String(ttl), address === undefined ? '' : formatIpv4(address), '0%', '3', ms]);
+      const shown = address === undefined ? '' : formatIpv4(address);
+      rows.push([String(ttl), shown, '0%', sent, ...probeTimes(base, count)]);
       continue;
     }
     if (result.ok) {
-      rows.push([String(ttl), formatIpv4(dst), '0%', '3', ms]);
+      rows.push([String(ttl), formatIpv4(dst), '0%', sent, ...probeTimes(base, count)]);
     } else {
-      rows.push([String(ttl), '', '100%', '3', 'timeout']);
+      rows.push([String(ttl), '', '100%', sent, '', '', '', '', '', 'timeout']);
     }
     break;
   }
-  const header = ['#', 'ADDRESS', 'LOSS', 'SENT', 'LAST'];
+  const header = ['#', ...TRACEROUTE_COLUMNS];
   const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)));
   const fmt = (cells: readonly string[]) =>
     cells
-      .map((c, i) => (i === 2 || i === 3 ? c.padStart(widths[i] ?? 0) : c.padEnd(widths[i] ?? 0)))
+      .map((c, i) => (LEFT_ALIGNED.has(i) ? c.padEnd(widths[i] ?? 0) : c.padStart(widths[i] ?? 0)))
       .join('  ')
       .trimEnd();
-  return ['Columns: ADDRESS, LOSS, SENT, LAST', fmt(header), ...rows.map(fmt)].join('\n');
+  return [`Columns: ${TRACEROUTE_COLUMNS.join(', ')}`, fmt(header), ...rows.map(fmt)].join('\n');
 }
 
 export const toolMenu: MenuDef = {
@@ -469,7 +518,51 @@ export const toolMenu: MenuDef = {
   },
 };
 
+// ── /tool mac-server ────────────────────────────────────────────────────────
+
+/** Acceso por MAC (consola o herramienta gráfica), limitado a una lista de interfaces. */
+function macAccessMenu(path: string, help: string, field: 'cli' | 'gui', order: number): MenuDef {
+  return {
+    path,
+    help,
+    coll: 'l2Access',
+    props: [prop('allowed-interface-list', T.ref('interface-list'), { default: 'all' })],
+    flags: [],
+    style: 'singleton',
+    columns: [],
+    export: { order, style: 'set' },
+    rows: (ctx) => [
+      dynamicRow(
+        'singleton',
+        props([['allowed-interface-list', ctx.device.config.l2Access[field]]]),
+        '',
+      ),
+    ],
+    update: (_row, p) =>
+      ok([
+        {
+          op: 'setSingleton',
+          key: 'l2Access',
+          patch:
+            field === 'cli'
+              ? { cli: get(p, 'allowed-interface-list') }
+              : { gui: get(p, 'allowed-interface-list') },
+        },
+      ]),
+  };
+}
+
+export const macServerMenu = macAccessMenu('tool/mac-server', 'MAC Telnet server', 'cli', 97);
+export const macWinboxMenu = macAccessMenu(
+  'tool/mac-server/mac-winbox',
+  'MAC graphical access server',
+  'gui',
+  98,
+);
+
 export const SYSTEM_MENUS: readonly MenuDef[] = [
+  macServerMenu,
+  macWinboxMenu,
   systemMenu,
   identityMenu,
   resourceMenu,

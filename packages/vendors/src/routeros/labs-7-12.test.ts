@@ -375,8 +375,7 @@ describe('Lab 7 · Firewall: proteger el router', () => {
     expect(go(t.net, { from: 'PC2', dst: '8.8.8.8', protocol: 'icmp' }).ok).toBe(true);
   });
 
-  // BUG: las entradas con timeout no caducan (ni salen como dinámicas); el bloqueo es permanente.
-  it.fails('una entrada de address-list con timeout caduca sola', () => {
+  it('una entrada de address-list con timeout caduca sola', () => {
     const t = office().script([
       `/ip firewall address-list add list=castigo address=${PC2_IP} timeout=1m`,
       '/ip firewall filter add chain=forward src-address-list=castigo action=drop',
@@ -461,8 +460,7 @@ describe('Lab 7 · Firewall: proteger el router', () => {
     ).toEqual([]);
   });
 
-  // BUG: falta reset-counters-all (RouterOS v7 lo tiene en filter, nat y mangle).
-  it.fails('reset-counters-all pone a cero todos los contadores', () => {
+  it('reset-counters-all pone a cero todos los contadores', () => {
     const t = office().script(PROTEGER);
     t.ok('/ping 8.8.8.8 count=3');
     t.ok('/ip firewall filter reset-counters-all');
@@ -482,19 +480,28 @@ describe('Lab 7 · Firewall: proteger el router', () => {
     expect(go(t.net, { from: 'PC1', dst: '8.8.8.8', protocol: 'icmp' }).ok).toBe(true);
   });
 
-  // BUG: RouterOS marca la regla como inválida y explica que hay que usar el bridge.
-  it.fails('una regla con un puerto esclavo del bridge sale inválida con la pista del maestro', () => {
+  it('una regla con un puerto esclavo del bridge sale inválida', () => {
     const t = office();
     t.ok('/ip firewall filter add chain=forward in-interface=ether2 action=drop');
     const out = t.ok('/ip firewall filter print');
     expect(out).toContain('I - INVALID');
-    expect(out).toContain(
+    expect(out).toContain('in/out-interface matcher not possible when interface (ether2) is slave');
+    expect(out).toMatch(/^ *0 +I +;;; /m);
+    expect(out).toMatch(/^ +chain=forward action=drop in-interface=ether2 /m);
+    // Al pasarla al bridge deja de ser inválida.
+    t.ok('/ip firewall filter set 0 in-interface=bridge1');
+    expect(t.ok('/ip firewall filter print')).not.toContain('INVALID');
+  });
+
+  it('la regla inválida por puerto esclavo explica que hay que usar el bridge', () => {
+    const t = office();
+    t.ok('/ip firewall filter add chain=forward in-interface=ether2 action=drop');
+    expect(t.ok('/ip firewall filter print')).toContain(
       'in/out-interface matcher not possible when interface (ether2) is slave - use master instead (bridge1)',
     );
   });
 
-  // BUG: connection-nat-state no existe, así que la regla de defconf no se puede escribir.
-  it.fails('la regla de forward de defconf con connection-nat-state=!dstnat', () => {
+  it('la regla de forward de defconf con connection-nat-state=!dstnat', () => {
     const t = office();
     t.ok(
       '/ip firewall filter add chain=forward action=drop connection-state=new connection-nat-state=!dstnat in-interface=ether1 comment="defconf: drop all from WAN not DSTNATed"',
@@ -502,8 +509,7 @@ describe('Lab 7 · Firewall: proteger el router', () => {
     expect(go(t.net, { from: 'PC1', dst: '8.8.8.8', protocol: 'icmp' }).ok).toBe(true);
   });
 
-  // BUG: hw-offload no existe, así que la regla de fasttrack de defconf no se puede escribir.
-  it.fails('fasttrack de defconf con hw-offload=yes', () => {
+  it('fasttrack de defconf con hw-offload=yes', () => {
     const t = office();
     t.ok(
       '/ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related hw-offload=yes',
@@ -720,8 +726,7 @@ describe('Lab 9 · DNS y caché', () => {
     expect(resolvesViaR1(t, 'PC1', 'example.com', EXAMPLE)).toBe(true);
   });
 
-  // BUG: sin dns-server (y dns-none=no) RouterOS entrega a los clientes los DNS del propio router.
-  it.fails('sin dns-server en la red DHCP los PCs reciben los DNS del router', () => {
+  it('sin dns-server en la red DHCP los PCs reciben los DNS del router', () => {
     const t = fresh().script(
       OFICINA.map((line) =>
         line.startsWith('/ip dhcp-server network')
@@ -889,8 +894,7 @@ describe('Lab 10 · Respaldo y restauración', () => {
     expect(t.last?.ok).toBe(false);
   });
 
-  // BUG: reset-configuration no guarda auto-before-reset.backup (skip-backup=no por defecto).
-  it.fails('reset-configuration guarda antes auto-before-reset.backup', () => {
+  it('reset-configuration guarda antes auto-before-reset.backup', () => {
     const t = office().script(['/system identity set name=Oficina']);
     t.script(['/system reset-configuration no-defaults=yes', 'y']);
     expect(backupNames(t)).toContain('auto-before-reset.backup');
@@ -931,8 +935,7 @@ describe('Lab 11 · Monitoreo con Torch', () => {
     expect(lastLine(out).slice(0, 2)).toEqual(['210.0kbps', '8.1Mbps']);
   });
 
-  // BUG: Torch muestra la cabecera recibida por el router (antes del masquerade) en todas sus interfaces.
-  it.fails('torch en ether1 (WAN con masquerade) ve la IP pública, no la de los PCs', () => {
+  it('torch en ether1 (WAN con masquerade) ve la IP pública, no la de los PCs', () => {
     const t = traffic();
     const out = t.ok('/tool torch interface=ether1 src-address=0.0.0.0/0 duration=1s');
     expect(out).not.toContain(PC1_IP);
@@ -960,8 +963,7 @@ describe('Lab 11 · Monitoreo con Torch', () => {
     expect(cells(out, PC1_IP).slice(0, 3)).toEqual([PC1_IP, EXAMPLE, '8.0Mbps']);
   });
 
-  // BUG: el valor de src-address se ignora: solo activa el clasificador, no filtra.
-  it.fails('src-address con una IP concreta limita torch a ese equipo', () => {
+  it('src-address con una IP concreta limita torch a ese equipo', () => {
     const t = traffic();
     const out = t.ok(`/tool torch interface=bridge1 src-address=${PC1_IP}/32 duration=1s`);
     expect(out).toContain(PC1_IP);
@@ -1025,8 +1027,7 @@ describe('Lab 11 · Monitoreo con Torch', () => {
     );
   });
 
-  // BUG: Torch cuenta como TX por ether1 los paquetes que el firewall descartó en forward.
-  it.fails('tras bloquearlo, torch en ether1 no muestra tráfico del PC bloqueado', () => {
+  it('tras bloquearlo, torch en ether1 no muestra tráfico del PC bloqueado', () => {
     const t = traffic();
     t.ok(BLOQUEO);
     const out = t.ok('/tool torch interface=ether1 duration=1s');
@@ -1200,8 +1201,7 @@ describe('Lab 12 · Oficina pequeña', () => {
     works(restored);
   });
 
-  // BUG: /tool mac-server no existe (endurecimiento habitual de defconf: MAC-Winbox solo desde la LAN).
-  it.fails('/tool mac-server limitado a la lista LAN', () => {
+  it('/tool mac-server limitado a la lista LAN', () => {
     const t = oficina();
     t.ok('/tool mac-server set allowed-interface-list=LAN');
     t.ok('/tool mac-server mac-winbox set allowed-interface-list=LAN');

@@ -1,6 +1,6 @@
 import type { CoreError, DriverError, ItemId, SyntaxFault } from '@nos/core';
 import { describe, expect, it } from 'vitest';
-import { describeError } from './errors';
+import { describeError, describeScriptError } from './errors';
 
 const syntax = (fault: SyntaxFault, line?: number): string =>
   describeError({ kind: 'syntax', fault }, line);
@@ -108,8 +108,29 @@ describe('describeError: errores del driver', () => {
     expect(vendor('nothing-to-undo')).toBe('failure: nothing to undo');
     expect(vendor('dns-nxdomain')).toBe('failure: dns name does not exist');
     expect(vendor('not-allowed')).toBe('failure: not allowed');
+    expect(vendor('not-enough-permissions')).toBe('failure: not enough permissions (9)');
     expect(vendor('out-of-range', 'count')).toBe('value of count out of range');
     expect(vendor('mystery', 'whatever')).toBe('failure: mystery');
+  });
+
+  it('errores de script: añade la línea solo si el mensaje no dice dónde', () => {
+    const at = (fault: SyntaxFault): DriverError => ({ kind: 'syntax', fault });
+    expect(describeScriptError(at({ code: 'bad-command', at: 4, detail: { name: 'x' } }), 2)).toBe(
+      'bad command name x (line 2 column 5)',
+    );
+    // `no-match` trae columna pero su mensaje no la muestra.
+    expect(
+      describeScriptError(at({ code: 'no-match', at: 9, detail: { arg: 'interface' } }), 3),
+    ).toBe('input does not match any value of interface (line 3)');
+    expect(describeScriptError({ kind: 'vendor', code: 'not-enough-permissions' }, 1)).toBe(
+      'failure: not enough permissions (9) (line 1)',
+    );
+    expect(
+      describeScriptError(
+        { kind: 'vendor', code: 'script-error', detail: 'no such item (line 7)' },
+        2,
+      ),
+    ).toBe('no such item (line 7)');
   });
 
   it('nunca tropieza con claves de Object.prototype', () => {

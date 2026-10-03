@@ -33,10 +33,15 @@ function failureStatus(result: TraceResult, origin: string): string {
   }
 }
 
-/** TTL con el que llega la respuesta: 64 en equipos simulados, ~118 desde "Internet". */
+/**
+ * TTL con el que llega la respuesta: 64 en equipos simulados, ~118 desde
+ * "Internet", menos uno por cada router que la reenvió. Los saltos de la
+ * vuelta incluyen la salida del que responde y la entrega en quien hizo el
+ * ping, así que los routers intermedios son los demás.
+ */
 export function replyTtl(result: TraceResult): number {
   const emulated = result.forward.end.kind === 'delivered' && result.forward.end.emulated;
-  const routers = Math.max(0, (result.reply?.hops.length ?? 1) - 1);
+  const routers = Math.max(0, (result.reply?.hops.length ?? 2) - 2);
   return (emulated ? 118 : 64) - routers;
 }
 
