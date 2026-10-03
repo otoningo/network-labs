@@ -37,6 +37,7 @@ export const es = {
       next: 'Otra pista',
       count: '{n} de {total}',
       none: 'No quedan más pistas para esta tarea.',
+      label: '{action} para la tarea {n}',
     },
     figure: 'Fig. 1',
     figureCaption: 'Topología del lab',

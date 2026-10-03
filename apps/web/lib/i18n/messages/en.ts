@@ -35,6 +35,7 @@ export const en: Messages = {
       next: 'Another hint',
       count: '{n} of {total}',
       none: 'No more hints for this task.',
+      label: '{action} for task {n}',
     },
     figure: 'Fig. 1',
     figureCaption: 'Lab topology',
