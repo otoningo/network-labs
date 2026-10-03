@@ -142,6 +142,25 @@ components:
     rounded: "{rounded.sm}"
     padding: "0 8px"
     height: "28px"
+  inspector:
+    backgroundColor: "{colors.sheet}"
+    textColor: "{colors.ink}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    padding: "8px 12px"
+  button-zoom:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-faint}"
+    size: "32px"
+  button-zoom-hover:
+    backgroundColor: "{colors.rule}"
+    textColor: "{colors.ink}"
+  evidence-line:
+    textColor: "{colors.ink-faint}"
+    typography: "{typography.label}"
+  link-next:
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
 ---
 
 # Design System: nos-labs
@@ -180,14 +199,14 @@ No hay acento de marca. La jerarquía la hace la tinta (ink, ink-muted, ink-fain
 
 ### Neutral
 - **Grafito de fondo** (ground): fondo de la pantalla, de la hoja y de la figura.
-- **Grafito de hoja** (sheet): relleno de las cajas de equipo en la figura y del enlace "saltar a la consola".
+- **Grafito de hoja** (sheet): relleno de las formas de equipo en la figura, del panel de detalle (inspector) y del enlace "saltar a la consola".
 - **Grafito de consola** (console): el escalón más oscuro, solo la consola y su franja.
-- **Filete** (rule): divisiones entre zonas, filas de tareas, barra superior, pie; fondo del código citado; fondo del botón de icono al pasar.
-- **Filete marcado** (rule-strong): separador al pasar el puntero, bordes de caja de equipo en reposo, cables caídos, selección de texto, barras de desplazamiento.
-- **Gris de control** (control): borde de casillas vacías, segmentos de progreso pendientes y cables activos de la figura. Está en 5,2:1 sobre el fondo porque el filete de 1px se suaviza al pintarse y debe seguir por encima de 3:1 (WCAG 1.4.11).
-- **Tinta** (ink): texto principal, enunciados, título, pestaña activa, anillo de foco, caja del equipo activo.
-- **Tinta media** (ink-muted): resumen del lab, pistas, encabezado "Tareas", botones discretos, segmentos de progreso cumplidos.
-- **Tinta tenue** (ink-faint): numerales, metadatos, pie de figura, aviso legal, idioma no activo.
+- **Filete** (rule): divisiones entre zonas, filas de tareas, barra superior, pie, enlace al siguiente lab; borde del grupo de zoom; fondo del código citado; fondo del botón de icono al pasar.
+- **Filete marcado** (rule-strong): separador al pasar el puntero, bordes de equipo en reposo, cables y asociaciones caídos, borde del inspector, botones de zoom deshabilitados, selección de texto, barras de desplazamiento.
+- **Gris de control** (control): borde de casillas vacías, segmentos de progreso pendientes, cables y asociaciones wifi activos de la figura y borde del equipo cuyo detalle se muestra. Está en 5,2:1 sobre el fondo porque el filete de 1px se suaviza al pintarse y debe seguir por encima de 3:1 (WCAG 1.4.11).
+- **Tinta** (ink): texto principal, enunciados, título, pestaña activa, anillo de foco, borde del equipo activo, id de equipo en la figura, enlace al siguiente lab.
+- **Tinta media** (ink-muted): resumen del lab, pistas, encabezado "Tareas", botones discretos, segmentos de progreso cumplidos, nombre de puerto y nombre en vivo en la figura.
+- **Tinta tenue** (ink-faint): numerales, metadatos, pie de figura, direcciones y etiquetas de la figura, línea de verificación, botones de zoom, aviso legal, idioma no activo.
 
 ### Named Rules
 **La Regla de la Casilla.** El color de estado vive en la casilla de la tarea (y en la nota de regresión de esa misma fila). Numerales, progreso, contadores y títulos de lab completado son monocromos.
@@ -211,8 +230,9 @@ No hay acento de marca. La jerarquía la hace la tinta (ink, ink-muted, ink-fain
 - **Title** (500, 0.9375rem): título del lab en la barra superior; el nombre del producto va en 600 con tracking ajustado.
 - **Body** (400, 0.9375rem, 1.55): enunciados de tarea, resumen y explicación final, con medida máxima de 62ch.
 - **Body small** (400, 0.875rem): pistas, encabezado "Tareas" (en 600), navegación de la barra, pestañas y botones.
-- **Label** (400, 0.8125rem): metadatos (dificultad · minutos), pie de figura, franja de la consola, nota de regresión.
+- **Label** (400, 0.8125rem): metadatos (dificultad · minutos), pie de figura, franja de la consola, nota de regresión, línea de verificación, inspector.
 - **Fine** (400, 0.75rem): aviso legal del pie. Es el tamaño mínimo de la interfaz.
+- **Figura** (Geist 12px, el mismo paso que fine; ids 13px en 600): texto del lienzo de topología, contraescalado para medir siempre lo mismo en pantalla a cualquier zoom.
 - **Console** (Geist Mono 13.5px, 1.35): todo lo que pinta la terminal.
 
 La escala va en rem (relación aproximada 1.2) para respetar el zoom del usuario.
@@ -222,6 +242,8 @@ La escala va en rem (relación aproximada 1.2) para respetar el zoom del usuario
 
 **La Regla del Numeral Callado.** El numeral es grande y ligero, y nunca cambia de color: el estado lo dice la casilla.
 
+**La Regla del Texto Fijo.** En la figura, el zoom escala formas y cables, nunca el texto: rótulos, direcciones, etiquetas y nombre en vivo miden 12px en pantalla y los ids 13px en 600, a cualquier escala.
+
 ## Layout
 
 Tres zonas sobre una rejilla de altura completa (100dvh): barra superior de 48px y, debajo, el banco de trabajo.
@@ -230,18 +252,23 @@ Tres zonas sobre una rejilla de altura completa (100dvh): barra superior de 48px
 - **Por debajo de 1024px:** pestañas Tareas · Topología · Consola, con el contador n/m de tareas en tinta tenue junto a "Tareas". La consola sigue montada aunque su pestaña no esté visible.
 - **Barra superior:** la ruta y el número de lab aparecen desde 768px; el texto "n de m tareas" desde 640px; el texto de confirmación de reinicio desde 1024px.
 - **Hoja:** consulta de contenedor; padding de 24px (32px cuando el contenedor pasa de 28rem). Las tareas son una rejilla de tres columnas compartidas (numeral, enunciado, casilla) con 16px de separación y 20px de aire vertical por fila, así un cambio de estado no mueve nada.
+- **Lienzo de la figura:** ocupa el panel; zoom entre 0.5× y 3× (paso 1.25×, rueda, pellizco, + y −), desplazamiento arrastrando o con flechas (40px) y encuadre (0) que centra con 16px de margen sin pasar de 1.5×. El reparto de equipos se elige para que formas y rótulos no se crucen, con el marco redondeado a 40px para no temblar al arrastrar el separador; en un panel estrecho y vertical (menos de 640px de ancho y más alto que ancho) puede trasponerse. Límite conocido: el lab 12 en un teléfono de 375px encuadra más ancho que el panel y hay que desplazarse.
 - **Ritmo:** escala de 4px. Pasos recurrentes: 4, 8, 12, 16, 20, 24, 32, 40 (entre bloques de la hoja) y 48px (antes del pie).
 
 ## Elevation & Depth
 
-Plano por completo. No hay ninguna sombra. La profundidad se da con tres escalones de grafito (consola más oscura, fondo, cajas de figura más claras) y con filetes de 1px. Lo activo se marca subiendo el filete a tinta, no levantando la superficie.
+Plano por completo. No hay ninguna sombra. La profundidad se da con tres escalones de grafito (consola más oscura, fondo, formas de la figura y el inspector más claros) y con filetes de 1px. Lo activo se marca subiendo el filete a tinta, no levantando la superficie; el inspector flota sobre el lienzo solo con su escalón de grafito y un borde de filete marcado.
 
 ### Named Rules
 **La Regla del Filete.** Las zonas se separan con una línea de 1px, nunca con una tarjeta, un fondo elevado o una sombra.
 
 ## Shapes
 
-Esquinas casi rectas: 2px en botones, casillas, chips de código, selector, foco y cajas de equipo de la figura. Los cables de la figura son líneas de 1.5px; un cable caído se dibuja discontinuo (4 4) en filete marcado. No hay formas redondeadas ni píldoras.
+Esquinas casi rectas: 2px en botones, casillas, chips de código, selector, foco, inspector, grupo de zoom y formas de la figura (2px en pantalla a cualquier zoom). No hay formas redondeadas ni píldoras; la nube de Internet es la única silueta curva y es un pictograma, no una esquina.
+
+La forma de cada equipo dice su papel: router como caja con una muesca arriba (la ranura de un chasis), equipo como caja simple, equipo inalámbrico como caja con dos arcos y un punto, Internet como nube. Los trazos no escalan con el zoom: 1px en reposo, 1.5px en el equipo activo y en los cables.
+
+**La Regla del Trazo que Dice el Medio.** Cable activo: línea continua en gris de control. Asociación wifi activa: discontinua (6 4) en gris de control. Caídos, en filete marcado: cable discontinuo (4 4), wifi punteado (2 4).
 
 ## Components
 
@@ -272,7 +299,19 @@ Cuadro de 18px con borde de control y 2px de radio. Cumplida: relleno verde con 
 Numeral, enunciado con sus pistas y casilla en columnas fijas, con filete superior. Las pistas reveladas se listan bajo el enunciado como "1 de 2" en tinta tenue seguido del texto en tinta media.
 
 ### Figura de topología (firma)
-SVG estático que no crece más que su tamaño natural (1.5×). Cajas de equipo de 132×52 en grafito de hoja con nombre en 600 y etiqueta en tinta tenue; la caja del equipo cuya consola está activa lleva borde de tinta. Cada extremo de cable lleva el nombre de la interfaz en tinta media y sus direcciones IPv4 en tinta tenue, leídos de la red en vivo. Pie: "Fig. 1." en 500 tinta media seguido del texto en tinta tenue.
+Lienzo SVG interactivo que sigue siendo la "Fig. 1" del cuaderno. Formas en grafito de hoja (router 132×48, equipo 116×44, nube 128×60 en unidades de mundo) con el id en tinta 600 y, debajo, el nombre en vivo del equipo en tinta media cuando difiere del id y cabe; la etiqueta va bajo la forma en tinta tenue. Borde de tinta en el equipo cuya consola está activa, gris de control en el que muestra su detalle, filete marcado en el resto. Cada extremo de cable es un solo bloque a un lado de la línea: el nombre del puerto en tinta media con sus direcciones debajo en tinta tenue, leídos de la red en vivo. Sobre cada forma hay un botón HTML transparente (abre la consola del equipo, aria-pressed) o un elemento enfocable si el equipo no tiene consola. Pie: "Fig. 1." en 500 tinta media seguido del texto en tinta tenue; en su misma fila, a la derecha, el grupo de zoom. Incluye una alternativa en texto oculta visualmente con equipos y enlaces. Nunca muestra tráfico ni contadores.
+
+### Inspector (firma)
+Detalle de un equipo al pasar el puntero o al enfocarlo: panel de grafito de hoja con borde de filete marcado, 2px de radio, texto de 0.8125rem, colocado junto a la forma y cambiado de lado si no cabe. Id en 600 con su papel en tinta tenue, nombre en vivo en tinta media, y una tabla bajo un filete con cada interfaz (nombre en 500 tinta), su estado y sus direcciones. Esc lo oculta; no se muestra mientras se desplaza.
+
+### Controles de zoom
+Grupo de tres botones de 32px (acercar, alejar, encuadrar) con iconos Phosphor de 16px en tinta tenue, dentro de un borde de filete con divisiones de filete y 2px de radio. Al pasar, fondo de filete y tinta; deshabilitados en filete marcado.
+
+### Línea de verificación
+Bajo el enunciado de una tarea cumplida o en regresión: lo que la red reporta, en 0.8125rem tinta tenue con cifras tabulares, como lista de definición con el rótulo "La red reporta" solo para lectores de pantalla. Cada línea sigue el patrón "equipo: dato = valor" o, para flujos, "ping PC1 → 192.168.88.1: llega" / "no llega, motivo". Sin color de estado: el estado ya lo dice la casilla.
+
+### Siguiente lab
+Al final de la sección de lab completado, tras un filete: "Siguiente" en 0.875rem tinta media y el número y título del lab en 500 tinta, subrayado al pasar, con flecha Phosphor de 15px en negrita. Si no hay siguiente, "Era el último lab de la ruta." en 0.875rem tinta media.
 
 ### Consola (firma)
 Escalón de grafito más oscuro, franja de 40px con "Consola de R1" en 0.8125rem. El tema de xterm se lee de los tokens; la paleta ANSI se reduce a ellos. Cursor de bloque sin parpadeo. Con foco, un anillo de tinta de 2px dibujado por encima del lienzo.
@@ -286,7 +325,9 @@ Escalón de grafito más oscuro, franja de 40px con "Consola de R1" en 0.8125rem
 - **Do** usar control (#8a929a) para bordes de casillas vacías y controles, para pasar 3:1 con un filete de 1px.
 - **Do** citar código en tareas y pistas con Geist 500 sobre un chip de filete.
 - **Do** usar 2px de radio en todo lo que tenga esquina.
-- **Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en cada extremo de cable.
+- **Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en un solo bloque en cada extremo de cable.
+- **Do** contraescalar el texto de la figura para que mida 12px (13px los ids) en pantalla a cualquier zoom, y mantener 2px de radio en pantalla.
+- **Do** distinguir el medio por el trazo: continuo para cable, discontinuo (6 4) para wifi; lo caído en filete marcado.
 
 ### Don't:
 - **Don't** usar rojo para un objetivo; el rojo es solo de acciones destructivas y de la salida del equipo en la consola.
@@ -296,3 +337,4 @@ Escalón de grafito más oscuro, franja de 40px con "Consola de R1" en 0.8125rem
 - **Don't** añadir degradados, efectos de cristal ni un color de acento de marca.
 - **Don't** colorear el anillo de foco con un color de estado.
 - **Don't** bajar de 0.75rem en texto de interfaz.
+- **Don't** mostrar tráfico ni contadores de interfaz en la figura.

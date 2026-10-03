@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-03T13:54:30.143644+00:00",
+  "generatedAt": "2026-10-03T18:47:09.492486+00:00",
   "title": "Design System: nos-labs",
   "extensions": {
     "colorMeta": {
@@ -272,11 +272,11 @@
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Metadatos, pie de figura, franja de consola, nota de regresión."
+        "purpose": "Metadatos, pie de figura, franja de consola, nota de regresión, línea de verificación e inspector."
       },
       "fine": {
         "displayName": "Fine",
-        "purpose": "Aviso legal; tamaño mínimo de la interfaz."
+        "purpose": "Aviso legal; tamaño mínimo de la interfaz. El texto de la figura usa este paso (12px) contraescalado al zoom."
       },
       "console": {
         "displayName": "Console",
@@ -378,17 +378,25 @@
       "name": "Fila de tarea con casilla",
       "kind": "custom",
       "refersTo": "status-box",
-      "description": "Firma del sistema: numeral ligero de un solo tono, enunciado y la casilla que lleva el color de estado.",
-      "html": "<ol class=\"ds-tasks\"><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">1</span><p>Cambia el nombre del router a R1-Oficina.</p><span class=\"ds-box done\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"m232.49 80.49-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z\"/></svg></span></li><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">2</span><div><p>La PC del técnico llega al router por ether2.</p><p class=\"ds-note\">Se cumplía y ya no.</p></div><span class=\"ds-box warn\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M240.26 186.1 152.81 34.23a28.74 28.74 0 0 0-49.62 0L15.74 186.1a27.45 27.45 0 0 0 0 27.71A28.31 28.31 0 0 0 40.55 228h174.9a28.31 28.31 0 0 0 24.79-14.19 27.45 27.45 0 0 0 .02-27.71ZM116 104a12 12 0 0 1 24 0v40a12 12 0 0 1-24 0Zm12 88a16 16 0 1 1 16-16 16 16 0 0 1-16 16Z\"/></svg></span></li><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">3</span><p>Crea el usuario soporte en el grupo read.</p><span class=\"ds-box\" aria-hidden=\"true\"></span></li></ol>",
-      "css": ".ds-tasks{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:16px;margin:0;padding:0;list-style:none;border-bottom:1px solid var(--color-rule);font-family:var(--font-ui),system-ui,sans-serif;color:var(--color-ink)}.ds-task{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:start;padding:20px 0;border-top:1px solid var(--color-rule)}.ds-task p{margin:0;font-size:.9375rem;line-height:1.55}.ds-num{margin-top:-6px;text-align:right;font-size:2.5rem;font-weight:300;line-height:1;font-variant-numeric:tabular-nums;color:var(--color-ink-faint)}.ds-task p.ds-note{margin-top:6px;font-size:.8125rem;color:var(--color-warn)}.ds-box{display:block;width:18px;height:18px;margin-top:3px;border:1px solid var(--color-control);border-radius:2px;box-sizing:border-box}.ds-box.done,.ds-box.warn{display:grid;place-items:center;border:0;color:var(--color-ground);animation:ds-tick .26s cubic-bezier(.16,1,.3,1)}.ds-box.done{background:var(--color-done)}.ds-box.warn{background:var(--color-warn)}@keyframes ds-tick{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}"
+      "description": "Firma del sistema: numeral ligero de un solo tono, enunciado con la línea de verificación de la red, y la casilla que lleva el color de estado.",
+      "html": "<ol class=\"ds-tasks\"><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">1</span><div><p>Cambia el nombre del router a R1-Oficina.</p><dl class=\"ds-ev\"><dt class=\"ds-sr\">La red reporta</dt><dd>R1: identity = R1-Oficina</dd></dl></div><span class=\"ds-box done\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"m232.49 80.49-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z\"/></svg></span></li><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">2</span><div><p>La PC del técnico llega al router por ether2.</p><p class=\"ds-note\">Se cumplía y ya no.</p><dl class=\"ds-ev\"><dt class=\"ds-sr\">La red reporta</dt><dd>ping PC1 → 192.168.88.1: no llega, sin ruta</dd></dl></div><span class=\"ds-box warn\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M240.26 186.1 152.81 34.23a28.74 28.74 0 0 0-49.62 0L15.74 186.1a27.45 27.45 0 0 0 0 27.71A28.31 28.31 0 0 0 40.55 228h174.9a28.31 28.31 0 0 0 24.79-14.19 27.45 27.45 0 0 0 .02-27.71ZM116 104a12 12 0 0 1 24 0v40a12 12 0 0 1-24 0Zm12 88a16 16 0 1 1 16-16 16 16 0 0 1-16 16Z\"/></svg></span></li><li class=\"ds-task\"><span class=\"ds-num\" aria-hidden=\"true\">3</span><p>Crea el usuario soporte en el grupo read.</p><span class=\"ds-box\" aria-hidden=\"true\"></span></li></ol>",
+      "css": ".ds-tasks{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:16px;margin:0;padding:0;list-style:none;border-bottom:1px solid var(--color-rule);font-family:var(--font-ui),system-ui,sans-serif;color:var(--color-ink)}.ds-task{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:start;padding:20px 0;border-top:1px solid var(--color-rule)}.ds-task p{margin:0;font-size:.9375rem;line-height:1.55}.ds-num{margin-top:-6px;text-align:right;font-size:2.5rem;font-weight:300;line-height:1;font-variant-numeric:tabular-nums;color:var(--color-ink-faint)}.ds-task p.ds-note{margin-top:6px;font-size:.8125rem;color:var(--color-warn)}.ds-ev{margin:8px 0 0;font-size:.8125rem;line-height:1.55;color:var(--color-ink-faint);font-variant-numeric:tabular-nums}.ds-ev dd{margin:0}.ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.ds-box{display:block;width:18px;height:18px;margin-top:3px;border:1px solid var(--color-control);border-radius:2px;box-sizing:border-box}.ds-box.done,.ds-box.warn{display:grid;place-items:center;border:0;color:var(--color-ground);animation:ds-tick .26s cubic-bezier(.16,1,.3,1)}.ds-box.done{background:var(--color-done)}.ds-box.warn{background:var(--color-warn)}@keyframes ds-tick{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}"
+    },
+    {
+      "name": "Siguiente lab",
+      "kind": "custom",
+      "refersTo": "link-next",
+      "description": "Cierre de la sección de lab completado: enlace de tinta discreto al siguiente lab de la ruta.",
+      "html": "<a class=\"ds-next\" href=\"#\"><span class=\"ds-next-k\">Siguiente</span><span class=\"ds-next-t\">Lab 2. Interfaces y direcciones IP</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a>",
+      "css": ".ds-next{display:inline-flex;align-items:baseline;gap:8px;padding-top:16px;border-top:1px solid var(--color-rule);color:var(--color-ink);text-decoration:none;font-family:var(--font-ui),system-ui,sans-serif;font-size:.9375rem}.ds-next svg{align-self:center}.ds-next-k{font-size:.875rem;color:var(--color-ink-muted)}.ds-next-t{font-weight:500}.ds-next:hover .ds-next-t{text-decoration:underline}.ds-next:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
     },
     {
       "name": "Figura de topología",
       "kind": "custom",
       "refersTo": "figure",
-      "description": "Figura numerada: cajas de equipo, cables rotulados con interfaz y direcciones, y pie.",
-      "html": "<figure class=\"ds-fig\"><svg viewBox=\"0 0 560 132\" width=\"560\" height=\"132\" role=\"img\" aria-label=\"Topología del lab\"><line x1=\"174\" y1=\"66\" x2=\"386\" y2=\"66\" stroke=\"var(--color-control)\" stroke-width=\"1.5\"/><rect x=\"42\" y=\"40\" width=\"132\" height=\"52\" rx=\"2\" fill=\"var(--color-sheet)\" stroke=\"var(--color-ink)\" stroke-width=\"1.5\"/><text x=\"108\" y=\"63\" text-anchor=\"middle\" class=\"ds-fig-id\">R1</text><text x=\"108\" y=\"80\" text-anchor=\"middle\" class=\"ds-fig-sub\">Router</text><rect x=\"386\" y=\"40\" width=\"132\" height=\"52\" rx=\"2\" fill=\"var(--color-sheet)\" stroke=\"var(--color-rule-strong)\"/><text x=\"452\" y=\"63\" text-anchor=\"middle\" class=\"ds-fig-id\">PC1</text><text x=\"452\" y=\"80\" text-anchor=\"middle\" class=\"ds-fig-sub\">PC del técnico</text><text x=\"182\" y=\"59\" class=\"ds-fig-port\">ether2<tspan x=\"182\" y=\"82\" class=\"ds-fig-sub\">192.168.88.1/24</tspan></text><text x=\"378\" y=\"59\" text-anchor=\"end\" class=\"ds-fig-port\">eth0<tspan x=\"378\" y=\"82\" class=\"ds-fig-sub\">192.168.88.10/24</tspan></text></svg><figcaption><b>Fig. 1.</b> Topología del lab. Las direcciones de cada puerto siguen a la red en vivo.</figcaption></figure>",
-      "css": ".ds-fig{margin:0;background:var(--color-ground);font-family:var(--font-ui),system-ui,sans-serif;}.ds-fig svg{max-width:100%;height:auto}.ds-fig-id{fill:var(--color-ink);font-size:13px;font-weight:600}.ds-fig-sub{fill:var(--color-ink-faint);font-size:11px}.ds-fig-port{fill:var(--color-ink-muted);font-size:11px}.ds-fig figcaption{padding:0 20px 12px;font-size:.8125rem;color:var(--color-ink-faint)}.ds-fig figcaption b{font-weight:500;color:var(--color-ink-muted)}"
+      "description": "Lienzo con zoom que sigue siendo la Fig. 1: formas por papel, un bloque de rótulo por extremo de cable, texto fijo en pantalla, inspector y grupo de zoom en la fila del pie.",
+      "html": "<figure class=\"ds-fig\"><div class=\"ds-fig-canvas\"><svg viewBox=\"0 0 560 150\" width=\"560\" height=\"150\" role=\"img\" aria-label=\"Topología del lab\"><line x1=\"174\" y1=\"60\" x2=\"386\" y2=\"60\" stroke=\"var(--color-control)\" stroke-width=\"1.5\"/><line x1=\"108\" y1=\"84\" x2=\"108\" y2=\"140\" stroke=\"var(--color-rule-strong)\" stroke-width=\"1.5\" stroke-dasharray=\"4 4\"/><path d=\"M 42 36 H 98 V 40 H 118 V 36 H 174 V 84 H 42 Z\" fill=\"var(--color-sheet)\" stroke=\"var(--color-ink)\" stroke-width=\"1.5\"/><text x=\"108\" y=\"58\" text-anchor=\"middle\" class=\"ds-fig-id\">R1</text><text x=\"108\" y=\"74\" text-anchor=\"middle\" class=\"ds-fig-live\">R1-Oficina</text><text x=\"108\" y=\"100\" text-anchor=\"middle\" class=\"ds-fig-sub\">Router de la oficina</text><rect x=\"386\" y=\"38\" width=\"116\" height=\"44\" rx=\"2\" fill=\"var(--color-sheet)\" stroke=\"var(--color-rule-strong)\"/><text x=\"444\" y=\"65\" text-anchor=\"middle\" class=\"ds-fig-id\">PC1</text><text x=\"444\" y=\"98\" text-anchor=\"middle\" class=\"ds-fig-sub\">PC del técnico</text><text x=\"182\" y=\"52\" class=\"ds-fig-port\">ether2</text><text x=\"182\" y=\"76\" class=\"ds-fig-sub\">192.168.88.1/24</text><text x=\"378\" y=\"52\" text-anchor=\"end\" class=\"ds-fig-port\">eth0</text><text x=\"378\" y=\"76\" text-anchor=\"end\" class=\"ds-fig-sub\">192.168.88.10/24</text></svg><div class=\"ds-insp\" role=\"tooltip\"><p><b>R1</b> <span class=\"ds-faint\">Router</span></p><p class=\"ds-muted\">Nombre en vivo: R1-Oficina</p><table><tbody><tr><th scope=\"row\">ether2</th><td class=\"ds-muted\">activa</td><td class=\"ds-muted\">192.168.88.1/24</td></tr><tr><th scope=\"row\">ether3</th><td class=\"ds-faint\">deshabilitada</td><td class=\"ds-faint\">sin dirección</td></tr></tbody></table></div></div><div class=\"ds-fig-foot\"><figcaption><b>Fig. 1.</b> Topología del lab. Las direcciones de cada puerto siguen a la red en vivo.</figcaption><fieldset class=\"ds-zoom\"><legend class=\"ds-sr\">Zoom</legend><button type=\"button\" aria-label=\"Acercar\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M152 112a8 8 0 0 1-8 8h-24v24a8 8 0 0 1-16 0v-24H80a8 8 0 0 1 0-16h24V80a8 8 0 0 1 16 0v24h24a8 8 0 0 1 8 8Zm77.66 117.66a8 8 0 0 1-11.32 0l-50.06-50.07a88.11 88.11 0 1 1 11.31-11.31l50.07 50.06a8 8 0 0 1 0 11.32ZM112 184a72 72 0 1 0-72-72 72.08 72.08 0 0 0 72 72Z\"/></svg></button><button type=\"button\" aria-label=\"Alejar\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M152 112a8 8 0 0 1-8 8H80a8 8 0 0 1 0-16h64a8 8 0 0 1 8 8Zm77.66 117.66a8 8 0 0 1-11.32 0l-50.06-50.07a88.11 88.11 0 1 1 11.31-11.31l50.07 50.06a8 8 0 0 1 0 11.32ZM112 184a72 72 0 1 0-72-72 72.08 72.08 0 0 0 72 72Z\"/></svg></button><button type=\"button\" aria-label=\"Encuadrar\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M216 48v40a8 8 0 0 1-16 0V56h-32a8 8 0 0 1 0-16h40a8 8 0 0 1 8 8ZM88 200H56v-32a8 8 0 0 0-16 0v40a8 8 0 0 0 8 8h40a8 8 0 0 0 0-16Zm120-40a8 8 0 0 0-8 8v32h-32a8 8 0 0 0 0 16h40a8 8 0 0 0 8-8v-40a8 8 0 0 0-8-8ZM88 40H48a8 8 0 0 0-8 8v40a8 8 0 0 0 16 0V56h32a8 8 0 0 0 0-16Z\"/></svg></button></fieldset></div></figure>",
+      "css": ".ds-fig{display:grid;margin:0;background:var(--color-ground);font-family:var(--font-ui),system-ui,sans-serif}.ds-fig-canvas{position:relative;overflow:hidden}.ds-fig svg{display:block;max-width:100%;height:auto}.ds-fig-id{fill:var(--color-ink);font-size:13px;font-weight:600}.ds-fig-live{fill:var(--color-ink-muted);font-size:12px}.ds-fig-sub{fill:var(--color-ink-faint);font-size:12px}.ds-fig-port{fill:var(--color-ink-muted);font-size:12px}.ds-insp{position:absolute;left:184px;top:96px;width:max-content;max-width:22rem;padding:8px 12px;border:1px solid var(--color-rule-strong);border-radius:2px;background:var(--color-sheet);color:var(--color-ink);font-size:.8125rem;line-height:1.55}.ds-insp p{margin:0}.ds-insp b{font-weight:600}.ds-insp table{margin-top:6px;border-top:1px solid var(--color-rule);border-collapse:collapse}.ds-insp th{padding:2px 12px 2px 0;text-align:left;font-weight:500;color:var(--color-ink)}.ds-insp td{padding:2px 12px 2px 0}.ds-muted{color:var(--color-ink-muted)}.ds-faint{color:var(--color-ink-faint)}.ds-fig-foot{display:flex;align-items:center;gap:12px;padding:8px 12px 8px 20px}.ds-fig figcaption{flex:1;font-size:.8125rem;color:var(--color-ink-faint)}.ds-fig figcaption b{font-weight:500;color:var(--color-ink-muted)}.ds-zoom{display:flex;margin:0;padding:0;border:1px solid var(--color-rule);border-radius:2px}.ds-zoom button{display:grid;place-items:center;width:32px;height:32px;border:0;background:transparent;color:var(--color-ink-faint);cursor:pointer}.ds-zoom button+button{border-left:1px solid var(--color-rule)}.ds-zoom button:hover{background:var(--color-rule);color:var(--color-ink)}.ds-zoom button:disabled{color:var(--color-rule-strong);background:transparent}.ds-zoom button:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}"
     },
     {
       "name": "Franja y selector de consola",
@@ -437,9 +445,19 @@
         "section": "typography"
       },
       {
+        "name": "La Regla del Texto Fijo",
+        "body": "En la figura, el zoom escala formas y cables, nunca el texto: rótulos, direcciones, etiquetas y nombre en vivo miden 12px en pantalla y los ids 13px en 600, a cualquier escala.",
+        "section": "typography"
+      },
+      {
         "name": "La Regla del Filete",
         "body": "Las zonas se separan con una línea de 1px, nunca con una tarjeta, un fondo elevado o una sombra.",
         "section": "elevation"
+      },
+      {
+        "name": "La Regla del Trazo que Dice el Medio",
+        "body": "Cable activo: línea continua en gris de control. Asociación wifi activa: discontinua (6 4) en gris de control. Caídos, en filete marcado: cable discontinuo (4 4), wifi punteado (2 4).",
+        "section": "shapes"
       }
     ],
     "dos": [
@@ -449,7 +467,9 @@
       "**Do** usar control (#8a929a) para bordes de casillas vacías y controles, para pasar 3:1 con un filete de 1px.",
       "**Do** citar código en tareas y pistas con Geist 500 sobre un chip de filete.",
       "**Do** usar 2px de radio en todo lo que tenga esquina.",
-      "**Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en cada extremo de cable."
+      "**Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en un solo bloque en cada extremo de cable.",
+      "**Do** contraescalar el texto de la figura para que mida 12px (13px los ids) en pantalla a cualquier zoom, y mantener 2px de radio en pantalla.",
+      "**Do** distinguir el medio por el trazo: continuo para cable, discontinuo (6 4) para wifi; lo caído en filete marcado."
     ],
     "donts": [
       "**Don't** usar rojo para un objetivo; el rojo es solo de acciones destructivas y de la salida del equipo en la consola.",
@@ -458,7 +478,8 @@
       "**Don't** envolver secciones en tarjetas, fondos elevados o sombras.",
       "**Don't** añadir degradados, efectos de cristal ni un color de acento de marca.",
       "**Don't** colorear el anillo de foco con un color de estado.",
-      "**Don't** bajar de 0.75rem en texto de interfaz."
+      "**Don't** bajar de 0.75rem en texto de interfaz.",
+      "**Don't** mostrar tráfico ni contadores de interfaz en la figura."
     ]
   }
 }
