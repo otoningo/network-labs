@@ -20,7 +20,7 @@ export interface PlatformSpec {
 /** Equipo final genérico (PC, portátil, servidor). No reenvía paquetes. */
 export const HOST_PLATFORM: PlatformSpec = {
   os: 'host',
-  traits: { forwards: false, poolAllocation: 'lowest' },
+  traits: { forwards: false, poolAllocation: 'lowest', dhcpDnsFallback: false },
   defaultMtu: 1500,
   interfaceName: (port) =>
     port.kind === 'ethernet' ? `eth${port.index - 1}` : `wlan${port.index - 1}`,
@@ -30,7 +30,7 @@ export const HOST_PLATFORM: PlatformSpec = {
 /** "Internet": responde por las IPs públicas que el escenario indique. */
 export const INTERNET_PLATFORM: PlatformSpec = {
   os: 'internet',
-  traits: { forwards: false, poolAllocation: 'lowest' },
+  traits: { forwards: false, poolAllocation: 'lowest', dhcpDnsFallback: false },
   defaultMtu: 1500,
   interfaceName: (port) => `eth${port.index - 1}`,
   defaultIdentity: () => 'internet',

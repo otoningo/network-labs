@@ -270,7 +270,7 @@ describe('DHCP', () => {
     net()
       .router('R1', 'sim-r5w', {
         os: 'routeros',
-        traits: { forwards: true, poolAllocation: allocation },
+        traits: { forwards: true, poolAllocation: allocation, dhcpDnsFallback: false },
         defaultMtu: 1500,
         interfaceName: (p) => (p.kind === 'ethernet' ? `ether${p.index}` : `wlan${p.index}`),
         defaultIdentity: (id) => id,

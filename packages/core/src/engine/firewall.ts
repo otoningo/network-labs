@@ -5,6 +5,7 @@
  */
 import type { ItemId } from '../model/brand';
 import type {
+  ConnNatState,
   ConnState,
   DeviceConfig,
   IpProtocol,
@@ -30,6 +31,8 @@ export interface MatchContext {
   readonly inIface?: ItemId;
   readonly outIface?: ItemId;
   readonly state: ConnState;
+  /** Traducciones que ya tiene la conexión en este equipo (vacío si ninguna). */
+  readonly natState?: readonly ConnNatState[];
 }
 
 export type Verdict = 'accept' | 'drop' | 'reject';
@@ -81,7 +84,10 @@ export function ruleMatches(config: DeviceConfig, match: Match, ctx: MatchContex
     holds(match.outInterface, iface(ctx.outIface)) &&
     holds(match.inInterfaceList, list(ctx.inIface)) &&
     holds(match.outInterfaceList, list(ctx.outIface)) &&
-    (match.connectionState === undefined || match.connectionState.includes(ctx.state))
+    (match.connectionState === undefined || match.connectionState.includes(ctx.state)) &&
+    holds(match.connectionNatState, (states) =>
+      states.some((state) => ctx.natState?.includes(state) ?? false),
+    )
   );
 }
 

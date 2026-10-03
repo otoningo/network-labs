@@ -247,7 +247,12 @@ export function evaluate(predicate: Predicate, ctx: EvalContext): boolean {
     case 'setting': {
       const d = device(predicate.device);
       if (!d) return false;
-      const values = { system: d.config.system, dns: d.config.dns, discovery: d.config.discovery };
+      const values = {
+        system: d.config.system,
+        dns: d.config.dns,
+        discovery: d.config.discovery,
+        l2Access: d.config.l2Access,
+      };
       return matcherHolds(d, valueAt(values[predicate.key], predicate.path), predicate.match);
     }
 

@@ -6,7 +6,7 @@
 import type { IpRange, Ipv4, Ipv4Prefix } from '../net/ipv4';
 import type { Mac } from '../net/mac';
 import type { PortSet } from '../net/ports';
-import type { ItemId } from './brand';
+import type { ItemId, SimTime } from './brand';
 
 export interface ItemBase {
   readonly id: ItemId;
@@ -173,11 +173,18 @@ export type Gateway =
   | { readonly kind: 'ip-iface'; readonly ip: Ipv4; readonly iface: ItemId }
   | { readonly kind: 'blackhole' };
 
+/**
+ * Comprobación de que el gateway sigue vivo: con ella la ruta solo está activa
+ * si el vecino responde de verdad en capa 2, no basta con que el enlace esté arriba.
+ */
+export type CheckGateway = 'ping' | 'arp';
+
 export interface StaticRoute extends ItemBase {
   readonly dst: Ipv4Prefix;
   readonly gateway: Gateway;
   readonly distance: number;
   readonly table: string;
+  readonly checkGateway?: CheckGateway;
 }
 
 // ── DHCP y DNS ──────────────────────────────────────────────────────────────
@@ -239,6 +246,8 @@ export interface Neg<T> {
 
 export type IpProtocol = 'tcp' | 'udp' | 'icmp';
 export type ConnState = 'new' | 'established' | 'related' | 'invalid' | 'untracked';
+/** Traducciones que ya tiene la conexión del paquete. */
+export type ConnNatState = 'srcnat' | 'dstnat';
 
 export interface Match {
   readonly srcAddress?: Neg<Ipv4Prefix | IpRange>;
@@ -253,6 +262,8 @@ export interface Match {
   readonly inInterfaceList?: Neg<string>;
   readonly outInterfaceList?: Neg<string>;
   readonly connectionState?: readonly ConnState[];
+  /** Coincide si la conexión tiene alguna de estas traducciones (o ninguna, negado). */
+  readonly connectionNatState?: Neg<readonly ConnNatState[]>;
 }
 
 export type RejectWith = 'icmp-port-unreachable' | 'icmp-admin-prohibited' | 'tcp-reset';
@@ -274,12 +285,15 @@ export interface FilterRule extends ItemBase {
   readonly action: FilterAction;
   readonly log: boolean;
   readonly logPrefix?: string;
+  /** Pedir que la vía rápida (fasttrack) la haga el hardware si puede. */
+  readonly hwOffload?: boolean;
 }
 
 export type NatAction =
   | { readonly kind: 'masquerade'; readonly toPorts?: PortSet }
   | { readonly kind: 'srcNat'; readonly to: IpRange; readonly toPorts?: PortSet }
-  | { readonly kind: 'dstNat'; readonly to: IpRange; readonly toPorts?: PortSet }
+  /** Sin `to` solo se traduce el puerto (el destino original se conserva). */
+  | { readonly kind: 'dstNat'; readonly to?: IpRange; readonly toPorts?: PortSet }
   | { readonly kind: 'redirect'; readonly toPorts: PortSet }
   | { readonly kind: 'netmap'; readonly to: Ipv4Prefix }
   | { readonly kind: 'accept' };
@@ -295,12 +309,23 @@ export interface NatRule extends ItemBase {
 export interface AddressListEntry extends ItemBase {
   readonly list: string;
   readonly address: Ipv4Prefix | IpRange;
+  /** Con timeout la entrada es temporal: caduca `timeoutS` segundos después de `createdAt`. */
   readonly timeoutS?: number;
+  readonly createdAt?: SimTime;
 }
 
 // ── Descubrimiento de vecinos ───────────────────────────────────────────────
 
 export type DiscoveryProtocol = 'lldp' | 'cdp' | 'mndp';
+
+/**
+ * Acceso de gestión por capa 2 (por MAC, sin IP): consola y herramienta gráfica.
+ * Cada campo es una lista de interfaces, o `all` / `none`.
+ */
+export interface L2AccessConfig {
+  readonly cli: string;
+  readonly gui: string;
+}
 
 export interface DiscoveryConfig {
   readonly protocols: readonly DiscoveryProtocol[];
@@ -339,6 +364,7 @@ export interface DeviceConfig {
     readonly addressLists: readonly AddressListEntry[];
   };
   readonly discovery: DiscoveryConfig;
+  readonly l2Access: L2AccessConfig;
 }
 
 export function emptyConfig(identity: string): DeviceConfig {
@@ -355,5 +381,6 @@ export function emptyConfig(identity: string): DeviceConfig {
     dns: { servers: [], allowRemoteRequests: false, cacheSizeKiB: 2048, static: [] },
     firewall: { filter: [], nat: [], addressLists: [] },
     discovery: { protocols: [], interfaceList: 'none' },
+    l2Access: { cli: 'all', gui: 'all' },
   };
 }

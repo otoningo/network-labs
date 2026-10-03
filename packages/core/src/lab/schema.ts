@@ -10,7 +10,12 @@ import { parseIpv4, parsePrefix, parseRange } from '../net/ipv4';
 
 const OS_IDS = ['routeros', 'vrp', 'vyos', 'ios', 'host', 'internet'] as const;
 export const VENDOR_OS = ['routeros', 'vrp', 'vyos', 'ios'] as const;
-const SINGLETON_KEYS = ['system', 'dns', 'discovery'] as const satisfies readonly SingletonKey[];
+const SINGLETON_KEYS = [
+  'system',
+  'dns',
+  'discovery',
+  'l2Access',
+] as const satisfies readonly SingletonKey[];
 
 const Name = z.string().min(1);
 const DeviceRef = z

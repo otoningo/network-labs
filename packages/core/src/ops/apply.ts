@@ -309,6 +309,16 @@ function setSingleton(device: Device, op: SetSingletonOp): Result<Applied, CoreE
         return err({ code: 'not-found', scope: 'discovery', field: 'interfaceList', ref: name });
       return ok({ device: { ...device, config: { ...config, discovery } } });
     }
+    case 'l2Access': {
+      const l2Access = { ...config.l2Access, ...op.patch };
+      for (const field of ['cli', 'gui'] as const) {
+        const name = l2Access[field];
+        const known =
+          name === 'all' || name === 'none' || config.interfaceLists.some((l) => l.name === name);
+        if (!known) return err({ code: 'not-found', scope: 'l2Access', field, ref: name });
+      }
+      return ok({ device: { ...device, config: { ...config, l2Access } } });
+    }
   }
 }
 

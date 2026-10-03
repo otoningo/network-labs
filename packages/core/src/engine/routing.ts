@@ -29,6 +29,11 @@ export interface RibInput {
   readonly routes: readonly StaticRoute[];
   readonly dhcpRoutes: readonly DhcpRoute[];
   isRunning(iface: ItemId): boolean;
+  /**
+   * ¿Responde de verdad el gateway por esa interfaz? Solo se consulta en rutas
+   * con comprobación de gateway; sin esta función se da por vivo.
+   */
+  gatewayAlive?(iface: ItemId, gateway: Ipv4): boolean;
 }
 
 type Candidate = Omit<RibEntry, 'active'>;
@@ -55,6 +60,10 @@ export function computeRib(input: RibInput): RibEntry[] {
     blackhole: false,
     reachable: input.isRunning(a.iface),
   }));
+
+  // Con comprobación de gateway no basta con que el enlace esté arriba: alguien debe responder.
+  const alive = (route: StaticRoute, iface: ItemId, gateway: Ipv4): boolean =>
+    route.checkGateway === undefined || (input.gatewayAlive?.(iface, gateway) ?? true);
 
   const statics: Candidate[] = [];
   for (const route of input.routes) {
@@ -84,17 +93,18 @@ export function computeRib(input: RibInput): RibEntry[] {
           gateway: gw.ip,
           iface: gw.iface,
           blackhole: false,
-          reachable: input.isRunning(gw.iface),
+          reachable: input.isRunning(gw.iface) && alive(route, gw.iface, gw.ip),
         });
         break;
       case 'ip': {
         const via = resolveVia(connected, gw.ip);
+        const iface = via?.iface;
         statics.push({
           ...base,
           gateway: gw.ip,
-          ...(via?.iface === undefined ? {} : { iface: via.iface }),
+          ...(iface === undefined ? {} : { iface }),
           blackhole: false,
-          reachable: via !== undefined,
+          reachable: iface !== undefined && alive(route, iface, gw.ip),
         });
         break;
       }

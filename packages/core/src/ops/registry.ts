@@ -367,7 +367,7 @@ export const REGISTRY: Registry = {
         outOfRange('routes', 'distance', r.distance, 1, 255),
         required('routes', 'table', r.table),
       ),
-    optional: ['comment'],
+    optional: ['comment', 'checkGateway'],
     creatable: always,
     removable: always,
   },
@@ -484,7 +484,7 @@ export const REGISTRY: Registry = {
       }
       return portsNeedTcpUdp('filterRules', r.match, false);
     },
-    optional: ['comment', 'logPrefix'],
+    optional: ['comment', 'logPrefix', 'hwOffload'],
     creatable: always,
     removable: always,
   },
@@ -508,7 +508,7 @@ export const REGISTRY: Registry = {
     refs: noRefs,
     uniques: (a) => [{ field: 'address', value: `${a.list}:${addressKey(a.address)}` }],
     check: (a) => required('addressLists', 'list', a.list),
-    optional: ['comment', 'timeoutS'],
+    optional: ['comment', 'timeoutS', 'createdAt'],
     creatable: always,
     removable: always,
   },

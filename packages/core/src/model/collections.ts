@@ -13,6 +13,7 @@ import type {
   InterfaceList,
   InterfaceListMember,
   IpAddress,
+  L2AccessConfig,
   MgmtService,
   NatRule,
   Pool,
@@ -64,6 +65,7 @@ export interface SingletonItems {
   system: SystemSettings;
   dns: DnsSettings;
   discovery: DiscoveryConfig;
+  l2Access: L2AccessConfig;
 }
 
 export type SingletonKey = keyof SingletonItems;

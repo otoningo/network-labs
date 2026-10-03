@@ -6,6 +6,7 @@
  */
 import type { DeviceId, ItemId } from '../model/brand';
 import { COLLECTION_KEYS } from '../model/collections';
+import type { Match } from '../model/config';
 import { portKey } from '../model/lookup';
 import type { Device, Network, PortRef } from '../model/network';
 import {
@@ -274,7 +275,29 @@ function invalidItems(device: Device, ctx: Context): InvalidItem[] {
   for (const c of config.addressing.dhcpClients) {
     if (slave(c.iface)) result.push({ coll: 'dhcpClients', id: c.id, reason: 'slave-port' });
   }
+  // El tráfico enrutado entra y sale por el bridge: un puerto esclavo nunca coincide.
+  const slaveMatch = (m: Match) =>
+    (m.inInterface !== undefined && slave(m.inInterface.value)) ||
+    (m.outInterface !== undefined && slave(m.outInterface.value));
+  for (const r of config.firewall.filter) {
+    if (slaveMatch(r.match)) result.push({ coll: 'filterRules', id: r.id, reason: 'slave-port' });
+  }
+  for (const r of config.firewall.nat) {
+    if (slaveMatch(r.match)) result.push({ coll: 'natRules', id: r.id, reason: 'slave-port' });
+  }
   return result;
+}
+
+/** El gateway responde: un extremo con esa IP es alcanzable en capa 2 en ambos sentidos. */
+function gatewayAlive(device: Device, ctx: Context, iface: ItemId, gateway: Ipv4): boolean {
+  const here: PortRef = { device: device.id, iface };
+  for (const peer of ctx.l2.flood(here).reached.values()) {
+    const owns = (ctx.addresses.get(peer.device) ?? []).some(
+      (a) => a.iface === peer.iface && a.address.ip === gateway,
+    );
+    if (owns && ctx.l2.mutual(here, peer)) return true;
+  }
+  return false;
 }
 
 function buildOper(device: Device, ctx: Context): DeviceOper {
@@ -309,14 +332,32 @@ function buildOper(device: Device, ctx: Context): DeviceOper {
     routes: device.config.routing.static,
     dhcpRoutes,
     isRunning: (iface) => ctx.links.isRunning({ device: device.id, iface }),
+    gatewayAlive: (iface, gateway) => gatewayAlive(device, ctx, iface, gateway),
   });
 
-  const newLeases: LogEntry[] = ctx.dhcp.fresh
-    .filter((f) => f.device === device.id)
-    .map((f) => ({
-      at: ctx.net.now,
-      event: { kind: 'dhcp-assigned', server: f.lease.server, ip: f.lease.ip, mac: f.lease.mac },
-    }));
+  const newLeases: LogEntry[] = [
+    ...ctx.dhcp.fresh
+      .filter((f) => f.device === device.id)
+      .map(
+        (f): LogEntry => ({
+          at: ctx.net.now,
+          event: {
+            kind: 'dhcp-assigned',
+            server: f.lease.server,
+            ip: f.lease.ip,
+            mac: f.lease.mac,
+          },
+        }),
+      ),
+    ...ctx.dhcp.exhausted
+      .filter((e) => e.device === device.id)
+      .map(
+        (e): LogEntry => ({
+          at: ctx.net.now,
+          event: { kind: 'dhcp-pool-empty', server: e.server, pool: e.pool },
+        }),
+      ),
+  ];
 
   return {
     interfaces: interfaceOpers(device, ctx),

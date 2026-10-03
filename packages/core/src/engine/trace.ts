@@ -7,7 +7,7 @@
  * Las validaciones de conectividad de los labs se basan en esto (ver D-014).
  */
 import type { DeviceId, ItemId } from '../model/brand';
-import type { IpProtocol, NatChain, NatRule } from '../model/config';
+import type { ConnNatState, IpProtocol, NatChain, NatRule } from '../model/config';
 import type { Device, InternetEmulation, Network, PortRef } from '../model/network';
 import type { RibEntry } from '../model/oper';
 import { type Ipv4, type Ipv4Prefix, isPrivateIpv4, maskOf, prefixContains } from '../net/ipv4';
@@ -224,6 +224,18 @@ interface Track {
   readonly after: PacketHeader;
 }
 
+const NAT_STATE: Readonly<Record<Track['kind'], ConnNatState>> = { src: 'srcnat', dst: 'dstnat' };
+
+/**
+ * Traducciones que la conexión ya tiene en un equipo. En la ida el filtro ve
+ * el dstnat del preruteo pero aún no el srcnat (que va después); en la vuelta,
+ * todo lo que quedó registrado.
+ */
+function natStateAt(device: DeviceId, tracks: readonly Track[]): ConnNatState[] {
+  const kinds = new Set(tracks.filter((t) => t.device === device).map((t) => NAT_STATE[t.kind]));
+  return (['srcnat', 'dstnat'] as const).filter((state) => kinds.has(state));
+}
+
 function netmap(to: Ipv4Prefix, ip: Ipv4): Ipv4 {
   const mask = maskOf(to.len);
   return (((to.ip & mask) | (ip & ~mask)) >>> 0) as Ipv4;
@@ -260,7 +272,7 @@ function translate(
     case 'dstNat':
       return header(
         pkt.src,
-        action.to.from,
+        action.to?.from ?? pkt.dst,
         pkt.protocol,
         pkt.srcPort,
         firstPort(action.toPorts, pkt.dstPort),
@@ -300,6 +312,7 @@ function applyNat(
     ...(inIface === undefined ? {} : { inIface }),
     ...(outIface === undefined ? {} : { outIface }),
     state: 'new',
+    natState: natStateAt(device.id, tracks),
   });
   if (!rule) return pkt;
   const after = translate(ctx, device.id, rule, pkt, inIface, outIface);
@@ -410,7 +423,12 @@ function runLeg(
           ? unSrcNat(deviceId, pkt, nat, tracks)
           : applyNat(ctx, device, 'dstnat', pkt, inIface, undefined, nat, tracks);
       if (isLocal(ctx, deviceId, pkt.dst)) {
-        const verdict = runFilter(device.config, 'input', { packet: pkt, inIface, state });
+        const verdict = runFilter(device.config, 'input', {
+          packet: pkt,
+          inIface,
+          state,
+          natState: natStateAt(deviceId, tracks),
+        });
         filters.push(verdict);
         hops.push(base);
         if (verdict.verdict !== 'accept') {
@@ -459,6 +477,7 @@ function runLeg(
       ...(inIface === undefined ? {} : { inIface }),
       outIface,
       state,
+      natState: natStateAt(deviceId, tracks),
     });
     filters.push(verdict);
     if (verdict.verdict !== 'accept') {

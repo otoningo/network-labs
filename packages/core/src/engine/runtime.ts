@@ -4,7 +4,7 @@
  * Todo es determinista: el tiempo lo pasa quien llama.
  */
 import type { DeviceId, ItemId, SimTime } from '../model/brand';
-import type { IpProtocol } from '../model/config';
+import type { AddressListEntry, DeviceConfig, IpProtocol } from '../model/config';
 import type { Device, Flow, Network } from '../model/network';
 import {
   type Connection,
@@ -15,7 +15,7 @@ import {
   type LogEntry,
   type RuleCounter,
 } from '../model/oper';
-import { formatIpv4, type Ipv4, parseIpv4 } from '../net/ipv4';
+import { formatIpv4, type Ipv4, type Ipv4Prefix, parseIpv4, prefixContains } from '../net/ipv4';
 import { converge } from './converge';
 import type { PacketHeader } from './firewall';
 import { type Hop, type TraceResult, trace } from './trace';
@@ -271,13 +271,50 @@ export interface TorchEntry {
   readonly flow: string;
 }
 
+/** Qué tráfico mostrar: solo el que cumple todos los criterios presentes. */
+export interface TorchFilter {
+  readonly srcAddress?: Ipv4Prefix;
+  readonly dstAddress?: Ipv4Prefix;
+  /** Puerto de origen o de destino. */
+  readonly port?: number;
+  readonly protocol?: IpProtocol;
+}
+
 const touches = (hop: Hop, iface: ItemId, side: 'in' | 'out'): boolean =>
   side === 'in'
     ? hop.inIface === iface || hop.inPort === iface
     : hop.outIface === iface || hop.outPort === iface;
 
-/** Tráfico de fondo que cruza una interfaz, visto desde ese dispositivo. */
-export function torch(net: Network, deviceId: DeviceId, iface: ItemId): TorchEntry[] {
+/** Cabecera de la vuelta vista en el sentido de la conexión. */
+const forwardView = (p: PacketHeader): PacketHeader => ({
+  src: p.dst,
+  dst: p.src,
+  protocol: p.protocol,
+  ...(p.dstPort === undefined ? {} : { srcPort: p.dstPort }),
+  ...(p.srcPort === undefined ? {} : { dstPort: p.srcPort }),
+});
+
+function passes(p: PacketHeader, filter: TorchFilter): boolean {
+  return (
+    (filter.srcAddress === undefined || prefixContains(filter.srcAddress, p.src)) &&
+    (filter.dstAddress === undefined || prefixContains(filter.dstAddress, p.dst)) &&
+    (filter.protocol === undefined || filter.protocol === p.protocol) &&
+    (filter.port === undefined || p.srcPort === filter.port || p.dstPort === filter.port)
+  );
+}
+
+/**
+ * Tráfico de fondo que cruza una interfaz, visto desde ese dispositivo. Cada
+ * flujo se muestra tal como pasa por la interfaz: al entrar, la cabecera
+ * recibida; al salir, la enviada (ya con srcnat). Solo cuenta lo que de verdad
+ * entra o sale: un paquete descartado por el firewall no se transmite.
+ */
+export function torch(
+  net: Network,
+  deviceId: DeviceId,
+  iface: ItemId,
+  filter: TorchFilter = {},
+): TorchEntry[] {
   const entries: TorchEntry[] = [];
   for (const flow of net.scenario.flows) {
     const result = trace(net, flowProbe(flow));
@@ -286,18 +323,29 @@ export function torch(net: Network, deviceId: DeviceId, iface: ItemId): TorchEnt
     let seen: PacketHeader | undefined;
     for (const hop of result.forward.hops) {
       if (hop.device !== deviceId) continue;
-      seen ??= hop.received;
-      if (touches(hop, iface, 'in')) rx += flow.bps;
-      if (touches(hop, iface, 'out')) tx += flow.bps;
+      if (touches(hop, iface, 'in')) {
+        rx += flow.bps;
+        seen ??= hop.received;
+      }
+      if (touches(hop, iface, 'out') && hop.sent) {
+        tx += flow.bps;
+        seen ??= hop.sent;
+      }
     }
     if (result.reply && result.forward.end.kind === 'delivered') {
       for (const hop of result.reply.hops) {
         if (hop.device !== deviceId) continue;
-        if (touches(hop, iface, 'in')) rx += flow.replyBps;
-        if (touches(hop, iface, 'out')) tx += flow.replyBps;
+        if (touches(hop, iface, 'in')) {
+          rx += flow.replyBps;
+          seen ??= forwardView(hop.received);
+        }
+        if (touches(hop, iface, 'out') && hop.sent) {
+          tx += flow.replyBps;
+          seen ??= forwardView(hop.sent);
+        }
       }
     }
-    if ((tx > 0 || rx > 0) && seen) {
+    if ((tx > 0 || rx > 0) && seen && passes(seen, filter)) {
       entries.push({
         protocol: seen.protocol,
         src: seen.src,
@@ -325,6 +373,19 @@ function flowProbe(flow: Flow) {
 
 // ── Avance del reloj ────────────────────────────────────────────────────────
 
+/** Entradas temporales de listas de direcciones cuyo plazo ya venció. */
+const expired = (e: AddressListEntry, now: SimTime): boolean =>
+  e.timeoutS !== undefined && e.createdAt !== undefined && e.createdAt + e.timeoutS <= now;
+
+function withoutExpired(config: DeviceConfig, now: SimTime): DeviceConfig {
+  const lists = config.firewall.addressLists;
+  if (!lists.some((e) => expired(e, now))) return config;
+  return {
+    ...config,
+    firewall: { ...config.firewall, addressLists: lists.filter((e) => !expired(e, now)) },
+  };
+}
+
 const CONNECTION_TIMEOUT: Readonly<Record<IpProtocol, number>> = { tcp: 86400, udp: 180, icmp: 10 };
 
 interface Traffic {
@@ -336,7 +397,8 @@ interface Traffic {
 
 /**
  * Avanza el reloj `dt` segundos: el tráfico de fondo suma en contadores de
- * interfaces y reglas, mantiene las conexiones vivas y caduca la caché DNS.
+ * interfaces y reglas, mantiene las conexiones vivas y caduca la caché DNS y
+ * las entradas temporales de las listas de direcciones.
  */
 export function tick(net: Network, dt: number): Network {
   const now = (net.now + dt) as SimTime;
@@ -426,6 +488,7 @@ export function tick(net: Network, dt: number): Network {
     const kept = device.oper.conntrack.filter((c) => c.flow === undefined && c.expiresAt > now);
     return {
       ...device,
+      config: withoutExpired(device.config, now),
       oper: {
         ...device.oper,
         interfaces,

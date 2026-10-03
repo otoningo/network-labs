@@ -22,6 +22,11 @@ export interface DeviceTraits {
   readonly forwards: boolean;
   /** Orden en que un pool DHCP entrega direcciones. */
   readonly poolAllocation: 'lowest' | 'highest';
+  /**
+   * Si una red DHCP no define servidores DNS, el servidor entrega los suyos
+   * (los configurados más los dinámicos). Si no, el cliente se queda sin DNS.
+   */
+  readonly dhcpDnsFallback: boolean;
 }
 
 export interface StoredFile {

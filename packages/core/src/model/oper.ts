@@ -107,6 +107,8 @@ export interface DhcpClientStatus {
   readonly gateway?: Ipv4;
   readonly dns: readonly Ipv4[];
   readonly expiresAt?: SimTime;
+  /** Servidor que responde pero no tiene direcciones libres (pool agotado). */
+  readonly exhausted?: PortRef;
 }
 
 export interface Neighbor {

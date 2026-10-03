@@ -171,7 +171,8 @@ describe('tráfico de fondo', () => {
       }),
       expect.objectContaining({ flow: 'perdido', txBps: 1000, rxBps: 0 }),
     ]);
-    expect(formatIpv4(wan[0]?.src ?? (0 as never))).toBe('192.168.88.10');
+    // Por la WAN sale ya traducido: se ve la IP pública del router, no la del PC.
+    expect(formatIpv4(wan[0]?.src ?? (0 as never))).toBe('203.0.113.2');
     const port = torch(n, R1, ifaceIn(n, 'R1', 'ether2'));
     expect(port).toEqual([
       expect.objectContaining({ flow: 'descarga', rxBps: 200_000, txBps: 5_000_000 }),

@@ -6,7 +6,7 @@ import type { PlatformSpec } from '../device/platform';
  */
 export const TEST_ROUTER_PLATFORM: PlatformSpec = {
   os: 'routeros',
-  traits: { forwards: true, poolAllocation: 'lowest' },
+  traits: { forwards: true, poolAllocation: 'lowest', dhcpDnsFallback: false },
   defaultMtu: 1500,
   interfaceName: (port) => (port.kind === 'ethernet' ? `ether${port.index}` : `wlan${port.index}`),
   defaultIdentity: (id) => id,

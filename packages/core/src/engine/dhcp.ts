@@ -24,6 +24,15 @@ export interface DhcpResult {
   readonly clients: ReadonlyMap<DeviceId, readonly DhcpClientStatus[]>;
   /** Leases que no existían antes de esta convergencia (para el log). */
   readonly fresh: readonly { readonly device: DeviceId; readonly lease: DhcpLease }[];
+  /**
+   * Clientes que se acaban de quedar sin dirección porque el pool de su
+   * servidor está agotado (para el log del servidor; no se repite mientras sigan así).
+   */
+  readonly exhausted: readonly {
+    readonly device: DeviceId;
+    readonly server: ItemId;
+    readonly pool: ItemId;
+  }[];
 }
 
 interface ServerCtx {
@@ -206,12 +215,39 @@ export function computeDhcp(
     }
   }
 
+  // 5. DNS que recibe cada cliente. Sin servidores en la red, algunos sistemas
+  // entregan los del propio servidor, que a su vez pueden venir de su cliente DHCP.
+  const resolving = new Set<DeviceId>();
+  const clientDns = (c: ClientCtx): readonly Ipv4[] => {
+    const s = c.server;
+    const lease = c.lease;
+    const network = s && lease ? networkFor(s.device, lease.ip) : undefined;
+    if (!s || !network) return [];
+    if (network.dnsServers.length > 0 || !s.device.traits.dhcpDnsFallback)
+      return network.dnsServers;
+    return serverDns(s.device);
+  };
+  const serverDns = (device: Device): readonly Ipv4[] => {
+    const result = [...device.config.dns.servers];
+    // Un ciclo de servidores que se remiten entre sí se corta en sus DNS estáticos.
+    if (resolving.has(device.id)) return result;
+    resolving.add(device.id);
+    for (const c of clients) {
+      if (c.device.id !== device.id || !c.client.usePeerDns) continue;
+      for (const ip of clientDns(c)) if (!result.includes(ip)) result.push(ip);
+    }
+    resolving.delete(device.id);
+    return result;
+  };
+
   const leases = new Map<DeviceId, DhcpLease[]>();
   const statuses = new Map<DeviceId, DhcpClientStatus[]>();
   const fresh: { device: DeviceId; lease: DhcpLease }[] = [];
+  const exhausted: { device: DeviceId; server: ItemId; pool: ItemId }[] = [];
   for (const c of clients) {
     const s = c.server;
     const lease = c.lease;
+    const pool = s ? poolOf(s) : undefined;
     let status: DhcpClientStatus;
     if (s && lease) {
       leases.set(s.device.id, [...(leases.get(s.device.id) ?? []), lease]);
@@ -226,14 +262,27 @@ export function computeDhcp(
         server: s.ref,
         address: { ip: lease.ip, len: prefixLenFor(s, lease.ip) },
         ...(network?.gateway === undefined ? {} : { gateway: network.gateway }),
-        dns: network?.dnsServers ?? [],
+        dns: clientDns(c),
         expiresAt: lease.expiresAt,
       };
+    } else if (s && pool !== undefined) {
+      // Hay servidor pero ninguna dirección libre: el pool está agotado.
+      status = { client: c.client.id, status: 'searching', dns: [], exhausted: s.ref };
+      const previous = c.device.oper.dhcpClients.find((x) => x.client === c.client.id)?.exhausted;
+      const already = previous?.device === s.ref.device && previous.iface === s.ref.iface;
+      if (!already) exhausted.push({ device: s.device.id, server: s.server.id, pool });
     } else {
       status = { client: c.client.id, status: 'searching', dns: [] };
     }
     statuses.set(c.device.id, [...(statuses.get(c.device.id) ?? []), status]);
   }
 
-  return { leases, clients: statuses, fresh };
+  return { leases, clients: statuses, fresh, exhausted };
+}
+
+/** Pool del que reparte el servidor, si existe (no es solo de leases estáticos). */
+function poolOf(s: ServerCtx): ItemId | undefined {
+  const pool = s.server.pool;
+  if (pool === 'static-only') return undefined;
+  return s.device.config.dhcpServer.pools.some((p) => p.id === pool) ? pool : undefined;
 }
