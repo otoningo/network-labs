@@ -59,7 +59,7 @@ export const en: Messages = {
   },
   terminal: {
     label: '{device} terminal. Type commands and press Enter.',
-    keys: 'Tab completes, ? shows help, up and down arrows walk the history, Ctrl+X toggles safe mode.',
+    keys: 'Tab completes, ? shows help, up and down arrows walk the history, Ctrl+X toggles safe mode and Ctrl+C cancels the line. To leave the terminal press Esc and then Tab, or Shift+Tab.',
     closed: 'Session closed. Press Enter to reconnect.',
   },
 };

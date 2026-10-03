@@ -61,7 +61,7 @@ export const es = {
   },
   terminal: {
     label: 'Terminal de {device}. Escribe comandos y pulsa Enter.',
-    keys: 'Tab completa, ? muestra ayuda, flechas arriba y abajo recorren el historial, Ctrl+X activa el modo seguro.',
+    keys: 'Tab completa, ? muestra ayuda, flechas arriba y abajo recorren el historial, Ctrl+X activa el modo seguro y Ctrl+C cancela la línea. Para salir de la terminal pulsa Esc y después Tab, o Mayús+Tab.',
     closed: 'Sesión cerrada. Pulsa Enter para volver a conectar.',
   },
 } as const;
