@@ -1,0 +1,147 @@
+@import "tailwindcss";
+@import "@xterm/xterm/css/xterm.css";
+
+/*
+ * Tokens de la interfaz (D-031). Todo color y tamaño de texto sale de aquí.
+ * El acento solo se usa para estado: cumplido, error y aviso.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Superficies: grafito casi negro, con un solo escalón para la consola. */
+  --color-ground: #141618;
+  --color-sheet: #181a1d;
+  --color-console: #0f1012;
+  --color-rule: #2a2e33;
+  --color-rule-strong: #3a3f45;
+
+  /* Tinta: blanco papel y dos grises para jerarquía. */
+  --color-ink: #e3e6e8;
+  --color-ink-muted: #a3aab1;
+  --color-ink-faint: #7d858d;
+
+  /* Estado. Nada más en la interfaz lleva color. */
+  --color-done: #6cc08a;
+  --color-error: #e5726a;
+  --color-warn: #e0b04f;
+  --color-done-quiet: #1d2a22;
+  --color-error-quiet: #2e1c1b;
+  --color-warn-quiet: #2d2618;
+
+  /* Foco: tinta, no acento, para no confundirlo con un estado. */
+  --color-focus: #e3e6e8;
+
+  /* Escala tipográfica (1.2 aprox.), en rem para respetar el zoom del usuario. */
+  --text-2xs: 0.75rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-numeral: 2.5rem;
+
+  --leading-tight: 1.2;
+  --leading-body: 1.55;
+
+  /* Espaciado y medidas. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --bar-height: 3rem;
+  --radius: 2px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-ground: var(--color-ground);
+  --color-sheet: var(--color-sheet);
+  --color-console: var(--color-console);
+  --color-rule: var(--color-rule);
+  --color-rule-strong: var(--color-rule-strong);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-done: var(--color-done);
+  --color-error: var(--color-error);
+  --color-warn: var(--color-warn);
+  --color-done-quiet: var(--color-done-quiet);
+  --color-error-quiet: var(--color-error-quiet);
+  --color-warn-quiet: var(--color-warn-quiet);
+
+  --text-2xs: var(--text-2xs);
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-md: var(--text-md);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-numeral: var(--text-numeral);
+
+  --font-sans: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-console), ui-monospace, monospace;
+  --radius-sm: var(--radius);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-rule-strong);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+a {
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule-strong) transparent;
+}
+
+/* Código en línea dentro de textos de lab y pistas: único uso de mono fuera de la consola. */
+.inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  background: var(--color-rule);
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: la preferencia del usuario manda sobre cualquier animación */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: ídem */
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,96 @@
+# Ruta "MikroTik desde cero", lab 1. Piloto de la fase 3; la fase 4 escribe el resto.
+id: ros-01-acceso-inicial
+vendor: routeros
+path: mikrotik-desde-cero
+order: 1
+title:
+  es: Acceso inicial y CLI
+  en: Initial access and the CLI
+summary:
+  es: Primer contacto con un router recién salido de fábrica. Nombre, usuarios y servicios de gestión.
+  en: First contact with a factory-fresh router. Name, users and management services.
+difficulty: beginner
+minutes: 10
+
+topology:
+  devices:
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 200, y: 120 }
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC del técnico, en: Technician PC }
+      position: { x: 480, y: 120 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+  links:
+    - [R1:ether2, PC1:eth0]
+
+objectives:
+  - id: identity
+    text:
+      es: Cambia el nombre del router a R1-Oficina.
+      en: Rename the router to R1-Oficina.
+    check:
+      setting: { device: R1, key: system, field: identity, is: R1-Oficina }
+    hints:
+      - es: El nombre del equipo vive en el menú de sistema. Explóralo con `?`.
+        en: The device name lives in the system menu. Explore it with `?`.
+      - es: Busca el submenú `identity` dentro de `/system` y usa `set`.
+        en: Look for the `identity` submenu under `/system` and use `set`.
+  - id: lan
+    text:
+      es: La PC del técnico llega al router por ether2 (la PC usa 192.168.88.10/24).
+      en: The technician PC reaches the router over ether2 (the PC uses 192.168.88.10/24).
+    check:
+      reachable: { from: PC1, to: 192.168.88.1 }
+    hints:
+      - es: La PC espera que su puerta de enlace sea 192.168.88.1.
+        en: The PC expects its gateway to be 192.168.88.1.
+      - es: Las direcciones IP se asignan en `/ip address`, indicando la interfaz.
+        en: IP addresses are assigned under `/ip address`, naming the interface.
+      - es: No olvides la máscara; sin ella la dirección queda como /32.
+        en: Do not forget the mask; without it the address becomes a /32.
+  - id: user
+    text:
+      es: Crea el usuario soporte en el grupo read, con contraseña.
+      en: Create the user soporte in the read group, with a password.
+    check:
+      exists:
+        device: R1
+        collection: users
+        where: { name: soporte, group: read, hasPassword: true }
+    hints:
+      - es: Los usuarios se gestionan en `/user`.
+        en: Users are managed under `/user`.
+      - es: Al crear un usuario indica `name`, `group` y `password`.
+        en: When adding a user, give `name`, `group` and `password`.
+  - id: telnet
+    text:
+      es: Telnet viaja en claro. Desactívalo para que la PC ya no pueda abrirlo.
+      en: Telnet travels in clear text. Disable it so the PC can no longer open it.
+    check:
+      all:
+        - reachable: { from: PC1, to: 192.168.88.1 }
+        - blocked: { from: PC1, to: 192.168.88.1, protocol: tcp, port: 23, by: any }
+    hints:
+      - es: Los servicios de gestión del router están bajo `/ip`.
+        en: The router management services live under `/ip`.
+      - es: En `/ip service` puedes deshabilitar un servicio por su nombre.
+        en: In `/ip service` you can disable a service by name.
+
+explanation:
+  es: >-
+    RouterOS organiza todo en menús jerárquicos: entras a uno con su ruta, `?` te muestra
+    lo que hay y Tab completa. A diferencia de IOS no hay modo de configuración: cada
+    comando se aplica al instante. Por eso el lab se valida por lo que hace la red
+    (la PC llega, telnet ya no responde), no por los comandos que escribiste.
+  en: >-
+    RouterOS organizes everything into hierarchical menus: you enter one by its path, `?`
+    shows what is there and Tab completes. Unlike IOS there is no configuration mode: every
+    command applies immediately. That is why the lab checks what the network does
+    (the PC gets through, telnet no longer answers), not the commands you typed.

@@ -247,3 +247,48 @@ cuando haya interfaz que los use, en lugar de en la fase 1 como decía el plan.
 - Una fila puede llevar una `note` (por qué un ítem es inválido) que print
   muestra como `;;;` antes del comentario. No se exporta ni se edita, para no
   mezclarse con el comentario del usuario.
+
+## D-030 · Dependencias de la interfaz (fase 3)
+
+Cada una cubre algo que no conviene escribir a mano:
+
+- `tailwindcss` + `@tailwindcss/postcss` (v4): pedido en el brief; las
+  utilidades leen los tokens de `globals.css`.
+- `@xterm/xterm` + `@xterm/addon-fit`: pedido en el brief. xterm solo pinta;
+  la edición de línea, el historial, Tab y `?` son nuestros.
+- `zustand`: pedido en el brief; un store por pantalla de lab (D-033).
+- `react-resizable-panels`: separadores con rol `separator`, teclado y límites
+  de tamaño ya resueltos. Escribirlo a mano es fácil de hacer mal en accesibilidad.
+- `@phosphor-icons/react`: una sola familia de iconos, sin dibujar SVG a mano.
+- Descartado `next-intl`: dos idiomas y cadenas simples se cubren con un
+  diccionario tipado y `Intl.PluralRules` (`apps/web/lib/i18n`).
+
+## D-031 · Tokens, tipografía y estado
+
+- Todos los colores y tamaños de texto son variables CSS en `:root`, expuestas
+  a Tailwind con `@theme inline`. Oscuro único en la v1.
+- El acento solo marca estado: verde cumplido, rojo error, ámbar "se cumplía y
+  ya no". El foco usa la tinta, no un acento, para no confundirse con un estado.
+- Geist para la interfaz y Geist Mono para la consola. La única mono fuera de
+  la consola es el `código` en línea de tareas y pistas, porque es literalmente
+  lo que se escribe en la consola.
+
+## D-032 · Progreso: se guarda lo escrito, no la red
+
+- `ProgressRepository` es asíncrono (load, save, list, clear) para cambiar
+  localStorage por Supabase sin tocar la UI.
+- Se guardan las líneas ejecutadas por equipo, las pistas y cuándo se cumplió
+  cada objetivo. Al abrir el lab se vuelven a ejecutar las líneas. La red no se
+  serializa: así un cambio del motor no deja progreso corrupto.
+- Lo leído del almacenamiento se valida antes de usarlo y los errores de cuota
+  o de almacenamiento bloqueado no rompen el lab.
+
+## D-033 · Estado del lab y objetivos en vivo
+
+- Un store de Zustand por pantalla, creado con el lab. Tras cada comando se
+  evalúan todos los objetivos contra la red.
+- Un objetivo tiene tres estados: pendiente, cumplido y "se cumplía y ya no"
+  (regresión). El lab se da por completado la primera vez que todos se cumplen
+  a la vez.
+- Los labs se leen del YAML en el servidor al compilar; al cliente llega el
+  objeto validado.
