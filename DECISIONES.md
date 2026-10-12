@@ -372,3 +372,26 @@ Cada una cubre algo que no conviene escribir a mano:
 - "Probar" escribe el ejemplo en la consola del router de práctica sin
   ejecutarlo (`suggest` del store): el estudiante lo lee, lo cambia y pulsa
   Enter.
+
+## D-041 · Portada "grulla plegada"
+
+- La portada se rediseña entera; lab, rutas y referencia conservan su mundo.
+  El usuario eligió el concepto "grulla plegada" entre los de la página de
+  decisión: el paquete es una hoja bermellón que se pliega por capa (TCP, IP,
+  Ethernet), viaja por la red y se despliega al entregarse.
+- Todo lo que se ve sale del motor: la consola del hero es un store real con
+  la oficina a medias y la tarea se marca cuando la regla de NAT hace que la PC
+  salga con la IP pública; el viaje es el `trace` de PC1 a example.com:443
+  con esa misma oficina, incluido el remite que traduce R1.
+- El viaje se mueve con el scroll escribiendo variables CSS desde un único
+  `requestAnimationFrame`; React solo conoce el paso activo. Con movimiento
+  reducido o una pantalla de menos de 480 px de alto, el CSS muestra en su
+  lugar la lista de pasos, sin esperar a hidratar.
+- Tokens propios bajo `.landing` (washi bermellón, sumi, crema, dorado solo en
+  el paso activo) y Jost como letra de display. La fibra del papel son dos
+  placas PNG (bermellón y crema) generadas por
+  `apps/web/scripts/washi-texture.mjs` con semilla fija; no hay imágenes de
+  terceros. La fibra es tan tenue que el texto blanco sobre el bermellón sigue
+  por encima de 4.5:1 en el 95 % del papel.
+- El menú pasa a "Aprender" (referencia) y "Practicar" (rutas), y la portada
+  tiene un bloque para cada uno.
