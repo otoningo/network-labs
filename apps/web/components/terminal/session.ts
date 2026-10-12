@@ -247,12 +247,30 @@ export class ConsoleSession {
       textarea.addEventListener('focus', () => this.onFocusChange?.(true));
       textarea.addEventListener('blur', () => this.onFocusChange?.(false));
       // Con screenReaderMode, xterm ignora los eventos `input` de tipo insertText:
-      // los teclados de móvil (keydown 229) y el dictado escriben así. Si la tecla
-      // ya la procesó xterm, el evento se canceló y no llega aquí.
+      // los teclados de móvil (keydown 229) y el dictado escriben así, y hay que
+      // reenviarlos. Pero con una tecla física xterm ya envió el carácter en el
+      // keydown sin cancelarlo, y el navegador dispara además `input`: ese no se
+      // reenvía, o cada letra saldría doble. El orden es keydown, input, keyup.
+      let keyHandled = false;
+      textarea.addEventListener(
+        'keydown',
+        (event) => {
+          keyHandled =
+            event.keyCode !== 229 && event.key !== 'Unidentified' && event.key !== 'Process';
+        },
+        true,
+      );
+      textarea.addEventListener('keyup', () => {
+        keyHandled = false;
+      });
       textarea.addEventListener('input', (event) => {
         if (!(event instanceof InputEvent)) return;
         if (event.inputType !== 'insertText' || !event.data || event.isComposing) return;
         textarea.value = '';
+        if (keyHandled) {
+          keyHandled = false;
+          return;
+        }
         this.input(event.data);
       });
     }
