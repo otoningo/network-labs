@@ -308,6 +308,13 @@ describe('red de oficina por la CLI', () => {
     expect(t.ok('/ping 10.99.99.99 count=1')).toContain('packet-loss=100%');
   });
 
+  it('ping rechaza palabras sueltas además de la dirección', () => {
+    const t = office();
+    expect(t.run('/ping 8.8.8.8 repeat 3')).toBe('expected end of command (line 1 column 15)');
+    expect(t.run('/ping 8.8.8.8 count')).toBe('expected end of command (line 1 column 15)');
+    expect(t.run('/ping address=8.8.8.8 9.9.9.9')).toMatch(/^expected end of command/);
+  });
+
   it('ping continuo es una vista en vivo', () => {
     const t = office();
     t.ok('/ping 192.168.88.254');

@@ -475,8 +475,13 @@ function parseGlobal(
       if (!split.ok) return split;
       const values = normalizeNamed(split.value, PING_ARGS, ctx.menuCtx);
       if (!values.ok) return values;
-      const target = values.value.get('address') ?? split.value.positional[0]?.text;
+      const named = values.value.get('address');
+      const target = named ?? split.value.positional[0]?.text;
       if (!target) return err(fault('missing-args', undefined, { args: 'address' }));
+      // Solo la dirección va sin nombre: cualquier otra palabra suelta ("repeat 3",
+      // "count" sin valor) es un error, como en los menús.
+      const extra = split.value.positional[named === undefined ? 1 : 0];
+      if (extra) return err(fault('expected-end', extra.start));
       const count = values.value.get('count');
       const src = values.value.get('src-address');
       return ok({

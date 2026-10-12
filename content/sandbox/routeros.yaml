@@ -23,7 +23,7 @@ topology:
         address: 203.0.113.1/24
         dhcp:
           pool: 203.0.113.10-203.0.113.20
-          dns: [203.0.113.1]
+          dns: [1.1.1.1]
         dns:
           example.com: 93.184.216.34
     - id: R1
