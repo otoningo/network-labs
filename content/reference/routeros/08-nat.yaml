@@ -1,0 +1,181 @@
+# Referencia de comandos, tema 8: NAT. El setup deja la WAN, la LAN y la ruta por
+# defecto para que las reglas tengan interfaces y direcciones reales.
+id: nat
+vendor: routeros
+order: 8
+title:
+  es: NAT
+  en: NAT
+summary:
+  es: Sacar la LAN a Internet con masquerade o src-nat y publicar un servicio interno con dst-nat.
+  en: Take the LAN to the Internet with masquerade or src-nat and publish an internal service with dst-nat.
+fromIos:
+  es: >-
+    En IOS marcas las interfaces con `ip nat inside` y `ip nat outside` y luego escribes
+    `ip nat inside source list 1 interface Gi0/0 overload`. En RouterOS no hay interfaces
+    inside ni outside: el NAT es una tabla de reglas en `/ip firewall nat`, y cada regla dice
+    en qué cadena actúa (`srcnat` para cambiar el origen, `dstnat` para cambiar el destino) y
+    con qué condiciones. El masquerade equivale al `overload` sobre la interfaz: usa la
+    dirección que tenga la WAN en ese momento. Como en el firewall, las reglas se leen de arriba
+    abajo y gana la primera que coincide.
+  en: >-
+    In IOS you mark interfaces with `ip nat inside` and `ip nat outside` and then write
+    `ip nat inside source list 1 interface Gi0/0 overload`. RouterOS has no inside or outside
+    interfaces: NAT is a table of rules under `/ip firewall nat`, and each rule says which
+    chain it works in (`srcnat` to change the source, `dstnat` to change the destination) and
+    under which conditions. Masquerade is the counterpart of `overload` on the interface: it
+    uses whatever address the WAN has right now. As in the firewall, rules are read top to
+    bottom and the first match wins.
+labs: [ros-06-nat-masquerade]
+setup: |
+  /ip address add address=203.0.113.2/24 interface=ether1 comment=WAN
+  /ip address add address=192.168.88.1/24 interface=ether2 comment=LAN
+  /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+
+commands:
+  - id: masquerade
+    syntax: /ip firewall nat add chain=srcnat action=masquerade out-interface=<interfaz-wan>
+    summary:
+      es: Traduce el origen de lo que sale por la WAN a la dirección actual de esa interfaz. Es la regla de casi cualquier oficina.
+      en: Translates the source of whatever leaves through the WAN to that interface's current address. It is the rule almost every office uses.
+    args:
+      - name: chain
+        text:
+          es: "`srcnat` para traducir el origen. Va después del enrutamiento, por eso se puede mirar la interfaz de salida."
+          en: "`srcnat` to translate the source. It runs after routing, which is why it can look at the outgoing interface."
+      - name: action
+        text:
+          es: "`masquerade` toma la dirección de la interfaz de salida; sirve aunque la WAN cambie de IP por DHCP."
+          en: "`masquerade` takes the address of the outgoing interface; it works even if the WAN changes IP over DHCP."
+      - name: out-interface
+        text:
+          es: Interfaz que va al proveedor. Sin ella también se traduce el tráfico entre tus propias redes.
+          en: Interface facing the provider. Without it, traffic between your own networks gets translated too.
+      - name: src-address
+        text:
+          es: Opcional, para limitar la regla a una red de origen, por ejemplo 192.168.88.0/24.
+          en: Optional, to limit the rule to one source network, for example 192.168.88.0/24.
+    examples:
+      - command: /ip firewall nat add chain=srcnat action=masquerade out-interface=ether1 comment="salida a Internet"
+      - command: /ip firewall nat add chain=postrouting action=masquerade out-interface=ether1
+        fails: true
+        note:
+          es: Las cadenas se llaman srcnat y dstnat, no postrouting como en iptables.
+          en: The chains are called srcnat and dstnat, not postrouting as in iptables.
+    ios: |-
+      access-list 1 permit 192.168.88.0 0.0.0.255
+      interface GigabitEthernet0/1
+       ip nat inside
+      interface GigabitEthernet0/0
+       ip nat outside
+      ip nat inside source list 1 interface GigabitEthernet0/0 overload
+    pitfalls:
+      - es: Sin `out-interface` la regla también traduce el tráfico entre tus LANs, y los equipos internos dejan de ver la IP real del otro.
+        en: Without `out-interface` the rule also translates traffic between your LANs, and internal hosts stop seeing each other's real IP.
+      - es: Con un `src-address` demasiado estrecho alguna LAN se queda sin Internet. Si hay varias, mejor filtrar solo por `out-interface`.
+        en: With a `src-address` that is too narrow some LAN is left without Internet. With several LANs, matching only on `out-interface` is safer.
+      - es: El NAT no abre ni cierra nada; lo que se permite o se bloquea lo decide `/ip firewall filter`.
+        en: NAT does not open or close anything; what is allowed or blocked is decided by `/ip firewall filter`.
+
+  - id: src-nat
+    syntax: /ip firewall nat add chain=srcnat action=src-nat to-addresses=<ip> [src-address=<red>] [out-interface=<interfaz>]
+    summary:
+      es: Traduce el origen a una dirección fija. Útil cuando la WAN es estática o tienes varias IP públicas.
+      en: Translates the source to a fixed address. Useful when the WAN is static or you own several public IPs.
+    args:
+      - name: to-addresses
+        text:
+          es: La dirección (o rango) que usará el tráfico al salir. Es obligatoria con src-nat.
+          en: The address (or range) traffic will use on the way out. It is required with src-nat.
+      - name: src-address
+        text:
+          es: Qué origen se traduce, por ejemplo una red o un solo equipo.
+          en: Which source is translated, for example a network or a single host.
+    examples:
+      - command: /ip firewall nat add chain=srcnat action=src-nat src-address=192.168.88.0/24 out-interface=ether1 to-addresses=203.0.113.2
+      - command: /ip firewall nat add chain=srcnat action=src-nat src-address=192.168.88.0/24 out-interface=ether1
+        fails: true
+        note:
+          es: src-nat sin to-addresses no sabe a qué dirección traducir.
+          en: src-nat without to-addresses does not know which address to translate to.
+    ios: ip nat inside source list 1 pool PUBLICA overload
+    pitfalls:
+      - es: Si la IP de la WAN cambia, la regla sigue apuntando a la vieja y la LAN se queda sin salida. Con DHCP en la WAN usa masquerade.
+        en: If the WAN IP changes, the rule still points at the old one and the LAN loses its way out. With DHCP on the WAN, use masquerade.
+
+  - id: dst-nat
+    syntax: /ip firewall nat add chain=dstnat action=dst-nat in-interface=<interfaz-wan> protocol=<tcp|udp> dst-port=<puerto> to-addresses=<ip-interna> [to-ports=<puerto>]
+    summary:
+      es: Redirige un puerto de la IP pública a un equipo de la LAN (port forwarding).
+      en: Forwards a port on the public IP to a host on the LAN (port forwarding).
+    args:
+      - name: in-interface
+        text:
+          es: Por dónde llega la conexión, normalmente la WAN. Sin ella también afecta al tráfico que sale de la LAN hacia ese puerto.
+          en: Where the connection comes in, usually the WAN. Without it, LAN traffic going out to that port is affected too.
+      - name: protocol
+        text:
+          es: tcp o udp. Hace falta para poder indicar un puerto.
+          en: tcp or udp. It is needed to match a port.
+      - name: dst-port
+        text:
+          es: Puerto público que se abre, por ejemplo 8080.
+          en: Public port being opened, for example 8080.
+      - name: to-addresses
+        text:
+          es: Equipo interno que recibe la conexión.
+          en: Internal host that receives the connection.
+      - name: to-ports
+        text:
+          es: Puerto en el equipo interno, si es distinto del público.
+          en: Port on the internal host, if it differs from the public one.
+    examples:
+      - command: /ip firewall nat add chain=dstnat action=dst-nat in-interface=ether1 protocol=tcp dst-port=8080 to-addresses=192.168.88.10 to-ports=80 comment="web de PC1"
+        note:
+          es: Quien abra http://203.0.113.2:8080 llega al puerto 80 de PC1.
+          en: Whoever opens http://203.0.113.2:8080 reaches port 80 on PC1.
+      - command: /ip firewall nat add chain=srcnat action=dst-nat in-interface=ether1 protocol=tcp dst-port=3389 to-addresses=192.168.88.10
+        fails: true
+        note:
+          es: La acción dst-nat no vale en la cadena srcnat; el port forwarding va en dstnat.
+          en: The dst-nat action is not valid in the srcnat chain; port forwarding belongs in dstnat.
+    ios: ip nat inside source static tcp 192.168.88.10 80 interface GigabitEthernet0/0 8080
+    pitfalls:
+      - es: Si el firewall descarta en forward lo que no es established, añade una regla que acepte `connection-nat-state=dstnat`.
+        en: If the firewall drops in forward anything that is not established, add a rule that accepts `connection-nat-state=dstnat`.
+      - es: El equipo interno debe tener al router como gateway, o la respuesta no vuelve por el NAT.
+        en: The internal host must use the router as its gateway, or the reply will not come back through NAT.
+
+  - id: print
+    syntax: /ip firewall nat print [stats] [where <condición>]
+    summary:
+      es: Lista las reglas en el orden en que se evalúan. Con stats muestra cuántos paquetes cogió cada una.
+      en: Lists the rules in the order they are evaluated. With stats it shows how many packets each one caught.
+    examples:
+      - command: /ip firewall nat print
+      - command: /ip firewall nat print stats
+        note:
+          es: Si una regla se queda en 0 paquetes, nada la está usando.
+          en: If a rule stays at 0 packets, nothing is using it.
+      - command: /ip firewall nat print where chain=dstnat
+    ios: |-
+      show ip nat translations
+      show ip nat statistics
+
+  - id: disable
+    syntax: /ip firewall nat disable|enable|remove <número|condición>
+    summary:
+      es: Desactiva una regla sin borrarla (sale con X en print), la vuelve a activar o la quita.
+      en: Turns a rule off without deleting it (it shows an X in print), turns it back on or removes it.
+    examples:
+      - command: /ip firewall nat disable [find comment="web de PC1"]
+      - command: /ip firewall nat enable [find comment="web de PC1"]
+      - command: /ip firewall nat remove [find action=src-nat]
+        note:
+          es: Quita la regla de src-nat; la de masquerade ya cubre la salida.
+          en: Removes the src-nat rule; the masquerade one already covers the way out.
+    ios: |-
+      no ip nat inside source static tcp 192.168.88.10 80 interface GigabitEthernet0/0 8080
+    pitfalls:
+      - es: Las conexiones ya abiertas siguen con la traducción vieja hasta que caducan.
+        en: Connections that are already open keep the old translation until they expire.

@@ -1,0 +1,156 @@
+# Referencia de comandos, tema 12: respaldo y restauración. Cargar un .backup reinicia
+# el router y cierra la sesión, así que aquí solo aparece como texto y como error típico.
+id: respaldo
+vendor: routeros
+order: 12
+title:
+  es: Respaldo y restauración
+  en: Backup and restore
+summary:
+  es: Guardar la configuración como respaldo binario o como script de texto, ver los archivos y volver a cargarla.
+  en: Save the configuration as a binary backup or as a text script, see the files and load it back.
+fromIos:
+  es: >-
+    En IOS hay running-config y startup-config, y nada sobrevive a un reinicio sin
+    `copy running-config startup-config`. RouterOS no tiene esa distinción: cada cambio se
+    guarda al momento, y no existe `write memory`. La red de seguridad son los respaldos, de
+    dos tipos. El `.backup` es binario y completo, pensado para volver al mismo equipo. El
+    `export` es el equivalente a `show running-config`: texto legible que puedes guardar en un
+    `.rsc`, comparar o importar en otro router. Los dos quedan en `/file`.
+  en: >-
+    IOS has running-config and startup-config, and nothing survives a reboot without
+    `copy running-config startup-config`. RouterOS has no such split: every change is saved at
+    once, and there is no `write memory`. Backups are the safety net, and they come in two
+    kinds. A `.backup` file is binary and complete, meant to go back onto the same device.
+    `export` is the counterpart of `show running-config`: readable text you can save to an
+    `.rsc` file, compare or import on another router. Both end up in `/file`.
+labs: [ros-10-respaldo-restauracion]
+setup: |
+  /system identity set name=R1-Practica
+  /ip address add address=192.168.88.1/24 interface=ether2 comment=LAN
+
+commands:
+  - id: backup-save
+    syntax: /system backup save [name=<nombre>] [password=<clave>]
+    summary:
+      es: Guarda un respaldo binario de toda la configuración. La extensión .backup la pone el router.
+      en: Saves a binary backup of the whole configuration. The router adds the .backup extension.
+    args:
+      - name: name
+        text:
+          es: Nombre del archivo. Sin él se usa la identidad con la fecha y la hora.
+          en: File name. Without it the identity plus date and time is used.
+      - name: password
+        text:
+          es: Cifra el respaldo; hará falta la misma clave para cargarlo.
+          en: Encrypts the backup; the same password is needed to load it.
+    examples:
+      - command: /system backup save name=respaldo
+      - command: /system backup save
+        note:
+          es: Sin nombre queda como R1-Practica con fecha y hora.
+          en: Without a name it is saved as R1-Practica plus date and time.
+    ios: "copy running-config flash:respaldo.cfg"
+    pitfalls:
+      - es: Un .backup no se lee ni se edita, y está pensado para el mismo modelo de equipo. Para llevar la configuración a otro router usa export.
+        en: A .backup cannot be read or edited, and it is meant for the same device model. To take the configuration to another router, use export.
+
+  - id: file-print
+    syntax: /file print | remove <nombre|número>
+    summary:
+      es: Lista los archivos del router, con su tipo, tamaño y fecha. También sirve para borrar los que sobran.
+      en: Lists the files on the router, with type, size and date. It also removes the ones you no longer need.
+    examples:
+      - command: /file print
+    ios: "dir flash:"
+    pitfalls:
+      - es: Los archivos se quedan en el router. Si el equipo muere, mueren con él; descárgalos a tu PC.
+        en: Files stay on the router. If the device dies, they die with it; download them to your PC.
+
+  - id: export
+    syntax: "[/<menú>] export [file=<nombre>] [show-sensitive]"
+    summary:
+      es: Muestra la configuración como comandos. Desde la raíz exporta todo; desde un menú, solo esa parte.
+      en: Shows the configuration as commands. From the root it exports everything; from a menu, only that part.
+    args:
+      - name: file
+        text:
+          es: Guarda el texto en un archivo .rsc en vez de mostrarlo.
+          en: Saves the text into an .rsc file instead of showing it.
+      - name: show-sensitive
+        text:
+          es: Incluye contraseñas, como la de la wifi, que por defecto se omiten.
+          en: Includes passwords, such as the Wi-Fi one, which are left out by default.
+    examples:
+      - command: /export
+      - command: /ip address export
+        note:
+          es: Solo la parte de direcciones.
+          en: Only the addresses part.
+      - command: /export file=config
+        note:
+          es: Crea config.rsc en /file.
+          en: Creates config.rsc in /file.
+    ios: |-
+      show running-config
+      copy running-config flash:config.txt
+    pitfalls:
+      - es: Sin show-sensitive el export no lleva contraseñas, y al importarlo la wifi queda sin clave.
+        en: Without show-sensitive the export carries no passwords, and after importing it the Wi-Fi has no passphrase.
+
+  - id: import
+    syntax: /import <archivo.rsc>
+    summary:
+      es: Ejecuta los comandos de un script .rsc, uno tras otro, como si los escribieras.
+      en: Runs the commands of an .rsc script, one after another, as if you typed them.
+    examples:
+      - command: /system identity export file=identidad
+      - command: /system identity set name=Pruebas
+      - command: /import identidad.rsc
+        note:
+          es: La identidad vuelve a ser R1-Practica.
+          en: The identity is back to R1-Practica.
+    ios: "copy flash:config.txt running-config"
+    pitfalls:
+      - es: Importar un export completo sobre un router ya configurado choca con lo que existe. Se importa sobre un router vacío.
+        en: Importing a full export over a configured router clashes with what is already there. Import onto an empty router.
+
+  - id: import-errors
+    syntax: /import <archivo.rsc>
+    summary:
+      es: Errores típicos al importar.
+      en: Typical mistakes when importing.
+    examples:
+      - command: /import config.rsc
+        fails: true
+        note:
+          es: La dirección de la LAN ya existe; el script se detiene en el primer comando que falla.
+          en: The LAN address already exists; the script stops at the first command that fails.
+      - command: /import respaldo.backup
+        fails: true
+        note:
+          es: Un .backup no es un script; se carga con /system backup load.
+          en: A .backup is not a script; it is loaded with /system backup load.
+
+  - id: backup-load
+    syntax: /system backup load name=<archivo.backup> [password=<clave>]
+    summary:
+      es: Restaura un respaldo binario. Pide confirmación, reinicia el router y cierra la sesión; por eso aquí solo se muestra el error típico.
+      en: Restores a binary backup. It asks for confirmation, reboots the router and closes the session; that is why only the typical mistake is shown here.
+    args:
+      - name: name
+        text:
+          es: Nombre completo del archivo, con .backup.
+          en: Full file name, including .backup.
+    examples:
+      - command: /system backup load name=respaldo
+        fails: true
+        note:
+          es: Falta la extensión; el archivo se llama respaldo.backup.
+          en: The extension is missing; the file is called respaldo.backup.
+    ios: |-
+      copy flash:respaldo.cfg startup-config
+      reload
+    pitfalls:
+      - es: Todo lo que cambiaste después del respaldo se pierde. Guarda otro antes de cargar si dudas.
+        en: Everything you changed after the backup is lost. Save another one before loading if in doubt.

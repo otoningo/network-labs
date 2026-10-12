@@ -1,0 +1,129 @@
+# Referencia de comandos, tema 11: DNS del router. El setup deja la WAN estática y la
+# LAN, pero el router aún no tiene servidores DNS.
+id: dns
+vendor: routeros
+order: 11
+title:
+  es: DNS
+  en: DNS
+summary:
+  es: Darle servidores DNS al router, convertirlo en el DNS de la LAN, añadir nombres fijos y revisar la caché.
+  en: Give the router DNS servers, make it the LAN DNS, add fixed names and check the cache.
+fromIos:
+  es: >-
+    En IOS defines a quién pregunta el router con `ip name-server`, lo conviertes en servidor
+    para la LAN con `ip dns server` y añades nombres fijos con `ip host`. RouterOS reúne todo en
+    `/ip dns`: `servers` es el `ip name-server`, `allow-remote-requests=yes` es el
+    `ip dns server` y las entradas de `/ip dns static` son los `ip host`. Las respuestas se
+    guardan en una caché que puedes ver y vaciar. Si la WAN usa cliente DHCP, los DNS del
+    proveedor llegan solos y aparecen como `dynamic-servers`.
+  en: >-
+    In IOS you set who the router asks with `ip name-server`, make it a server for the LAN with
+    `ip dns server` and add fixed names with `ip host`. RouterOS puts all of it under
+    `/ip dns`: `servers` is `ip name-server`, `allow-remote-requests=yes` is `ip dns server`
+    and the entries in `/ip dns static` are the `ip host` lines. Answers are kept in a cache you
+    can view and flush. If the WAN uses a DHCP client, the provider DNS servers arrive on their
+    own and show up as `dynamic-servers`.
+labs: [ros-09-dns-cache]
+setup: |
+  /ip address add address=203.0.113.2/24 interface=ether1 comment=WAN
+  /ip address add address=192.168.88.1/24 interface=ether2 comment=LAN
+  /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+
+commands:
+  - id: servers
+    syntax: /ip dns set servers=<ip>[,<ip>] [allow-remote-requests=yes|no]
+    summary:
+      es: Indica a qué servidores pregunta el router y si atiende consultas de otros equipos.
+      en: Sets which servers the router asks and whether it answers queries from other hosts.
+    args:
+      - name: servers
+        text:
+          es: Uno o varios servidores DNS separados por comas.
+          en: One or more DNS servers separated by commas.
+      - name: allow-remote-requests
+        text:
+          es: Con yes el router hace de DNS para la LAN. Con no solo resuelve para sí mismo.
+          en: With yes the router acts as DNS for the LAN. With no it only resolves for itself.
+    examples:
+      - command: ":resolve example.com"
+        fails: true
+        note:
+          es: Sin servidores el router no puede resolver nada.
+          en: Without servers the router cannot resolve anything.
+      - command: /ip dns set servers=1.1.1.1 allow-remote-requests=yes
+      - command: /ip dns print
+    ios: |-
+      ip name-server 1.1.1.1
+      ip domain lookup
+      ip dns server
+    pitfalls:
+      - es: Con allow-remote-requests=yes el router también contesta por la WAN. Cierra el puerto 53 de input en esa interfaz para no ser un resolvedor abierto.
+        en: With allow-remote-requests=yes the router also answers on the WAN. Close port 53 in input on that interface so it is not an open resolver.
+      - es: Que el router resuelva no basta; los equipos de la LAN deben usarlo como DNS (por DHCP o a mano).
+        en: The router resolving is not enough; LAN hosts must use it as their DNS (over DHCP or by hand).
+
+  - id: resolve
+    syntax: ":resolve <nombre>"
+    summary:
+      es: Resuelve un nombre desde el propio router. Es la forma rápida de probar que el DNS funciona.
+      en: Resolves a name from the router itself. It is the quick way to test that DNS works.
+    examples:
+      - command: ":resolve example.com"
+      - command: ":resolve nada.example"
+        fails: true
+        note:
+          es: El nombre no existe y el servidor lo dice.
+          en: The name does not exist and the server says so.
+
+  - id: static
+    syntax: /ip dns static add name=<nombre> address=<ip>
+    summary:
+      es: Crea un nombre fijo que el router contesta sin preguntar a nadie. Útil para equipos de la LAN.
+      en: Creates a fixed name the router answers without asking anyone. Useful for LAN hosts.
+    args:
+      - name: name
+        text:
+          es: El nombre completo, por ejemplo impresora.lan.
+          en: The full name, for example impresora.lan.
+      - name: address
+        text:
+          es: La IPv4 a la que apunta.
+          en: The IPv4 address it points to.
+      - name: ttl
+        text:
+          es: Cuánto lo guardan los clientes en caché. Por defecto, un día.
+          en: How long clients cache it. One day by default.
+    examples:
+      - command: /ip dns static add name=router.lan address=192.168.88.1
+      - command: /ip dns static add name=pc1.lan address=192.168.88.10 comment="PC fija"
+      - command: ":resolve pc1.lan"
+    ios: ip host pc1.lan 192.168.88.10
+    pitfalls:
+      - es: Las entradas estáticas solo las ven los equipos que preguntan a este router; si una PC usa otro DNS, no las conoce.
+        en: Static entries are only seen by hosts that ask this router; a PC using another DNS does not know them.
+
+  - id: static-print
+    syntax: /ip dns static print | remove <número|condición>
+    summary:
+      es: Lista o quita entradas estáticas.
+      en: Lists or removes static entries.
+    examples:
+      - command: /ip dns static print
+      - command: /ip dns static remove [find name=router.lan]
+    ios: show hosts
+
+  - id: cache
+    syntax: /ip dns cache print | flush
+    summary:
+      es: Muestra las respuestas guardadas con el tiempo que les queda, o vacía la caché entera.
+      en: Shows the stored answers with their remaining time, or empties the whole cache.
+    examples:
+      - command: /ip dns cache print
+      - command: /ip dns cache flush
+        note:
+          es: Útil tras cambiar un registro, para no esperar a que caduque.
+          en: Useful after changing a record, so you do not wait for it to expire.
+    ios: |-
+      show hosts
+      clear host *

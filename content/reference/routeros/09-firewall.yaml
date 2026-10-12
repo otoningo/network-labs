@@ -1,0 +1,220 @@
+# Referencia de comandos, tema 9: firewall de filtrado. El setup deja WAN, LAN y ruta
+# por defecto; los ejemplos construyen un input seguro y una regla de forward.
+id: firewall
+vendor: routeros
+order: 9
+title:
+  es: Firewall de filtrado
+  en: Filter firewall
+summary:
+  es: Proteger el router y la LAN con reglas por cadena, estado de conexión, interfaz, dirección y puerto.
+  en: Protect the router and the LAN with rules by chain, connection state, interface, address and port.
+fromIos:
+  es: >-
+    En IOS escribes una ACL y la aplicas a una interfaz con `ip access-group`, y las líneas vty
+    se protegen aparte con `access-class`. En RouterOS todas las reglas viven en
+    `/ip firewall filter` y se reparten en cadenas: `input` es lo dirigido al propio router,
+    `forward` lo que lo atraviesa y `output` lo que el router genera. Se leen de arriba abajo y
+    gana la primera que coincide, como en una ACL, pero no hay deny implícito al final: si no
+    pones un drop, todo pasa. Además el firewall tiene estado, así que una regla de
+    `established,related` deja volver las respuestas sin abrir nada más.
+  en: >-
+    In IOS you write an ACL and apply it to an interface with `ip access-group`, and the vty
+    lines are protected separately with `access-class`. In RouterOS every rule lives in
+    `/ip firewall filter`, split into chains: `input` is traffic aimed at the router itself,
+    `forward` is traffic crossing it and `output` is what the router generates. Rules are read
+    top to bottom and the first match wins, as with an ACL, but there is no implicit deny at the
+    end: without a drop, everything passes. The firewall is also stateful, so one
+    `established,related` rule lets replies back in without opening anything else.
+labs: [ros-07-firewall-filter]
+setup: |
+  /ip address add address=203.0.113.2/24 interface=ether1 comment=WAN
+  /ip address add address=192.168.88.1/24 interface=ether2 comment=LAN
+  /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+
+commands:
+  - id: connection-state
+    syntax: /ip firewall filter add chain=<input|forward|output> connection-state=<estados> action=<accept|drop>
+    summary:
+      es: Acepta las respuestas de conexiones ya abiertas y descarta los paquetes inválidos. Son las primeras reglas de cualquier cadena.
+      en: Accepts replies of connections that are already open and drops invalid packets. They are the first rules of any chain.
+    args:
+      - name: chain
+        text:
+          es: "`input` (al router), `forward` (a través del router) u `output` (desde el router)."
+          en: "`input` (to the router), `forward` (through the router) or `output` (from the router)."
+      - name: connection-state
+        text:
+          es: Uno o varios de established, related, new, invalid y untracked, separados por comas.
+          en: One or more of established, related, new, invalid and untracked, separated by commas.
+      - name: action
+        text:
+          es: "`accept` deja pasar, `drop` descarta en silencio y `reject` descarta avisando al origen."
+          en: "`accept` lets it through, `drop` discards silently and `reject` discards and tells the sender."
+    examples:
+      - command: /ip firewall filter add chain=input connection-state=established,related action=accept comment="respuestas"
+      - command: /ip firewall filter add chain=input connection-state=invalid action=drop comment="invalidos"
+      - command: /ip firewall filter add chain=input connection-state=invalid action=deny
+        fails: true
+        note:
+          es: En RouterOS no existe deny; la acción es drop.
+          en: RouterOS has no deny; the action is drop.
+    ios: |-
+      ip access-list extended DESDE-WAN
+       permit tcp any any established
+      interface GigabitEthernet0/0
+       ip access-group DESDE-WAN in
+    pitfalls:
+      - es: Sin la regla de established,related, el drop final también tira las respuestas a lo que pide el propio router (DNS, ping, actualizaciones).
+        en: Without the established,related rule, the final drop also kills replies to what the router itself asks for (DNS, ping, updates).
+
+  - id: management
+    syntax: /ip firewall filter add chain=input in-interface=<interfaz-lan> action=accept
+    summary:
+      es: Permite gestionar el router desde la LAN. Va antes del drop final para no quedarte fuera.
+      en: Allows managing the router from the LAN. It goes above the final drop so you do not lock yourself out.
+    args:
+      - name: in-interface
+        text:
+          es: Interfaz por la que entra el paquete. Si la LAN es un bridge, pon el bridge, no el puerto ethernet.
+          en: Interface the packet comes in on. If the LAN is a bridge, use the bridge, not the ethernet port.
+      - name: src-address
+        text:
+          es: Dirección o red de origen, por ejemplo 192.168.88.0/24 o un solo equipo.
+          en: Source address or network, for example 192.168.88.0/24 or a single host.
+    examples:
+      - command: /ip firewall filter add chain=input in-interface=ether2 action=accept comment="gestion desde la LAN"
+      - command: /ip firewall filter add chain=input in-interface=ether2 src-address=192.168.88.0/24 action=accept
+        note:
+          es: Más estricto, solo la red de la LAN y solo por su interfaz.
+          en: Stricter, only the LAN network and only through its interface.
+    ios: |-
+      access-list 10 permit 192.168.88.0 0.0.0.255
+      line vty 0 4
+       access-class 10 in
+    pitfalls:
+      - es: Si la LAN está en un bridge, una regla con `in-interface=ether2` no coincide nunca; el tráfico entra por el bridge.
+        en: If the LAN is on a bridge, a rule with `in-interface=ether2` never matches; the traffic comes in through the bridge.
+
+  - id: protocol-port
+    syntax: /ip firewall filter add chain=<cadena> protocol=<tcp|udp|icmp> [dst-port=<puertos>] [in-interface=<interfaz>] action=<acción>
+    summary:
+      es: Filtra por protocolo y puerto de destino. Los puertos admiten listas (22,8291) y rangos (1000-2000).
+      en: Matches on protocol and destination port. Ports accept lists (22,8291) and ranges (1000-2000).
+    args:
+      - name: protocol
+        text:
+          es: tcp, udp, icmp o un número de protocolo.
+          en: tcp, udp, icmp or a protocol number.
+      - name: dst-port
+        text:
+          es: Puerto o puertos de destino. Solo tiene sentido con tcp o udp.
+          en: Destination port or ports. It only makes sense with tcp or udp.
+    examples:
+      - command: /ip firewall filter add chain=input protocol=icmp action=accept comment="ping al router"
+      - command: /ip firewall filter add chain=input in-interface=ether1 protocol=udp dst-port=53 action=drop comment="DNS cerrado a Internet"
+    ios: |-
+      ip access-list extended DESDE-WAN
+       permit icmp any any
+       deny udp any any eq domain
+
+  - id: drop-rest
+    syntax: /ip firewall filter add chain=<cadena> action=drop
+    summary:
+      es: El drop final de la cadena. Todo lo que no aceptaste arriba se descarta.
+      en: The final drop of the chain. Everything you did not accept above is discarded.
+    examples:
+      - command: /ip firewall filter add chain=input action=drop comment="resto"
+    ios: |-
+      ip access-list extended DESDE-WAN
+       deny ip any any
+    pitfalls:
+      - es: Un drop sin condiciones al principio de input te deja fuera a ti, a la LAN y al propio router. Ponlo siempre el último.
+        en: An unconditional drop at the top of input locks out you, the LAN and the router itself. Always put it last.
+      - es: Trabaja desde la LAN con una regla de gestión ya puesta, o usa el modo seguro (Ctrl+X) si lo pruebas en un equipo real.
+        en: Work from the LAN with a management rule already in place, or use safe mode (Ctrl+X) when trying it on real hardware.
+
+  - id: address-list
+    syntax: /ip firewall address-list add list=<nombre> address=<ip|red>
+    summary:
+      es: Agrupa direcciones bajo un nombre. Una regla con src-address-list o dst-address-list las cubre todas a la vez.
+      en: Groups addresses under one name. A rule with src-address-list or dst-address-list covers all of them at once.
+    args:
+      - name: list
+        text:
+          es: Nombre de la lista. Se crea sola con la primera entrada.
+          en: Name of the list. It is created with its first entry.
+      - name: address
+        text:
+          es: Una dirección, una red o un rango.
+          en: An address, a network or a range.
+      - name: timeout
+        text:
+          es: Opcional. La entrada se borra sola al cumplirse el plazo.
+          en: Optional. The entry removes itself when the time runs out.
+    examples:
+      - command: /ip firewall address-list add list=bloqueados address=192.168.88.20 comment="camara IP"
+      - command: /ip firewall filter add chain=forward src-address-list=bloqueados out-interface=ether1 action=drop comment="sin Internet"
+        note:
+          es: La regla no cambia; para bloquear otro equipo solo se añade a la lista.
+          en: The rule stays the same; to block another host you just add it to the list.
+      - command: /ip firewall address-list print
+    ios: |-
+      object-group network BLOQUEADOS
+       host 192.168.88.20
+      ip access-list extended DESDE-LAN
+       deny ip object-group BLOQUEADOS any
+       permit ip any any
+
+  - id: print
+    syntax: /ip firewall filter print [stats] [where <condición>]
+    summary:
+      es: Lista las reglas en orden de evaluación. Con stats muestra bytes y paquetes por regla, que es la mejor pista de cuál está actuando.
+      en: Lists the rules in evaluation order. With stats it shows bytes and packets per rule, the best hint of which one is acting.
+    examples:
+      - command: /ip firewall filter print
+      - command: /ip firewall filter print stats
+      - command: /ip firewall filter print where chain=input
+    ios: show ip access-lists
+
+  - id: move
+    syntax: /ip firewall filter move <número> destination=<número>
+    summary:
+      es: Cambia una regla de sitio. Queda justo antes de la que ocupa el destino. Los números son los del último print.
+      en: Moves a rule. It lands right before the one at the destination. Numbers come from the last print.
+    examples:
+      - command: /ip firewall filter add chain=input protocol=tcp dst-port=8291 src-address=192.168.88.10 action=accept comment="winbox del tecnico"
+        note:
+          es: Una regla nueva va al final, detrás del drop "resto", y no llega a usarse nunca.
+          en: A new rule goes to the end, behind the "resto" drop, and is never reached.
+      - command: /ip firewall filter print where chain=input
+        note:
+          es: El print da los números; la regla nueva es la 7 y el drop la 6.
+          en: The print gives the numbers; the new rule is 7 and the drop is 6.
+      - command: /ip firewall filter move 7 destination=6
+        note:
+          es: La regla pasa a estar justo encima del drop.
+          en: The rule now sits right above the drop.
+    ios: |-
+      ip access-list extended DESDE-WAN
+       15 permit tcp host 192.168.88.10 any eq 8291
+    pitfalls:
+      - es: Los números cambian tras cada add, move o remove. Haz un print antes de usarlos, o usa `[find comment="..."]`.
+        en: Numbers change after every add, move or remove. Run a print before using them, or use `[find comment="..."]`.
+
+  - id: place-before
+    syntax: /ip firewall filter add <condiciones> action=<acción> place-before=<número>
+    summary:
+      es: Crea la regla directamente en su sitio, antes de la que tiene ese número, sin tener que moverla después.
+      en: Creates the rule right in place, before the one with that number, with no need to move it afterwards.
+    examples:
+      - command: /ip firewall filter add chain=input protocol=tcp dst-port=22 src-address=192.168.88.10 action=accept place-before=0
+        note:
+          es: SSH desde la PC del técnico, como primera regla de input.
+          en: SSH from the technician PC, as the first input rule.
+    ios: |-
+      ip access-list extended DESDE-WAN
+       5 permit tcp host 192.168.88.10 any eq 22
+    pitfalls:
+      - es: place-before no se guarda en la regla; solo decide dónde nace.
+        en: place-before is not stored in the rule; it only decides where the rule is born.

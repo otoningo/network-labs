@@ -1,0 +1,148 @@
+# Referencia de comandos, tema 13: herramientas de diagnóstico. Todos los ejemplos
+# terminan solos: ping con count, traceroute con count y Torch con duration.
+id: herramientas
+vendor: routeros
+order: 13
+title:
+  es: Herramientas de diagnóstico
+  en: Diagnostic tools
+summary:
+  es: Ping, traceroute, el log, la tabla ARP, los vecinos y Torch para ver quién usa el enlace.
+  en: Ping, traceroute, the log, the ARP table, neighbors and Torch to see who is using the link.
+fromIos:
+  es: >-
+    Las herramientas son las mismas que en IOS, con otra forma de escribirlas. `/ping` sigue
+    hasta que pulsas Ctrl+C, así que se limita con `count`, y sus opciones tienen otros
+    nombres: `count` en vez de `repeat`, `src-address` en vez de `source`. El `show logging` es `/log print`,
+    el `show arp` es `/ip arp print` y el `show cdp neighbors` es `/ip neighbor print`, que
+    junta MNDP, CDP y LLDP. Torch no tiene un equivalente directo: es como mirar
+    `show ip flow top-talkers` sin configurar NetFlow antes.
+  en: >-
+    The tools are the same as in IOS, written differently. `/ping` keeps going until you press
+    Ctrl+C, so you limit it with `count`, and its options have other names: `count` instead of
+    `repeat`, `src-address` instead of `source`. `show logging` is `/log print`, `show arp` is `/ip arp print` and
+    `show cdp neighbors` is `/ip neighbor print`, which gathers MNDP, CDP and LLDP. Torch has no
+    direct counterpart: it is like looking at `show ip flow top-talkers` without setting up
+    NetFlow first.
+labs: [ros-11-torch, ros-12-oficina-final]
+setup: |
+  /ip address add address=203.0.113.2/24 interface=ether1 comment=WAN
+  /ip address add address=192.168.88.1/24 interface=ether2 comment=LAN
+  /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+
+commands:
+  - id: ping
+    syntax: /ping <dirección|nombre> count=<n> [src-address=<ip>] [size=<bytes>]
+    summary:
+      es: Envía ecos ICMP y resume enviados, recibidos, pérdida y tiempos. Sin count no para hasta Ctrl+C.
+      en: Sends ICMP echoes and sums up sent, received, loss and times. Without count it does not stop until Ctrl+C.
+    args:
+      - name: count
+        text:
+          es: Cuántos paquetes enviar.
+          en: How many packets to send.
+      - name: src-address
+        text:
+          es: Dirección de origen. Sirve para probar que la LAN sale, no solo el router.
+          en: Source address. It helps test that the LAN gets out, not only the router.
+      - name: size
+        text:
+          es: Tamaño del paquete en bytes.
+          en: Packet size in bytes.
+    examples:
+      - command: /ping 192.168.88.10 count=3
+      - command: /ping 8.8.8.8 count=3 src-address=192.168.88.1
+        note:
+          es: Sale con la dirección de la LAN; aquí sin NAT la respuesta no tiene por dónde volver.
+          en: It goes out with the LAN address; without NAT here the reply has no way back.
+      - command: /ping 8.8.8.8 repeat=3
+        fails: true
+        note:
+          es: repeat es de IOS; en RouterOS la opción se llama count.
+          en: repeat is IOS; in RouterOS the option is called count.
+    ios: |-
+      ping 192.168.88.10 repeat 3
+      ping 8.8.8.8 repeat 3 source GigabitEthernet0/1
+    pitfalls:
+      - es: Si el ping del router sale bien y el de la LAN no, el problema suele estar en el NAT o en el firewall de forward.
+        en: If the router ping works and the LAN one does not, the problem is usually NAT or the forward firewall.
+
+  - id: traceroute
+    syntax: /tool traceroute <dirección> [count=<n>]
+    summary:
+      es: Muestra cada salto hasta el destino con su pérdida y sus tiempos.
+      en: Shows every hop to the destination with its loss and times.
+    args:
+      - name: count
+        text:
+          es: Sondas por salto. Con count la orden termina sola.
+          en: Probes per hop. With count the command ends on its own.
+    examples:
+      - command: /tool traceroute 8.8.8.8 count=1
+    ios: traceroute 8.8.8.8
+
+  - id: log
+    syntax: /log print [where <condición>]
+    summary:
+      es: Muestra el registro del sistema, con la hora, los temas y el mensaje.
+      en: Shows the system log, with time, topics and message.
+    examples:
+      - command: /log print
+      - command: /log print where message~"route"
+        note:
+          es: Con ~ se filtra por una parte del texto.
+          en: With ~ you filter on part of the text.
+    ios: show logging
+    pitfalls:
+      - es: Las reglas de firewall solo escriben en el log si llevan `log=yes`.
+        en: Firewall rules only write to the log when they have `log=yes`.
+
+  - id: arp
+    syntax: /ip arp print
+    summary:
+      es: Tabla ARP del router, qué MAC tiene cada IP vecina y por qué interfaz se ve.
+      en: The router ARP table, which MAC each neighbor IP has and on which interface it is seen.
+    examples:
+      - command: /ip arp print
+    ios: show arp
+
+  - id: neighbor
+    syntax: /ip neighbor print
+    summary:
+      es: Equipos vecinos descubiertos por MNDP, CDP o LLDP, con su identidad, plataforma y dirección.
+      en: Neighboring devices found through MNDP, CDP or LLDP, with their identity, platform and address.
+    examples:
+      - command: /ip neighbor print
+    ios: show cdp neighbors
+
+  - id: torch
+    syntax: /tool torch interface=<interfaz> [src-address=0.0.0.0/0] [dst-address=0.0.0.0/0] [port=any] duration=<tiempo>
+    summary:
+      es: Mide el tráfico de una interfaz agrupado por origen, destino o puerto. Sin duration es una vista en vivo que se cierra con Ctrl+C; con duration toma una muestra y termina.
+      en: Measures an interface's traffic grouped by source, destination or port. Without duration it is a live view you close with Ctrl+C; with duration it takes one sample and ends.
+    args:
+      - name: interface
+        text:
+          es: Dónde mirar. En la LAN se ve cada equipo; en la WAN con masquerade todo lleva la IP pública.
+          en: Where to look. On the LAN each host is visible; on the WAN with masquerade everything carries the public IP.
+      - name: src-address
+        text:
+          es: Con 0.0.0.0/0 agrupa por origen; con una dirección concreta solo mide ese equipo.
+          en: With 0.0.0.0/0 it groups by source; with a specific address it only measures that host.
+      - name: duration
+        text:
+          es: Tiempo de la muestra. Sin él la vista sigue en pantalla hasta que la cierras.
+          en: Sample time. Without it the view stays on screen until you close it.
+    examples:
+      - command: /tool torch interface=ether2 src-address=0.0.0.0/0 duration=1s
+      - command: /tool torch interface=ether9 duration=1s
+        fails: true
+        note:
+          es: La interfaz no existe en este router.
+          en: The interface does not exist on this router.
+    ios: show ip flow top-talkers
+    pitfalls:
+      - es: En la LAN, TX es lo que el router entrega al equipo, es decir, lo que descarga. Es fácil leerlo al revés.
+        en: On the LAN, TX is what the router delivers to the host, that is, its download. It is easy to read it backwards.
+      - es: Si la LAN es un bridge, mira el bridge para ver a todos o un puerto para ver solo a quien cuelga de él.
+        en: If the LAN is a bridge, look at the bridge to see everyone, or at one port to see only who hangs off it.

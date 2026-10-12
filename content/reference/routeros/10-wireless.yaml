@@ -1,0 +1,147 @@
+# Referencia de comandos, tema 10: wireless con el menú /interface wifi de RouterOS 7.
+# El setup deja la LAN en un bridge con DHCP, para que el portátil reciba dirección.
+id: wireless
+vendor: routeros
+order: 10
+title:
+  es: Wireless
+  en: Wireless
+summary:
+  es: Encender la radio, darle SSID y WPA2, ver quién está conectado y meterla en la LAN.
+  en: Turn on the radio, give it an SSID and WPA2, see who is connected and put it on the LAN.
+fromIos:
+  es: >-
+    En el mundo Cisco la wifi suele estar en un AP aparte o en una controladora, con
+    `dot11 ssid`, `authentication key-management wpa` y `wpa-psk ascii`, y se une a la red
+    cableada con `bridge-group`. En RouterOS la radio es una interfaz más (`wifi1`) que se
+    configura en `/interface wifi`: los ajustes van agrupados con prefijo, como
+    `configuration.ssid` o `security.passphrase`. Sale de fábrica deshabilitada, y para que
+    los clientes estén en la LAN hay que meterla en el mismo bridge que los puertos cableados.
+  en: >-
+    In the Cisco world Wi-Fi usually lives on a separate AP or a controller, with `dot11 ssid`,
+    `authentication key-management wpa` and `wpa-psk ascii`, and it joins the wired network
+    with `bridge-group`. In RouterOS the radio is just another interface (`wifi1`) configured
+    under `/interface wifi`: settings are grouped with a prefix, such as `configuration.ssid`
+    or `security.passphrase`. It comes disabled from the factory, and for clients to be on the
+    LAN it has to join the same bridge as the wired ports.
+labs: [ros-08-wireless-basico]
+setup: |
+  /interface bridge add name=bridge1
+  /interface bridge port add bridge=bridge1 interface=ether2
+  /ip address add address=192.168.88.1/24 interface=bridge1
+  /ip pool add name=lan ranges=192.168.88.100-192.168.88.200
+  /ip dhcp-server add interface=bridge1 address-pool=lan
+  /ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1
+
+commands:
+  - id: print
+    syntax: /interface wifi print [detail]
+    summary:
+      es: Lista las radios con su modo y SSID. La X indica que está deshabilitada; la R, que está funcionando.
+      en: Lists the radios with their mode and SSID. X means disabled; R means running.
+    examples:
+      - command: /interface wifi print
+      - command: /interface wifi print detail
+        note:
+          es: Muestra también la banda, la frecuencia y la autenticación.
+          en: Also shows the band, the frequency and the authentication.
+    ios: show interfaces Dot11Radio0
+    pitfalls:
+      - es: En RouterOS 7 con el paquete wifi el menú es `/interface wifi`. El `/interface wireless` de los tutoriales de v6 es otro paquete con otros parámetros.
+        en: In RouterOS 7 with the wifi package the menu is `/interface wifi`. The `/interface wireless` from v6 tutorials is a different package with different parameters.
+
+  - id: ssid-mode
+    syntax: /interface wifi set <radio> configuration.mode=<ap|station> configuration.ssid=<nombre>
+    summary:
+      es: Pone la radio como punto de acceso y le da el nombre de la red.
+      en: Sets the radio as an access point and gives it the network name.
+    args:
+      - name: configuration.mode
+        text:
+          es: "`ap` para dar servicio a clientes, `station` para conectarse a otra red como cliente."
+          en: "`ap` to serve clients, `station` to join another network as a client."
+      - name: configuration.ssid
+        text:
+          es: Nombre de la red que se anuncia. Distingue mayúsculas.
+          en: Network name being announced. It is case-sensitive.
+    examples:
+      - command: /interface wifi set wifi1 configuration.mode=ap configuration.ssid=Practica
+      - command: /interface wifi set wifi1 configuration.mode=ap-bridge
+        fails: true
+        note:
+          es: ap-bridge es del menú wireless de v6; en /interface wifi el modo es ap.
+          en: ap-bridge belongs to the v6 wireless menu; in /interface wifi the mode is ap.
+    ios: |-
+      dot11 ssid Practica
+       guest-mode
+      interface Dot11Radio0
+       ssid Practica
+
+  - id: security
+    syntax: /interface wifi set <radio> security.authentication-types=<wpa2-psk|wpa3-psk> security.passphrase=<clave>
+    summary:
+      es: Protege la red con WPA2 o WPA3 y una contraseña compartida.
+      en: Protects the network with WPA2 or WPA3 and a shared passphrase.
+    args:
+      - name: security.authentication-types
+        text:
+          es: wpa2-psk, wpa3-psk o los dos separados por coma. Vacío deja la red abierta.
+          en: wpa2-psk, wpa3-psk or both separated by a comma. Empty leaves the network open.
+      - name: security.passphrase
+        text:
+          es: Contraseña de la red. No sale en print ni en export salvo con show-sensitive.
+          en: Network passphrase. It does not show in print or export unless you use show-sensitive.
+    examples:
+      - command: /interface wifi set wifi1 security.authentication-types=wpa2-psk security.passphrase=practica2026
+    ios: |-
+      dot11 ssid Practica
+       authentication open
+       authentication key-management wpa version 2
+       wpa-psk ascii practica2026
+    pitfalls:
+      - es: La contraseña y el tipo deben coincidir exactamente con los del cliente; si no, el cliente no aparece en la tabla de registro.
+        en: The passphrase and the type must match the client exactly; otherwise the client never shows up in the registration table.
+
+  - id: enable
+    syntax: /interface wifi enable|disable <radio>
+    summary:
+      es: Enciende o apaga la radio. De fábrica viene apagada.
+      en: Turns the radio on or off. It comes off from the factory.
+    examples:
+      - command: /interface wifi enable wifi1
+      - command: /interface wifi enable wlan1
+        fails: true
+        note:
+          es: En el menú wifi la radio se llama wifi1, no wlan1 como en v6.
+          en: In the wifi menu the radio is called wifi1, not wlan1 as in v6.
+    ios: |-
+      interface Dot11Radio0
+       no shutdown
+
+  - id: registration-table
+    syntax: /interface wifi registration-table print
+    summary:
+      es: Clientes asociados a cada radio, con su MAC, tiempo conectado y señal.
+      en: Clients associated with each radio, with their MAC, connected time and signal.
+    examples:
+      - command: /interface wifi registration-table print
+    ios: show dot11 associations
+    pitfalls:
+      - es: Aparecer aquí solo prueba la capa 2. Si la radio no está en el bridge de la LAN, el cliente no recibe dirección por DHCP.
+        en: Showing up here only proves layer 2. If the radio is not in the LAN bridge, the client gets no DHCP address.
+
+  - id: bridge
+    syntax: /interface bridge port add bridge=<bridge> interface=<radio>
+    summary:
+      es: Mete la radio en el bridge de la LAN, para que los clientes inalámbricos compartan red y DHCP con los cableados.
+      en: Adds the radio to the LAN bridge, so wireless clients share the network and DHCP with the wired ones.
+    examples:
+      - command: /interface bridge port add bridge=bridge1 interface=wifi1
+      - command: /interface bridge port print
+      - command: /ip dhcp-server lease print
+        note:
+          es: El portátil ya tiene una dirección de la LAN.
+          en: The laptop already has a LAN address.
+    ios: |-
+      interface Dot11Radio0
+       bridge-group 1
