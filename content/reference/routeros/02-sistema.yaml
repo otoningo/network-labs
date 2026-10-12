@@ -1,0 +1,244 @@
+# Referencia de comandos, tema 2: identidad, usuarios, servicios de gestión,
+# recursos y log. Los ejemplos corren en orden sobre el router de práctica
+# (content/sandbox/routeros.yaml); los marcados con `fails: true` deben fallar.
+id: sistema
+vendor: routeros
+order: 2
+title:
+  es: Sistema y acceso
+  en: System and access
+summary:
+  es: El nombre del router, los usuarios y sus grupos, los servicios de gestión, los recursos y el log.
+  en: The router name, users and their groups, management services, resources and the log.
+fromIos:
+  es: >-
+    En IOS el nombre es `hostname`, los usuarios llevan un nivel de privilegio del 0 al 15
+    y el acceso remoto se decide en las `line vty`. RouterOS reparte lo mismo en menús:
+    el nombre está en `/system identity`, cada usuario de `/user` pertenece a un grupo
+    (`full`, `write` o `read`) que fija lo que puede hacer, y cada forma de entrar (telnet,
+    ssh, winbox, web, api) es una fila de `/ip service` que se apaga, se mueve de puerto o
+    se limita a ciertas redes por separado.
+  en: >-
+    In IOS the name is `hostname`, users carry a privilege level from 0 to 15 and remote
+    access is decided under `line vty`. RouterOS spreads the same things across menus: the
+    name is in `/system identity`, each user in `/user` belongs to a group (`full`,
+    `write` or `read`) that sets what it may do, and each way in (telnet, ssh, winbox, web,
+    api) is a row in `/ip service` that can be turned off, moved to another port or
+    limited to certain networks on its own.
+labs: [ros-01-acceso-inicial]
+
+commands:
+  - id: identity
+    syntax: /system identity set name=<nombre>
+    summary:
+      es: Cambia el nombre del router. Sale en el prompt, en el log y en lo que ven los vecinos.
+      en: Changes the router name. It shows in the prompt, in the log and in what neighbours see.
+    args:
+      - name: name
+        text:
+          es: El nombre nuevo. Si lleva espacios, entre comillas.
+          en: The new name. If it has spaces, quote it.
+    examples:
+      - command: /system identity set name=R1-Oficina
+        note:
+          es: El prompt pasa a `[admin@R1-Oficina] >`.
+          en: The prompt becomes `[admin@R1-Oficina] >`.
+      - command: /system identity print
+    ios: hostname R1-Oficina
+    pitfalls:
+      - es: Un router recién salido de fábrica se llama MikroTik; cámbialo pronto para no confundir consolas.
+        en: A factory-fresh router is called MikroTik; change it early so you do not mix up consoles.
+
+  - id: user-add
+    syntax: /user add name=<nombre> group=<full|write|read> password=<clave>
+    summary:
+      es: Crea un usuario local en uno de los tres grupos de fábrica.
+      en: Creates a local user in one of the three factory groups.
+    args:
+      - name: name
+        text:
+          es: Nombre con el que entra. No puede repetirse.
+          en: The name it logs in with. It cannot be repeated.
+      - name: group
+        text:
+          es: >-
+            `full` lo puede todo, incluida la gestión de usuarios; `write` cambia la
+            configuración pero no los usuarios; `read` solo mira. Indícalo siempre.
+          en: >-
+            `full` can do everything, user management included; `write` changes the
+            configuration but not the users; `read` can only look. Always give it.
+      - name: password
+        text:
+          es: La clave. No se muestra en print ni en export.
+          en: The password. It is not shown in print or in export.
+      - name: comment
+        text:
+          es: Nota opcional, por ejemplo para quién es la cuenta.
+          en: Optional note, for example who the account is for.
+    examples:
+      - command: /user add name=soporte group=read password=Soporte2026
+      - command: /user add name=tecnico group=write password=Tecnico2026 comment="técnico de guardia"
+    ios: |-
+      username soporte privilege 1 secret Soporte2026
+      username tecnico privilege 15 secret Tecnico2026
+    pitfalls:
+      - es: Sin `password` el usuario entra con la clave vacía.
+        en: Without `password` the user logs in with an empty password.
+      - es: Un usuario `read` puede ver casi toda la configuración; no es un usuario sin acceso.
+        en: A `read` user can see almost all of the configuration; it is not a user without access.
+
+  - id: user-add-errors
+    syntax: /user add name=<nombre> group=<full|write|read> password=<clave>
+    summary:
+      es: Errores típicos al crear usuarios, con la respuesta del equipo.
+      en: Typical mistakes when creating users, with the device's answer.
+    examples:
+      - command: /user add name=pepe group=superadmin password=Pepe2026
+        fails: true
+        note:
+          es: Ese grupo no existe. Los de fábrica son full, write y read.
+          en: That group does not exist. The factory ones are full, write and read.
+      - command: /user add name=soporte group=read password=Otra2026
+        fails: true
+        note:
+          es: Ya hay un usuario soporte.
+          en: There is already a user called soporte.
+
+  - id: user-print
+    syntax: /user print [detail]
+    summary:
+      es: Lista los usuarios con su grupo. La contraseña nunca aparece.
+      en: Lists the users with their group. The password never appears.
+    examples:
+      - command: /user print
+      - command: /user print detail
+    ios: show running-config | include username
+    pitfalls:
+      - es: El usuario admin trae el comentario `system default user`; no lo borres sin tener otro usuario `full` que funcione.
+        en: The admin user carries the comment `system default user`; do not delete it before you have another working `full` user.
+
+  - id: user-set
+    syntax: /user set <nombre|número> <propiedad>=<valor>
+    summary:
+      es: Cambia el grupo o la clave de un usuario. `disable` lo bloquea sin borrarlo.
+      en: Changes a user's group or password. `disable` locks it out without deleting it.
+    examples:
+      - command: /user set soporte group=write
+      - command: /user set admin password=ClaveAdmin2026
+        note:
+          es: Lo primero que conviene hacer en un router nuevo.
+          en: The first thing worth doing on a new router.
+      - command: /user disable tecnico
+    ios: username admin privilege 15 secret ClaveAdmin2026
+    pitfalls:
+      - es: Un usuario deshabilitado sigue en la lista con la flag X; `enable` lo devuelve tal cual.
+        en: A disabled user stays in the list with the X flag; `enable` brings it back as it was.
+
+  - id: user-remove
+    syntax: /user remove <nombre|número>
+    summary:
+      es: Borra un usuario.
+      en: Deletes a user.
+    examples:
+      - command: /user remove tecnico
+    ios: no username tecnico
+
+  - id: service-print
+    syntax: /ip service print [where <condición>]
+    summary:
+      es: >-
+        Lista los servicios de gestión del router con su puerto y, si las hay, las redes
+        desde las que aceptan conexiones. Los deshabilitados llevan X.
+      en: >-
+        Lists the router's management services with their port and, if set, the networks
+        they accept connections from. Disabled ones carry X.
+    examples:
+      - command: /ip service print
+      - command: /ip service print where name=ssh
+    pitfalls:
+      - es: Una columna ADDRESS vacía significa que el servicio acepta conexiones desde cualquier red.
+        en: An empty ADDRESS column means the service accepts connections from any network.
+
+  - id: service-disable
+    syntax: /ip service <disable|enable> <nombre>[,<nombre>…]
+    summary:
+      es: Apaga o enciende servicios por su nombre. Se pueden dar varios separados por comas.
+      en: Turns services off or on by name. Several can be given separated by commas.
+    examples:
+      - command: /ip service disable telnet
+        note:
+          es: Telnet viaja en claro; es lo primero que se apaga.
+          en: Telnet travels in clear text; it is the first thing to turn off.
+      - command: /ip service disable ftp,www
+      - command: /ip service print where disabled
+    ios: |-
+      line vty 0 4
+       transport input ssh
+      no ip http server
+    pitfalls:
+      - es: Si apagas el servicio por el que estás conectado, la sesión siguiente ya no entra. Deja ssh o winbox vivos.
+        en: If you turn off the service you are connected through, your next session cannot get in. Keep ssh or winbox alive.
+
+  - id: service-set
+    syntax: /ip service set <nombre> [port=<puerto>] [address=<red>[,<red>…]]
+    summary:
+      es: Mueve un servicio a otro puerto o lo limita a ciertas redes de origen.
+      en: Moves a service to another port or limits it to certain source networks.
+    args:
+      - name: port
+        text:
+          es: Puerto TCP nuevo, de 1 a 65535.
+          en: New TCP port, from 1 to 65535.
+      - name: address
+        text:
+          es: Redes desde las que se acepta el servicio, con prefijo. Vacío significa todas.
+          en: Networks the service is accepted from, with prefix. Empty means all.
+    examples:
+      - command: /ip service set ssh port=2222
+      - command: /ip service set winbox address=192.168.88.0/24
+        note:
+          es: Winbox solo desde la LAN.
+          en: Winbox only from the LAN.
+      - command: /ip service set telnet port=99999
+        fails: true
+        note:
+          es: Fuera de rango.
+          en: Out of range.
+    ios: |-
+      access-list 10 permit 192.168.88.0 0.0.0.255
+      line vty 0 4
+       access-class 10 in
+    pitfalls:
+      - es: Tras mover ssh, el cliente tiene que indicar el puerto (`ssh -p 2222`).
+        en: After moving ssh, the client has to give the port (`ssh -p 2222`).
+      - es: Limitar `address` no sustituye al firewall; solo afecta a ese servicio.
+        en: Limiting `address` does not replace the firewall; it only affects that service.
+
+  - id: resource
+    syntax: /system resource print
+    summary:
+      es: Muestra el tiempo encendido, la versión, la memoria, el disco, la CPU y la placa.
+      en: Shows uptime, version, memory, storage, CPU and board.
+    examples:
+      - command: /system resource print
+    ios: show version
+
+  - id: log
+    syntax: /log print [where <condición>]
+    summary:
+      es: >-
+        Muestra los mensajes del sistema con hora y temas (topics). Cada cambio de
+        configuración deja una línea que dice qué cambió y quién lo hizo.
+      en: >-
+        Shows the system messages with time and topics. Every configuration change leaves a
+        line saying what changed and who did it.
+    examples:
+      - command: /log print
+      - command: /log print where message~"user"
+        note:
+          es: Solo las líneas cuyo mensaje contiene "user".
+          en: Only the lines whose message contains "user".
+    ios: show logging
+    pitfalls:
+      - es: Por defecto el log vive en memoria y se pierde al reiniciar.
+        en: By default the log lives in memory and is lost on reboot.

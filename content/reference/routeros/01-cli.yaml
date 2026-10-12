@@ -1,0 +1,347 @@
+# Referencia de comandos, tema 1: moverse por la CLI. Los ejemplos corren en
+# orden sobre el router de práctica (content/sandbox/routeros.yaml); los
+# marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: cli
+vendor: routeros
+order: 1
+title:
+  es: La línea de comandos
+  en: The command line
+summary:
+  es: Menús, ayuda, print y las órdenes que sirven en cualquier menú para añadir, cambiar, quitar y deshacer.
+  en: Menus, help, print and the commands that work in every menu to add, change, remove and undo.
+fromIos:
+  es: >-
+    En IOS hay modos: usuario, privilegiado y configuración, y lo que escribes en
+    configuración no se guarda hasta `write memory`. RouterOS no tiene modos. La
+    configuración es un árbol de menús (`/ip address`, `/interface bridge`) que recorres
+    como carpetas, y en cada menú los mismos verbos: `print`, `add`, `set`, `remove`,
+    `enable`, `disable`. Cada cambio se aplica y se guarda al instante, así que no hay
+    `write memory`, pero sí `undo` para dar marcha atrás y safe mode (Ctrl+X) para no
+    quedarte fuera si un cambio corta tu propia conexión.
+  en: >-
+    IOS has modes: user, privileged and configuration, and what you type in configuration
+    is not saved until `write memory`. RouterOS has no modes. The configuration is a tree
+    of menus (`/ip address`, `/interface bridge`) that you walk like folders, and every
+    menu has the same verbs: `print`, `add`, `set`, `remove`, `enable`, `disable`. Each
+    change applies and is saved at once, so there is no `write memory`, but there is
+    `undo` to step back and safe mode (Ctrl+X) so you are not locked out if a change cuts
+    your own connection.
+labs: [ros-01-acceso-inicial]
+
+commands:
+  - id: menu
+    syntax: /<menú> [<submenú>…]  |  ..  |  /
+    summary:
+      es: >-
+        Entra en un menú escribiendo su ruta; el prompt muestra dónde estás y desde ahí los
+        comandos van sin ruta. `..` sube un nivel y `/` vuelve a la raíz. La ruta también se
+        puede escribir con barras: `/ip/address/print`.
+      en: >-
+        Enter a menu by typing its path; the prompt shows where you are and from there
+        commands need no path. `..` goes up one level and `/` returns to the root. The path
+        can also be written with slashes: `/ip/address/print`.
+    args:
+      - name: ..
+        text:
+          es: Sube al menú padre, como `exit` en un submodo de IOS.
+          en: Goes up to the parent menu, like `exit` in an IOS submode.
+      - name: /
+        text:
+          es: Sola, vuelve a la raíz. Al principio de una línea, hace que la ruta sea absoluta.
+          en: On its own, returns to the root. At the start of a line, makes the path absolute.
+    examples:
+      - command: /ip address
+        note:
+          es: El prompt pasa a `[admin@MikroTik] /ip/address>`.
+          en: The prompt becomes `[admin@MikroTik] /ip/address>`.
+      - command: ..
+        note:
+          es: Ahora estás en `/ip`.
+          en: Now you are in `/ip`.
+      - command: /
+        note:
+          es: De vuelta en la raíz.
+          en: Back at the root.
+    ios: |-
+      configure terminal
+       interface GigabitEthernet0/1
+       exit
+      end
+    pitfalls:
+      - es: Una línea que empieza con `/` ignora el menú actual. Sin `/`, se interpreta dentro del menú donde estás.
+        en: A line starting with `/` ignores the current menu. Without `/`, it is read inside the menu you are in.
+
+  - id: ayuda
+    syntax: <prefijo de cada palabra>  (? muestra opciones, Tab completa)
+    summary:
+      es: >-
+        `?` lista lo que puedes escribir en ese punto: submenús, comandos o argumentos. Tab
+        completa la palabra, y dos Tab muestran las opciones. Cada palabra se puede abreviar
+        mientras no sea ambigua.
+      en: >-
+        `?` lists what you can type at that point: submenus, commands or arguments. Tab
+        completes the word, and a double Tab shows the choices. Every word can be shortened
+        as long as it is not ambiguous.
+    examples:
+      - command: /int pr
+        note:
+          es: Igual que `/interface print`.
+          en: Same as `/interface print`.
+      - command: /ip d print
+        fails: true
+        note:
+          es: Ambiguo, en `/ip` hay dhcp-client, dhcp-server y dns. Escribe más letras o usa Tab.
+          en: Ambiguous, `/ip` has dhcp-client, dhcp-server and dns. Type more letters or use Tab.
+      - command: /ip adress print
+        fails: true
+        note:
+          es: Con una letra de menos no es un prefijo de nada. Tab lo habría evitado.
+          en: With a letter missing it is not a prefix of anything. Tab would have caught it.
+    ios: |-
+      show ?
+      sh ip int br
+    pitfalls:
+      - es: Tras `=` Tab también propone valores, como nombres de interfaces o grupos.
+        en: After `=` Tab also suggests values, such as interface or group names.
+      - es: En scripts y documentación escribe las palabras completas; una abreviatura puede volverse ambigua en otra versión.
+        en: In scripts and documentation write full words; an abbreviation can become ambiguous in another version.
+
+  - id: print
+    syntax: <menú> print [detail] [count-only]
+    summary:
+      es: >-
+        Muestra las filas del menú. Arriba explica las letras de estado (flags) y las
+        columnas. `detail` enseña todas las propiedades y `count-only` solo cuántas filas hay.
+      en: >-
+        Shows the rows of the menu. The top lines explain the status letters (flags) and the
+        columns. `detail` shows every property and `count-only` just how many rows there are.
+    args:
+      - name: detail
+        text:
+          es: Una fila por ítem con todas sus propiedades en la forma `nombre=valor`.
+          en: One entry per item with all its properties as `name=value`.
+      - name: count-only
+        text:
+          es: Solo el número de filas. Se combina con `where`.
+          en: Just the number of rows. Combines with `where`.
+    examples:
+      - command: /interface print
+      - command: /interface print detail
+      - command: /interface print count-only
+    ios: |-
+      show interfaces
+      show running-config | count interface
+    pitfalls:
+      - es: El número de la primera columna no es un identificador fijo; sale del último print de ese menú.
+        en: The number in the first column is not a fixed id; it comes from the last print of that menu.
+
+  - id: print-where
+    syntax: <menú> print [detail|count-only] where <condición>
+    summary:
+      es: >-
+        Filtra las filas. La condición compara propiedades (`name=ether2`), usa flags
+        sueltos (`running`, `disabled`), los niega con `!` y busca texto con `~`.
+      en: >-
+        Filters the rows. The condition compares properties (`name=ether2`), uses bare flags
+        (`running`, `disabled`), negates them with `!` and matches text with `~`.
+    args:
+      - name: where
+        text:
+          es: Va al final del print. Se pueden unir condiciones con `and`.
+          en: Goes at the end of print. Conditions can be joined with `and`.
+    examples:
+      - command: /interface print where running
+        note:
+          es: Solo los puertos con enlace (flag R).
+          en: Only the ports with link (flag R).
+      - command: /interface print where !running
+      - command: /interface print count-only where running
+    ios: show ip interface brief | include up
+    pitfalls:
+      - es: Después de un `print where` los números cambian; el 0 es la primera fila filtrada, no la del print completo.
+        en: After a `print where` the numbers change; 0 is the first filtered row, not the one from the full print.
+
+  - id: add
+    syntax: <menú> add <propiedad>=<valor> …
+    summary:
+      es: Crea una fila nueva en el menú. Las propiedades obligatorias dependen del menú; las demás toman su valor por defecto.
+      en: Creates a new row in the menu. The required properties depend on the menu; the rest take their default.
+    args:
+      - name: comment
+        text:
+          es: Existe en casi todos los menús. Aparece con `;;;` encima de la fila.
+          en: Exists in almost every menu. Shows up with `;;;` above the row.
+      - name: disabled
+        text:
+          es: Con `disabled=yes` la fila se crea ya deshabilitada.
+          en: With `disabled=yes` the row is created already disabled.
+    examples:
+      - command: /ip address add address=10.0.1.1/24 interface=ether4
+      - command: /ip address add address=10.0.2.1/24 interface=ether5 comment=pruebas
+    pitfalls:
+      - es: Si falta una propiedad obligatoria el error dice cuál, por ejemplo `missing value(s) of argument(s) interface`.
+        en: If a required property is missing the error says which, for example `missing value(s) of argument(s) interface`.
+
+  - id: set
+    syntax: <menú> set <número|nombre> <propiedad>=<valor> …
+    summary:
+      es: >-
+        Cambia propiedades de una fila existente. Se elige por el número del último print o,
+        en los menús con nombre (interfaces, usuarios, servicios), por su nombre.
+      en: >-
+        Changes properties of an existing row. Pick it by the number from the last print or,
+        in menus with names (interfaces, users, services), by its name.
+    examples:
+      - command: /ip address print
+        note:
+          es: Primero el print, para saber qué número tiene cada fila.
+          en: Print first, to see which number each row has.
+      - command: /ip address set 1 address=10.0.2.254/24
+      - command: /interface set ether4 comment=libre
+        note:
+          es: En `/interface` basta el nombre.
+          en: In `/interface` the name is enough.
+    pitfalls:
+      - es: Si no has hecho print en ese menú durante la sesión, los números pueden no ser los que crees.
+        en: If you have not printed that menu during the session, the numbers may not be what you think.
+
+  - id: find
+    syntax: <menú> <set|remove|enable|disable> [find <condición>] …
+    summary:
+      es: >-
+        `[find …]` elige las filas por su contenido en lugar de por número. Es la forma
+        segura en scripts, porque no depende de ningún print anterior.
+      en: >-
+        `[find …]` picks rows by their content instead of by number. It is the safe form in
+        scripts, because it does not depend on any earlier print.
+    examples:
+      - command: /ip address set [find interface=ether5] address=10.0.2.1/24
+      - command: /ip address remove [find interface=ether9]
+        note:
+          es: No da error aunque no encuentre nada; simplemente no hace nada.
+          en: No error even if it finds nothing; it simply does nothing.
+    pitfalls:
+      - es: Un find que coincide con varias filas las cambia todas. Revisa antes con `print where` y la misma condición.
+        en: A find that matches several rows changes all of them. Check first with `print where` and the same condition.
+      - es: Si un valor lleva `/` o espacios, ponlo entre comillas, como en `[find address="10.0.1.1/24"]`.
+        en: If a value has `/` or spaces, quote it, as in `[find address="10.0.1.1/24"]`.
+
+  - id: enable-disable
+    syntax: <menú> <enable|disable> <número|nombre|[find …]>
+    summary:
+      es: >-
+        Deshabilita una fila sin borrarla: deja de tener efecto pero sigue en la
+        configuración, marcada con X. `enable` la reactiva tal cual estaba.
+      en: >-
+        Disables a row without deleting it: it stops taking effect but stays in the
+        configuration, marked with X. `enable` brings it back as it was.
+    examples:
+      - command: /ip address disable 0
+      - command: /ip address print
+        note:
+          es: La fila 0 aparece con la flag X.
+          en: Row 0 shows the X flag.
+      - command: /ip address enable 0
+    ios: |-
+      interface GigabitEthernet0/1
+       shutdown
+       no shutdown
+    pitfalls:
+      - es: Deshabilitar es la manera de probar sin perder lo escrito; en IOS solo existe para interfaces.
+        en: Disabling is the way to test without losing what you typed; in IOS it only exists for interfaces.
+
+  - id: comment
+    syntax: <menú> comment <número|nombre|[find …]> comment=<texto>
+    summary:
+      es: Pone o cambia el comentario de una fila. Es lo mismo que `set … comment=`.
+      en: Sets or changes the comment of a row. Same as `set … comment=`.
+    examples:
+      - command: /interface comment ether1 comment="hacia el ISP"
+      - command: /interface print
+        note:
+          es: El comentario sale con `;;;` encima de ether1.
+          en: The comment shows with `;;;` above ether1.
+    ios: |-
+      interface GigabitEthernet0/0
+       description hacia el ISP
+    pitfalls:
+      - es: Si el texto lleva espacios, entre comillas; sin ellas solo se toma la primera palabra y el resto da error.
+        en: If the text has spaces, use quotes; without them only the first word is taken and the rest is an error.
+
+  - id: remove
+    syntax: <menú> remove <número|nombre|[find …]>
+    summary:
+      es: Borra filas. No pide confirmación.
+      en: Deletes rows. It does not ask for confirmation.
+    examples:
+      - command: /ip address remove [find interface=ether5]
+      - command: /ip address remove 7
+        fails: true
+        note:
+          es: No hay fila 7 en el último print.
+          en: There is no row 7 in the last print.
+    pitfalls:
+      - es: Las filas dinámicas (flag D) las crea el sistema y no se pueden borrar a mano.
+        en: Dynamic rows (flag D) are created by the system and cannot be deleted by hand.
+
+  - id: undo-redo
+    syntax: /undo  |  /redo
+    summary:
+      es: >-
+        `/undo` deshace el último cambio de configuración, sea del menú que sea, y `/redo`
+        lo vuelve a aplicar. Para cambios arriesgados está safe mode: pulsa Ctrl+X, el
+        prompt muestra `<SAFE>`, y si la sesión se corta todo lo hecho desde entonces se
+        deshace solo. Ctrl+X otra vez lo suelta y conserva los cambios.
+      en: >-
+        `/undo` reverts the last configuration change, whatever menu it was in, and `/redo`
+        applies it again. For risky changes there is safe mode: press Ctrl+X, the prompt
+        shows `<SAFE>`, and if the session drops everything done since then is reverted on
+        its own. Ctrl+X again releases it and keeps the changes.
+    examples:
+      - command: /undo
+        note:
+          es: Devuelve la dirección de ether5 que acabas de borrar.
+          en: Brings back the ether5 address you just removed.
+      - command: /redo
+        note:
+          es: La vuelve a borrar.
+          en: Removes it again.
+    pitfalls:
+      - es: Undo no distingue menús; deshace el último cambio del router, aunque lo hicieras en otro menú.
+        en: Undo does not care about menus; it reverts the router's last change, even one made in another menu.
+      - es: Lo más parecido a safe mode en IOS es `reload in 5` o `configure terminal revert timer`. Aquí basta Ctrl+X antes de tocar el firewall o la interfaz por la que entras.
+        en: The closest thing to safe mode in IOS is `reload in 5` or `configure terminal revert timer`. Here Ctrl+X is enough before touching the firewall or the interface you are connected through.
+
+  - id: export
+    syntax: '[/<menú>] export [verbose] [show-sensitive] [file=<nombre>]'
+    summary:
+      es: >-
+        Muestra la configuración como los comandos que la recrean. Desde la raíz exporta todo;
+        dentro de un menú, solo ese menú. Por defecto omite los valores que siguen de fábrica.
+      en: >-
+        Shows the configuration as the commands that rebuild it. From the root it exports
+        everything; inside a menu, only that menu. By default it leaves out values still at
+        factory default.
+    args:
+      - name: verbose
+        text:
+          es: Incluye también los valores por defecto.
+          en: Also includes default values.
+      - name: show-sensitive
+        text:
+          es: Muestra datos sensibles, como claves Wi-Fi, que normalmente se ocultan.
+          en: Shows sensitive data, such as Wi-Fi keys, that is normally hidden.
+      - name: file
+        text:
+          es: Guarda el resultado en un archivo .rsc en lugar de mostrarlo.
+          en: Saves the result to an .rsc file instead of showing it.
+    examples:
+      - command: /export
+      - command: /ip address export
+    ios: |-
+      show running-config
+      show running-config | section interface
+    pitfalls:
+      - es: Las contraseñas de usuarios nunca salen en el export, ni con `show-sensitive`.
+        en: User passwords never appear in the export, not even with `show-sensitive`.

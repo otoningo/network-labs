@@ -1,0 +1,251 @@
+# Referencia de comandos, tema 7: servidor y cliente DHCP. Los ejemplos corren
+# en orden sobre el router de práctica (content/sandbox/routeros.yaml) después
+# del setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: dhcp
+vendor: routeros
+order: 7
+title:
+  es: DHCP
+  en: DHCP
+summary:
+  es: Repartir direcciones en la LAN con pool, servidor y red, fijar leases y pedir dirección al proveedor por la WAN.
+  en: Hand out LAN addresses with a pool, a server and a network, pin leases and get an address from the provider on the WAN.
+fromIos:
+  es: >-
+    En IOS un `ip dhcp pool` lo reúne todo: la red, el gateway, el DNS, y lo que no se
+    reparte se saca con `ip dhcp excluded-address`. RouterOS lo divide en tres piezas: el
+    rango de direcciones en `/ip pool`, el servidor que escucha en una interfaz en
+    `/ip dhcp-server`, y lo que se entrega con cada dirección (gateway, DNS) en
+    `/ip dhcp-server network`. Si falta la red, los clientes reciben dirección pero no
+    gateway. El cliente DHCP de la WAN, que en IOS es `ip address dhcp`, es una fila de
+    `/ip dhcp-client`.
+  en: >-
+    In IOS one `ip dhcp pool` holds everything: network, gateway, DNS, and what must not be
+    handed out is removed with `ip dhcp excluded-address`. RouterOS splits it into three
+    pieces: the address range in `/ip pool`, the server listening on an interface in
+    `/ip dhcp-server`, and what is handed out with each address (gateway, DNS) in
+    `/ip dhcp-server network`. Without the network, clients get an address but no
+    gateway. The WAN DHCP client, which in IOS is `ip address dhcp`, is a row in
+    `/ip dhcp-client`.
+labs: [ros-05-dhcp-server, ros-06-nat-masquerade]
+setup: |
+  /interface bridge add name=bridge1
+  /interface bridge port add bridge=bridge1 interface=ether2
+  /interface bridge port add bridge=bridge1 interface=ether3
+  /ip address add address=192.168.88.1/24 interface=bridge1
+
+commands:
+  - id: pool-add
+    syntax: /ip pool add name=<nombre> ranges=<desde>-<hasta>[,<desde>-<hasta>…]
+    summary:
+      es: Define el rango de direcciones que el servidor puede repartir.
+      en: Defines the range of addresses the server may hand out.
+    args:
+      - name: name
+        text:
+          es: Nombre con el que el servidor se refiere al pool.
+          en: The name the server uses to refer to the pool.
+      - name: ranges
+        text:
+          es: Uno o varios rangos separados por comas. Deja fuera el gateway y las IP fijas.
+          en: One or more ranges separated by commas. Leave out the gateway and the static IPs.
+    examples:
+      - command: /ip pool add name=pool-lan ranges=192.168.88.100-192.168.88.200
+        note:
+          es: PC1 tiene la .10 fija, así que el pool empieza en la .100.
+          en: PC1 has .10 fixed, so the pool starts at .100.
+      - command: /ip pool print
+      - command: /ip pool add name=pool-mal ranges=192.168.88.300-192.168.88.310
+        fails: true
+        note:
+          es: 300 no es un octeto válido.
+          en: 300 is not a valid octet.
+    ios: |-
+      ip dhcp excluded-address 192.168.88.1 192.168.88.99
+      ip dhcp excluded-address 192.168.88.201 192.168.88.254
+    pitfalls:
+      - es: El servidor reparte empezando por el final del rango, así que el primer cliente recibe la .200.
+        en: The server hands out from the end of the range, so the first client gets .200.
+
+  - id: server-add
+    syntax: /ip dhcp-server add interface=<interfaz> address-pool=<pool> [name=<nombre>] [lease-time=<tiempo>]
+    summary:
+      es: Pone un servidor DHCP a escuchar en una interfaz, entregando direcciones del pool.
+      en: Starts a DHCP server listening on an interface, handing out addresses from the pool.
+    args:
+      - name: interface
+        text:
+          es: Donde están los clientes. Si la LAN es un bridge, el bridge, no un puerto.
+          en: Where the clients are. If the LAN is a bridge, the bridge, not a port.
+      - name: address-pool
+        text:
+          es: El pool de donde salen las direcciones.
+          en: The pool the addresses come from.
+      - name: name
+        text:
+          es: Si lo omites se llama dhcp1, dhcp2…
+          en: If you leave it out it is called dhcp1, dhcp2…
+      - name: lease-time
+        text:
+          es: Cuánto dura cada préstamo. Por defecto 30m.
+          en: How long each lease lasts. 30m by default.
+    examples:
+      - command: /ip dhcp-server add name=dhcp-lan interface=bridge1 address-pool=pool-lan lease-time=1h
+      - command: /ip dhcp-server print
+    ios: |-
+      ip dhcp pool LAN
+       network 192.168.88.0 255.255.255.0
+       lease 0 1
+    pitfalls:
+      - es: Un servidor sobre un puerto del bridge queda inválido (flag I) y no entrega nada.
+        en: A server on a bridge port becomes invalid (flag I) and hands out nothing.
+
+  - id: server-errors
+    syntax: /ip dhcp-server add interface=<interfaz> address-pool=<pool>
+    summary:
+      es: Errores típicos al crear el servidor, con la respuesta del equipo.
+      en: Typical mistakes when creating the server, with the device's answer.
+    examples:
+      - command: /ip dhcp-server add interface=bridge1 address-pool=pool-lna
+        fails: true
+        note:
+          es: El pool está mal escrito.
+          en: The pool name is misspelled.
+      - command: /ip dhcp-server add interface=bridge1 address-pool=pool-lan
+        fails: true
+        note:
+          es: Ya hay un servidor en bridge1; solo cabe uno por interfaz.
+          en: There is already a server on bridge1; only one fits per interface.
+
+  - id: network-add
+    syntax: /ip dhcp-server network add address=<red/prefijo> gateway=<ip> dns-server=<ip>[,<ip>…]
+    summary:
+      es: Dice qué gateway y qué DNS reciben los clientes de esa red junto con su dirección.
+      en: Says which gateway and which DNS the clients of that network get along with their address.
+    args:
+      - name: address
+        text:
+          es: La red de los clientes, con prefijo. También les da la máscara.
+          en: The clients' network, with prefix. It also gives them the mask.
+      - name: gateway
+        text:
+          es: La puerta de enlace que usarán, normalmente la IP del router en esa LAN.
+          en: The gateway they will use, usually the router's IP on that LAN.
+      - name: dns-server
+        text:
+          es: Uno o varios servidores DNS separados por comas.
+          en: One or more DNS servers separated by commas.
+    examples:
+      - command: /ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1
+      - command: /ip dhcp-server network print
+    ios: |-
+      ip dhcp pool LAN
+       default-router 192.168.88.1
+       dns-server 192.168.88.1
+    pitfalls:
+      - es: Sin esta fila los clientes reciben IP pero ni gateway ni DNS; llegan a la LAN y a nada más.
+        en: Without this row clients get an IP but neither gateway nor DNS; they reach the LAN and nothing else.
+      - es: Si das el router como DNS, activa `allow-remote-requests` en `/ip dns` para que responda.
+        en: If you give the router as DNS, turn on `allow-remote-requests` in `/ip dns` so it answers.
+
+  - id: lease-print
+    syntax: /ip dhcp-server lease print [detail] [where <condición>]
+    summary:
+      es: Lista los préstamos. Los dinámicos llevan D; los estáticos (reservas) no.
+      en: Lists the leases. Dynamic ones carry D; static ones (reservations) do not.
+    examples:
+      - command: /ip dhcp-server lease print
+        note:
+          es: PC2, en ether3, ya tiene la .200.
+          en: PC2, on ether3, already has .200.
+      - command: /ip dhcp-server lease print detail where host-name=PC2
+    ios: show ip dhcp binding
+
+  - id: make-static
+    syntax: /ip dhcp-server lease make-static <número|[find …]>
+    summary:
+      es: >-
+        Convierte un préstamo dinámico en reserva: ese equipo recibirá siempre la misma IP.
+        Después se puede cambiar la dirección con `set`.
+      en: >-
+        Turns a dynamic lease into a reservation: that device will always get the same IP.
+        Afterwards the address can be changed with `set`.
+    examples:
+      - command: /ip dhcp-server lease make-static [find host-name=PC2]
+      - command: /ip dhcp-server lease set [find host-name=PC2] address=192.168.88.50
+        note:
+          es: La reserva puede quedar fuera del pool, como aquí.
+          en: The reservation may sit outside the pool, as here.
+      - command: /ip dhcp-server lease print
+    ios: |-
+      ip dhcp pool PC2
+       host 192.168.88.50 255.255.255.0
+       hardware-address 0011.2233.4455
+    pitfalls:
+      - es: Solo se pueden editar los estáticos; un lease con D primero necesita `make-static`.
+        en: Only static leases can be edited; a lease with D first needs `make-static`.
+
+  - id: lease-add
+    syntax: /ip dhcp-server lease add address=<ip> mac-address=<mac>
+    summary:
+      es: Reserva una IP para una MAC antes de que el equipo aparezca, por ejemplo una impresora.
+      en: Reserves an IP for a MAC before the device shows up, for example a printer.
+    examples:
+      - command: /ip dhcp-server lease add address=192.168.88.60 mac-address=00:11:22:33:44:55 comment=impresora
+        note:
+          es: Queda en estado waiting hasta que ese equipo pida dirección.
+          en: It stays in the waiting state until that device asks for an address.
+      - command: /ip dhcp-server lease add address=192.168.88.61 mac-address=00:11:22:33:44
+        fails: true
+        note:
+          es: A la MAC le falta un byte.
+          en: The MAC is missing a byte.
+
+  - id: client-add
+    syntax: /ip dhcp-client add interface=<interfaz> [add-default-route=yes|no] [use-peer-dns=yes|no]
+    summary:
+      es: >-
+        Pide dirección por DHCP en esa interfaz, normalmente la WAN. Con lo que recibe pone una
+        dirección dinámica, la ruta por defecto y los DNS del proveedor.
+      en: >-
+        Asks for an address over DHCP on that interface, usually the WAN. With what it gets it
+        sets a dynamic address, the default route and the provider's DNS.
+    args:
+      - name: add-default-route
+        text:
+          es: Si crea la ruta por defecto hacia el gateway recibido. Por defecto yes.
+          en: Whether it creates the default route to the received gateway. yes by default.
+      - name: use-peer-dns
+        text:
+          es: Si usa los DNS que da el proveedor. Por defecto yes.
+          en: Whether it uses the DNS servers the provider gives. yes by default.
+    examples:
+      - command: /ip dhcp-client add interface=ether1
+      - command: /ip dhcp-client print
+        note:
+          es: Estado bound y la dirección recibida del proveedor.
+          en: Status bound and the address received from the provider.
+      - command: /ip dhcp-client print detail
+        note:
+          es: En detail sale también el gateway y cuándo vence el préstamo.
+          en: Detail also shows the gateway and when the lease expires.
+    ios: |-
+      interface GigabitEthernet0/0
+       ip address dhcp
+    pitfalls:
+      - es: La dirección aparece en `/ip address` con flag D y no se puede borrar allí; se quita borrando el cliente.
+        en: The address shows in `/ip address` with the D flag and cannot be deleted there; remove the client instead.
+      - es: Si además tienes una ruta por defecto estática, pon `add-default-route=no` o ajusta las distancias.
+        en: If you also have a static default route, set `add-default-route=no` or adjust the distances.
+
+  - id: client-errors
+    syntax: /ip dhcp-client add interface=<interfaz>
+    summary:
+      es: Error típico con el cliente DHCP, con la respuesta del equipo.
+      en: Typical mistake with the DHCP client, with the device's answer.
+    examples:
+      - command: /ip dhcp-client add interface=ether1
+        fails: true
+        note:
+          es: Ya hay un cliente en ether1. Para cambiarlo usa `set`.
+          en: There is already a client on ether1. To change it use `set`.

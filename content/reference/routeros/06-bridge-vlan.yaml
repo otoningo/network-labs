@@ -1,0 +1,208 @@
+# Referencia de comandos, tema 6: bridge y VLANs. Los ejemplos corren en orden
+# sobre el router de práctica (content/sandbox/routeros.yaml); los marcados con
+# `fails: true` deben fallar, porque enseñan un error típico.
+id: bridge-vlan
+vendor: routeros
+order: 6
+title:
+  es: Bridge y VLANs
+  en: Bridge and VLANs
+summary:
+  es: Unir puertos en un bridge, separarlos en VLANs, armar un troncal y dar al router una interfaz en cada VLAN.
+  en: Join ports in a bridge, split them into VLANs, build a trunk and give the router an interface in each VLAN.
+fromIos:
+  es: >-
+    En un switch Cisco todos los puertos ya conmutan entre sí y las VLAN se asignan por
+    puerto con `switchport`. En un router RouterOS cada puerto es independiente hasta que
+    lo metes en un bridge: el bridge es el switch. Las VLAN se configuran en dos sitios: el
+    `pvid` de cada puerto del bridge (como `switchport access vlan`) y la tabla
+    `/interface bridge vlan`, que dice qué puertos llevan cada VLAN etiquetada o sin
+    etiquetar (como `switchport trunk allowed vlan`). Nada de eso se aplica hasta que
+    activas `vlan-filtering` en el bridge. Las SVI de IOS (`interface Vlan10`) son aquí
+    interfaces de `/interface vlan` colgadas del bridge.
+  en: >-
+    On a Cisco switch every port already switches with the others and VLANs are assigned per
+    port with `switchport`. On a RouterOS router each port stands alone until you put it in a
+    bridge: the bridge is the switch. VLANs are configured in two places: the `pvid` of each
+    bridge port (like `switchport access vlan`) and the `/interface bridge vlan` table,
+    which says which ports carry each VLAN tagged or untagged (like
+    `switchport trunk allowed vlan`). None of that applies until you turn on
+    `vlan-filtering` on the bridge. IOS SVIs (`interface Vlan10`) are interfaces under
+    `/interface vlan` hanging off the bridge.
+labs: [ros-04-bridge-vlans]
+
+commands:
+  - id: bridge-add
+    syntax: /interface bridge add name=<nombre>
+    summary:
+      es: Crea un bridge, un switch por software dentro del router. Aparece en `/interface` como una interfaz más.
+      en: Creates a bridge, a software switch inside the router. It shows up in `/interface` like any other interface.
+    args:
+      - name: name
+        text:
+          es: Si lo omites se llama bridge1, bridge2…
+          en: If you leave it out it is called bridge1, bridge2…
+      - name: vlan-filtering
+        text:
+          es: Por defecto `no`. Ver más abajo.
+          en: Defaults to `no`. See below.
+    examples:
+      - command: /interface bridge add name=bridge1
+      - command: /interface bridge print
+    pitfalls:
+      - es: Un bridge sin puertos no conmuta nada; el siguiente paso es añadirle puertos.
+        en: A bridge with no ports switches nothing; the next step is to add ports to it.
+
+  - id: port-add
+    syntax: /interface bridge port add bridge=<bridge> interface=<puerto> [pvid=<vlan>] [frame-types=<tipo>]
+    summary:
+      es: >-
+        Mete un puerto en el bridge. Con `pvid` el puerto es de acceso a esa VLAN; el troncal
+        se deja con pvid 1 y, si solo debe aceptar tramas etiquetadas, se le pone
+        `frame-types=admit-only-vlan-tagged`.
+      en: >-
+        Puts a port into the bridge. With `pvid` the port is an access port for that VLAN; the
+        trunk keeps pvid 1 and, if it should only accept tagged frames, gets
+        `frame-types=admit-only-vlan-tagged`.
+    args:
+      - name: pvid
+        text:
+          es: VLAN que reciben las tramas sin etiqueta que entran por el puerto. Por defecto 1.
+          en: VLAN given to untagged frames entering the port. 1 by default.
+      - name: frame-types
+        text:
+          es: >-
+            Qué tramas acepta el puerto: `admit-all` (por defecto), `admit-only-vlan-tagged`
+            para troncales o `admit-only-untagged-and-priority-tagged` para accesos.
+          en: >-
+            Which frames the port accepts: `admit-all` (default), `admit-only-vlan-tagged`
+            for trunks or `admit-only-untagged-and-priority-tagged` for access ports.
+    examples:
+      - command: /interface bridge port add bridge=bridge1 interface=ether2 pvid=10
+      - command: /interface bridge port add bridge=bridge1 interface=ether3 pvid=20
+      - command: /interface bridge port add bridge=bridge1 interface=ether5 frame-types=admit-only-vlan-tagged
+        note:
+          es: ether5 será el troncal hacia otro switch.
+          en: ether5 will be the trunk to another switch.
+    ios: |-
+      interface GigabitEthernet0/2
+       switchport mode access
+       switchport access vlan 10
+    pitfalls:
+      - es: Una dirección IP en un puerto del bridge queda inválida; la dirección va en el bridge o en una interfaz VLAN.
+        en: An IP address on a bridge port becomes invalid; the address goes on the bridge or on a VLAN interface.
+      - es: Los puertos del bridge salen con la flag S en `/interface print`.
+        en: Bridge ports show the S flag in `/interface print`.
+
+  - id: port-errors
+    syntax: /interface bridge port add bridge=<bridge> interface=<puerto>
+    summary:
+      es: Errores típicos al añadir puertos, con la respuesta del equipo.
+      en: Typical mistakes when adding ports, with the device's answer.
+    examples:
+      - command: /interface bridge port add bridge=bridge1 interface=ether2
+        fails: true
+        note:
+          es: ether2 ya es puerto del bridge. Para cambiar su pvid usa `set`.
+          en: ether2 is already a bridge port. To change its pvid use `set`.
+      - command: /interface bridge port add bridge=bridge2 interface=ether4
+        fails: true
+        note:
+          es: No existe bridge2.
+          en: There is no bridge2.
+      - command: /interface bridge port print
+        note:
+          es: ether5 sale con I (inactivo) porque no tiene nada conectado.
+          en: ether5 shows I (inactive) because nothing is plugged into it.
+    pitfalls:
+      - es: Un puerto solo puede estar en un bridge a la vez.
+        en: A port can only be in one bridge at a time.
+
+  - id: bridge-vlan
+    syntax: /interface bridge vlan add bridge=<bridge> vlan-ids=<vlan>[,<vlan>…] tagged=<puertos> [untagged=<puertos>]
+    summary:
+      es: >-
+        Declara qué puertos llevan cada VLAN. En `tagged` van los troncales y también el
+        propio bridge si el router tiene una interfaz en esa VLAN; en `untagged`, los accesos.
+      en: >-
+        Declares which ports carry each VLAN. `tagged` lists the trunks and also the bridge
+        itself if the router has an interface in that VLAN; `untagged` lists the access ports.
+    args:
+      - name: vlan-ids
+        text:
+          es: Una o varias VLAN, separadas por comas.
+          en: One or more VLANs, separated by commas.
+      - name: tagged
+        text:
+          es: Puertos por los que la VLAN sale con etiqueta 802.1Q.
+          en: Ports where the VLAN leaves with an 802.1Q tag.
+      - name: untagged
+        text:
+          es: Puertos por los que sale sin etiqueta. Con vlan-filtering, el pvid ya los añade solo.
+          en: Ports where it leaves untagged. With vlan-filtering, the pvid already adds them.
+    examples:
+      - command: /interface bridge vlan add bridge=bridge1 vlan-ids=10 tagged=bridge1,ether5 untagged=ether2
+      - command: /interface bridge vlan add bridge=bridge1 vlan-ids=20 tagged=bridge1,ether5 untagged=ether3
+      - command: /interface bridge vlan print
+    ios: |-
+      vlan 10,20
+      interface GigabitEthernet0/5
+       switchport mode trunk
+       switchport trunk allowed vlan 10,20
+    pitfalls:
+      - es: Olvidar `bridge1` en `tagged` es el error más común; la interfaz VLAN del router aparece running pero nadie le contesta.
+        en: Forgetting `bridge1` in `tagged` is the most common mistake; the router's VLAN interface shows running but nobody answers it.
+
+  - id: interface-vlan
+    syntax: /interface vlan add name=<nombre> vlan-id=<1-4094> interface=<bridge>
+    summary:
+      es: >-
+        Crea una interfaz del router dentro de una VLAN, para darle una dirección y que haga
+        de gateway. Con varias, el router enruta entre las VLAN.
+      en: >-
+        Creates a router interface inside a VLAN, to give it an address and act as gateway.
+        With several, the router routes between the VLANs.
+    args:
+      - name: vlan-id
+        text:
+          es: Número de VLAN, de 1 a 4094.
+          en: VLAN number, from 1 to 4094.
+      - name: interface
+        text:
+          es: Interfaz que lleva la VLAN etiquetada. En un bridge con VLANs, el propio bridge.
+          en: Interface carrying the tagged VLAN. On a VLAN-aware bridge, the bridge itself.
+    examples:
+      - command: /interface vlan add name=vlan10 vlan-id=10 interface=bridge1
+      - command: /ip address add address=10.0.10.1/24 interface=vlan10
+      - command: /interface vlan add name=vlan20 vlan-id=4095 interface=bridge1
+        fails: true
+        note:
+          es: Fuera de rango; el máximo es 4094.
+          en: Out of range; the maximum is 4094.
+    ios: |-
+      interface Vlan10
+       ip address 10.0.10.1 255.255.255.0
+    pitfalls:
+      - es: Colgar la VLAN de un puerto del bridge (ether5) en lugar del bridge hace que no reciba nada.
+        en: Hanging the VLAN off a bridge port (ether5) instead of the bridge means it receives nothing.
+
+  - id: vlan-filtering
+    syntax: /interface bridge set <bridge> vlan-filtering=yes
+    summary:
+      es: >-
+        Activa las VLAN en el bridge: desde ese momento valen los pvid y la tabla de
+        `/interface bridge vlan`. Hasta entonces el bridge pasa todo como si no hubiera VLANs.
+      en: >-
+        Turns VLANs on in the bridge: from then on the pvids and the `/interface bridge vlan`
+        table apply. Until then the bridge passes everything as if there were no VLANs.
+    examples:
+      - command: /interface bridge set bridge1 vlan-filtering=yes
+      - command: /interface bridge vlan print
+        note:
+          es: Ahora aparecen las columnas CURRENT con los puertos reales, y una fila dinámica (D) para la VLAN 1.
+          en: Now the CURRENT columns show the real ports, plus a dynamic row (D) for VLAN 1.
+    pitfalls:
+      - es: Actívalo al final, con todo lo demás escrito, y en safe mode (Ctrl+X). Si entras por un puerto del bridge, un error te deja fuera.
+        en: Turn it on last, with everything else in place, and in safe mode (Ctrl+X). If you are connected through a bridge port, a mistake locks you out.
+      - es: Las filas dinámicas de `/interface bridge vlan` no se pueden borrar; salen de los pvid.
+        en: Dynamic rows in `/interface bridge vlan` cannot be deleted; they come from the pvids.

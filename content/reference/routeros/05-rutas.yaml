@@ -1,0 +1,181 @@
+# Referencia de comandos, tema 5: rutas estáticas. Los ejemplos corren en
+# orden sobre el router de práctica (content/sandbox/routeros.yaml) después del
+# setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: rutas
+vendor: routeros
+order: 5
+title:
+  es: Rutas estáticas
+  en: Static routes
+summary:
+  es: Leer la tabla de rutas, añadir rutas y la ruta por defecto, dar respaldo con distance y quitarlas.
+  en: Read the routing table, add routes and the default route, back them up with distance and remove them.
+fromIos:
+  es: >-
+    En IOS una ruta es una línea `ip route` con red, máscara y siguiente salto, y se ve con
+    `show ip route`. En RouterOS las rutas son filas de `/ip route`: la red va con prefijo
+    en `dst-address` y el siguiente salto en `gateway`. La misma tabla muestra las rutas
+    conectadas (DAc) que el router crea solo por cada dirección, las estáticas (s) y las
+    que llegan por DHCP (d). La A de activa dice cuál se usa de verdad; la distancia
+    administrativa se llama `distance`.
+  en: >-
+    In IOS a route is an `ip route` line with network, mask and next hop, and you see it with
+    `show ip route`. In RouterOS routes are rows in `/ip route`: the network goes with a
+    prefix in `dst-address` and the next hop in `gateway`. The same table shows the
+    connected routes (DAc) the router creates by itself for each address, the static ones
+    (s) and those that come from DHCP (d). The A for active says which one is really used;
+    administrative distance is called `distance`.
+labs: [ros-03-rutas-estaticas]
+setup: |
+  /ip address add address=203.0.113.2/24 interface=ether1
+  /ip address add address=192.168.88.1/24 interface=ether2
+  /ip address add address=10.0.12.1/30 interface=ether3
+
+commands:
+  - id: print
+    syntax: /ip route print [detail] [where <condición>]
+    summary:
+      es: >-
+        Muestra la tabla de rutas. Las letras de la izquierda son flags: D dinámica, A activa,
+        c conectada, s estática, d aprendida por DHCP, I inactiva, X deshabilitada.
+      en: >-
+        Shows the routing table. The letters on the left are flags: D dynamic, A active,
+        c connected, s static, d learned by DHCP, I inactive, X disabled.
+    examples:
+      - command: /ip route print
+        note:
+          es: Con solo direcciones, únicamente hay rutas conectadas (DAc), una por red.
+          en: With only addresses, there are only connected routes (DAc), one per network.
+    ios: show ip route
+    pitfalls:
+      - es: Las rutas conectadas no llevan número porque son dinámicas; no se pueden editar ni borrar.
+        en: Connected routes have no number because they are dynamic; they cannot be edited or deleted.
+
+  - id: add
+    syntax: /ip route add dst-address=<red/prefijo> gateway=<ip>
+    summary:
+      es: Añade una ruta estática hacia una red remota a través de un vecino directamente conectado.
+      en: Adds a static route to a remote network through a directly connected neighbour.
+    args:
+      - name: dst-address
+        text:
+          es: La red de destino con prefijo, escrita como dirección de red (192.168.2.0/24).
+          en: The destination network with prefix, written as the network address (192.168.2.0/24).
+      - name: gateway
+        text:
+          es: La IP del siguiente salto. Tiene que estar en una red conectada para que la ruta quede activa.
+          en: The next hop IP. It must be on a connected network for the route to become active.
+      - name: comment
+        text:
+          es: Nota opcional, útil para saber a qué sede o cliente lleva la ruta.
+          en: Optional note, useful to know which site or customer the route leads to.
+    examples:
+      - command: /ip route add dst-address=192.168.2.0/24 gateway=10.0.12.2
+      - command: /ip route add dst-address=10.0.50.0/24 gateway=192.168.88.254 comment="red del laboratorio"
+      - command: /ip route print
+        note:
+          es: Las nuevas aparecen como As, estáticas y activas, con distancia 1.
+          en: The new ones show as As, static and active, with distance 1.
+    ios: |-
+      ip route 192.168.2.0 255.255.255.0 10.0.12.2
+      ip route 10.0.50.0 255.255.255.0 192.168.88.254
+    pitfalls:
+      - es: Que la ida tenga ruta no basta. El router del otro lado también necesita una ruta de vuelta hacia tu LAN.
+        en: Having a route out is not enough. The router on the other side also needs a route back to your LAN.
+      - es: Un gateway que es una interfaz (gateway=ether3) solo funciona si el vecino contesta ARP por toda la red remota; usa la IP del vecino.
+        en: A gateway that is an interface (gateway=ether3) only works if the neighbour answers ARP for the whole remote network; use the neighbour's IP.
+
+  - id: default
+    syntax: /ip route add dst-address=0.0.0.0/0 gateway=<ip>
+    summary:
+      es: La ruta por defecto, por donde sale todo lo que no tiene una ruta más concreta. Normalmente apunta al proveedor.
+      en: The default route, where everything without a more specific route goes. It usually points to the provider.
+    examples:
+      - command: /ip route add dst-address=0.0.0.0/0 gateway=203.0.113.1
+      - command: /ping 8.8.8.8 count=2
+        note:
+          es: Con la ruta por defecto el router ya llega a Internet.
+          en: With the default route the router now reaches the Internet.
+    ios: ip route 0.0.0.0 0.0.0.0 203.0.113.1
+    pitfalls:
+      - es: Si omites `dst-address` la ruta queda como 0.0.0.0/0, es decir, otra ruta por defecto.
+        en: If you leave out `dst-address` the route becomes 0.0.0.0/0, that is, another default route.
+      - es: Si la WAN usa cliente DHCP, este ya crea la ruta por defecto (flag d); no añadas otra a mano.
+        en: If the WAN uses a DHCP client, it already creates the default route (flag d); do not add another by hand.
+
+  - id: distance
+    syntax: /ip route add dst-address=<red/prefijo> gateway=<ip> distance=<1-255>
+    summary:
+      es: >-
+        Con dos rutas a la misma red gana la de menor distancia. La otra queda de respaldo,
+        sin la A de activa, y entra sola si cae la principal.
+      en: >-
+        With two routes to the same network the lowest distance wins. The other one waits as
+        a backup, without the A for active, and takes over by itself if the main one fails.
+    args:
+      - name: distance
+        text:
+          es: De 1 a 255. Las estáticas valen 1 por defecto; las conectadas, 0.
+          en: From 1 to 255. Static routes default to 1; connected ones are 0.
+    examples:
+      - command: /ip route add gateway=203.0.113.254 distance=2
+        note:
+          es: Sin dst-address es otra ruta por defecto, de respaldo.
+          en: Without dst-address it is another default route, a backup one.
+      - command: /ip route print where dst-address=0.0.0.0/0
+    ios: ip route 0.0.0.0 0.0.0.0 203.0.113.254 2
+    pitfalls:
+      - es: El respaldo solo entra si la principal deja de ser válida (interfaz caída o, con `check-gateway=ping`, vecino que no responde).
+        en: The backup only takes over if the main route stops being valid (interface down or, with `check-gateway=ping`, a neighbour that does not answer).
+
+  - id: inactive
+    syntax: /ip route set <número|[find …]> gateway=<ip>
+    summary:
+      es: >-
+        Una ruta cuyo gateway no está en ninguna red conectada queda inactiva (flag I) y no se
+        usa. Corregir el gateway con `set` la activa al momento.
+      en: >-
+        A route whose gateway is not on any connected network becomes inactive (flag I) and is
+        not used. Fixing the gateway with `set` activates it at once.
+    examples:
+      - command: /ip route add dst-address=172.16.0.0/16 gateway=10.0.99.1
+      - command: /ip route print where !active
+        note:
+          es: 172.16.0.0/16 sale como Is, con un gateway que no está en ninguna red del router.
+          en: 172.16.0.0/16 shows as Is, with a gateway that is on none of the router's networks.
+      - command: /ip route set [find dst-address=172.16.0.0/16] gateway=10.0.12.2
+    pitfalls:
+      - es: El router acepta la ruta sin quejarse aunque el gateway esté mal escrito; revisa siempre la flag A después de añadirla.
+        en: The router accepts the route without complaint even if the gateway is mistyped; always check the A flag after adding it.
+
+  - id: disable-remove
+    syntax: /ip route <disable|enable|remove> <número|[find …]>
+    summary:
+      es: Deshabilitar deja la ruta escrita pero sin uso (flag X); remove la borra.
+      en: Disabling keeps the route written but unused (flag X); remove deletes it.
+    examples:
+      - command: /ip route disable [find dst-address=172.16.0.0/16]
+      - command: /ip route remove [find dst-address=172.16.0.0/16]
+      - command: /ip route remove [find dst-address=192.168.88.0/24]
+        fails: true
+        note:
+          es: Es la ruta conectada de la LAN; para quitarla hay que quitar la dirección.
+          en: It is the LAN's connected route; to remove it you remove the address.
+    ios: no ip route 172.16.0.0 255.255.0.0 10.0.12.2
+
+  - id: add-errors
+    syntax: /ip route add dst-address=<red/prefijo> gateway=<ip>
+    summary:
+      es: Errores típicos al añadir rutas, con la respuesta del equipo.
+      en: Typical mistakes when adding routes, with the device's answer.
+    examples:
+      - command: /ip route add dst-address=192.168.2.1/24 gateway=10.0.12.2
+        fails: true
+        note:
+          es: Lleva bits de host. La red es 192.168.2.0/24.
+          en: It has host bits set. The network is 192.168.2.0/24.
+      - command: /ip route add dst-address=192.168.3.0/24 gateway=10.0.12.2 distance=0
+        fails: true
+        note:
+          es: La distancia 0 es solo de las conectadas.
+          en: Distance 0 belongs to connected routes only.

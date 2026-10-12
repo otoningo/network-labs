@@ -1,0 +1,166 @@
+# Referencia de comandos, tema 3: interfaces. Los ejemplos corren en orden
+# sobre el router de práctica (content/sandbox/routeros.yaml); los marcados con
+# `fails: true` deben fallar, porque enseñan un error típico.
+id: interfaces
+vendor: routeros
+order: 3
+title:
+  es: Interfaces
+  en: Interfaces
+summary:
+  es: Ver el estado de los puertos, darles nombre y comentario, y habilitarlos o deshabilitarlos.
+  en: Check port status, give ports a name and a comment, and enable or disable them.
+fromIos:
+  es: >-
+    En IOS los puertos tienen un nombre fijo (`GigabitEthernet0/1`) y vienen apagados en
+    los routers hasta `no shutdown`. En RouterOS los puertos ethernet vienen encendidos y
+    se llaman ether1, ether2…, pero el nombre se puede cambiar por uno que diga para qué
+    sirve el puerto, como `ether1-wan`. Todas las interfaces, físicas o no (bridge, vlan,
+    wifi), aparecen juntas en `/interface`, y cada tipo tiene además su propio menú con sus
+    opciones, como `/interface ethernet`.
+  en: >-
+    In IOS ports have a fixed name (`GigabitEthernet0/1`) and on routers they stay down until
+    `no shutdown`. In RouterOS ethernet ports come up enabled and are called ether1,
+    ether2…, but the name can be changed to one that says what the port is for, such as
+    `ether1-wan`. Every interface, physical or not (bridge, vlan, wifi), shows up together
+    in `/interface`, and each type also has its own menu with its options, such as
+    `/interface ethernet`.
+labs: [ros-02-interfaces-direcciones]
+
+commands:
+  - id: print
+    syntax: /interface print [detail] [where <condición>]
+    summary:
+      es: >-
+        Lista todas las interfaces con su tipo, MTU y MAC. La flag R (running) indica que
+        hay enlace; X, que está deshabilitada; S, que es puerto de un bridge.
+      en: >-
+        Lists every interface with its type, MTU and MAC. The R flag (running) means there
+        is link; X, that it is disabled; S, that it is a bridge port.
+    examples:
+      - command: /interface print
+        note:
+          es: ether1 a ether3 tienen algo conectado (R); ether4 y ether5 no; wifi1 viene deshabilitada (X).
+          en: ether1 to ether3 have something plugged in (R); ether4 and ether5 do not; wifi1 comes disabled (X).
+      - command: /interface print where running
+      - command: /interface print detail where name=ether1
+        note:
+          es: En detail se ve también `default-name`, el nombre de fábrica.
+          en: Detail also shows `default-name`, the factory name.
+    ios: |-
+      show ip interface brief
+      show interfaces status
+    pitfalls:
+      - es: Sin R no hay enlace. Antes de buscar errores de IP, mira el cable y que el puerto no tenga X.
+        en: Without R there is no link. Before hunting IP mistakes, check the cable and that the port has no X.
+
+  - id: rename
+    syntax: /interface set <nombre|[find default-name=<nombre>]> name=<nombre-nuevo>
+    summary:
+      es: >-
+        Cambia el nombre de una interfaz. Todo lo que la usaba (direcciones, rutas, reglas)
+        sigue apuntando a ella y pasa a mostrar el nombre nuevo.
+      en: >-
+        Changes the name of an interface. Everything that used it (addresses, routes, rules)
+        keeps pointing at it and now shows the new name.
+    args:
+      - name: name
+        text:
+          es: El nombre nuevo. No puede coincidir con el de otra interfaz.
+          en: The new name. It cannot match another interface's name.
+    examples:
+      - command: /interface set ether1 name=ether1-wan
+      - command: /interface set [find default-name=ether2] name=ether2-lan
+        note:
+          es: Con `default-name` funciona aunque el puerto ya tuviera otro nombre.
+          en: With `default-name` it works even if the port already had another name.
+      - command: /ip address add address=203.0.113.2/24 interface=ether1
+        fails: true
+        note:
+          es: Desde que se llama ether1-wan, el nombre ether1 ya no existe.
+          en: Since it is called ether1-wan, the name ether1 no longer exists.
+    pitfalls:
+      - es: Los comandos que copies de una guía con el nombre viejo fallarán; cámbialos al nombre nuevo.
+        en: Commands you copy from a guide with the old name will fail; change them to the new name.
+
+  - id: comment
+    syntax: /interface comment <nombre> comment=<texto>
+    summary:
+      es: Añade una nota a la interfaz, visible con `;;;` encima de su fila. También vale `set … comment=`.
+      en: Adds a note to the interface, shown with `;;;` above its row. `set … comment=` works too.
+    examples:
+      - command: /interface comment ether1-wan comment="Enlace al ISP"
+      - command: /interface set ether3 comment="PC2 por DHCP"
+      - command: /interface print
+    ios: |-
+      interface GigabitEthernet0/0
+       description Enlace al ISP
+
+  - id: enable-disable
+    syntax: /interface <disable|enable> <nombre>[,<nombre>…]
+    summary:
+      es: >-
+        Apaga o enciende una interfaz sin tocar su configuración. Deshabilitar los puertos que
+        no se usan es una buena costumbre.
+      en: >-
+        Turns an interface off or on without touching its configuration. Disabling unused
+        ports is a good habit.
+    examples:
+      - command: /interface disable ether4,ether5
+      - command: /interface print where disabled
+      - command: /interface enable ether4
+    ios: |-
+      interface range GigabitEthernet0/4 - 5
+       shutdown
+      interface GigabitEthernet0/4
+       no shutdown
+    pitfalls:
+      - es: Si deshabilitas el puerto por el que estás conectado, pierdes la sesión. Toma safe mode (Ctrl+X) antes.
+        en: If you disable the port you are connected through, you lose the session. Take safe mode (Ctrl+X) first.
+
+  - id: ethernet
+    syntax: /interface ethernet <print|set> …
+    summary:
+      es: >-
+        El menú de los puertos físicos. Lista solo los ethernet, con su MTU y su MAC, y permite
+        cambiar sus opciones propias. Los puertos físicos no se crean ni se borran.
+      en: >-
+        The menu for physical ports. It lists only the ethernet ones, with their MTU and MAC,
+        and lets you change their own options. Physical ports are not created or deleted.
+    args:
+      - name: mtu
+        text:
+          es: Tamaño máximo de paquete IP en ese puerto. Por defecto 1500.
+          en: Largest IP packet on that port. 1500 by default.
+    examples:
+      - command: /interface ethernet print
+      - command: /interface ethernet set [find default-name=ether5] mtu=1400
+      - command: /interface ethernet add name=ether6
+        fails: true
+        note:
+          es: No existe `add`; los puertos los pone el hardware.
+          en: There is no `add`; the hardware provides the ports.
+    ios: |-
+      show interfaces GigabitEthernet0/5
+      interface GigabitEthernet0/5
+       ip mtu 1400
+    pitfalls:
+      - es: El export guarda estos cambios como `set [ find default-name=ether5 ] …`, por eso siguen valiendo aunque renombres el puerto.
+        en: The export saves these changes as `set [ find default-name=ether5 ] …`, which is why they still apply if you rename the port.
+
+  - id: errors
+    syntax: /interface set <nombre> <propiedad>=<valor>
+    summary:
+      es: Errores típicos al cambiar interfaces, con la respuesta del equipo.
+      en: Typical mistakes when changing interfaces, with the device's answer.
+    examples:
+      - command: /interface set ether3 name=ether2-lan
+        fails: true
+        note:
+          es: Ese nombre ya lo tiene otra interfaz.
+          en: Another interface already has that name.
+      - command: /interface set ether9 comment=libre
+        fails: true
+        note:
+          es: Este router no tiene ether9.
+          en: This router has no ether9.
