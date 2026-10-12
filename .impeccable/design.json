@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-03T18:47:09.492486+00:00",
+  "generatedAt": "2026-10-12T01:20:56.998932+00:00",
   "title": "Design System: nos-labs",
   "extensions": {
     "colorMeta": {
@@ -246,17 +246,25 @@
       }
     },
     "typographyMeta": {
+      "hero": {
+        "displayName": "Hero",
+        "purpose": "Solo el titular de la portada; fluido de 1.75rem a 2.5rem, tracking -0.02em."
+      },
       "display": {
         "displayName": "Display",
-        "purpose": "Título del lab al inicio de la hoja."
+        "purpose": "Título del lab al inicio de la hoja y título de las páginas de rutas."
       },
       "numeral": {
         "displayName": "Numeral",
         "purpose": "Numeral de tarea: grande, ligero y de un solo tono."
       },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Títulos de sección de la portada; en 300, numeral compacto de la lista de labs de la portada."
+      },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Título de lab completado."
+        "purpose": "Título de lab completado y nombre de cada ruta en el índice; en 400, entradilla de la portada."
       },
       "title": {
         "displayName": "Title",
@@ -280,7 +288,11 @@
       },
       "console": {
         "displayName": "Console",
-        "purpose": "Solo la terminal (Geist Mono)."
+        "purpose": "La terminal del lab y la consola de la demostración de la portada (Geist Mono)."
+      },
+      "console-quote": {
+        "displayName": "Console quote",
+        "purpose": "Bloques de consola citados en la portada (Geist Mono, interlineado 1.45)."
       }
     },
     "shadows": [],
@@ -326,6 +338,30 @@
     ]
   },
   "components": [
+    {
+      "name": "Marco del sitio",
+      "kind": "nav",
+      "refersTo": "site-header",
+      "description": "Portada y rutas: cabecera de 48px con nombre, Rutas e idioma; main#main; pie con el aviso de no afiliación.",
+      "html": "<div class=\"ds-site\"><header class=\"ds-site-head\"><div class=\"ds-site-in\"><a class=\"ds-site-name\" href=\"#\">nos-labs</a><nav aria-label=\"Sitio\"><a class=\"ds-site-link\" href=\"#\" aria-current=\"page\">Rutas</a></nav><ul class=\"ds-site-lang\"><li><a href=\"#\" aria-current=\"true\">es</a></li><li><a href=\"#\">en</a></li></ul></div></header><main id=\"main\" class=\"ds-site-main\"></main><footer class=\"ds-site-foot\"><p>Proyecto independiente con fines educativos. No está afiliado a MikroTik, Huawei, Cisco ni a ningún otro fabricante; los nombres de productos pertenecen a sus dueños.</p></footer></div>",
+      "css": ".ds-site{background:var(--color-ground);color:var(--color-ink);font-family:var(--font-ui),system-ui,sans-serif;}.ds-site-head{border-bottom:1px solid var(--color-rule)}.ds-site-in{display:flex;align-items:center;gap:24px;max-width:72rem;height:48px;margin:0 auto;padding:0 24px}.ds-site-name{font-weight:600;letter-spacing:-.025em;color:var(--color-ink);text-decoration:none}.ds-site-link{font-size:.875rem;color:var(--color-ink-muted);text-decoration:none}.ds-site-link:hover,.ds-site-link[aria-current]{color:var(--color-ink)}.ds-site-lang{display:flex;gap:4px;margin:0 0 0 auto;padding:0;list-style:none;font-size:.875rem}.ds-site-lang a{padding:2px 6px;border-radius:2px;text-transform:uppercase;text-decoration:none;color:var(--color-ink-faint)}.ds-site-lang a:hover{color:var(--color-ink-muted)}.ds-site-lang a[aria-current]{color:var(--color-ink)}.ds-site-main{min-height:96px}.ds-site-foot{border-top:1px solid var(--color-rule)}.ds-site-foot p{max-width:72ch;margin:0 auto;padding:24px;font-size:.75rem;line-height:1.55;color:var(--color-ink-faint)}.ds-site a:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Botón principal relleno (portada)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Como mucho uno por superficie de persuasión: relleno de tinta, texto en grafito; al pasar, tinta media.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\"><span>Empezar el lab 1</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:44px;max-width:100%;padding:0 16px;border-radius:2px;background:var(--color-ink);color:var(--color-ground);font-family:var(--font-ui),system-ui,sans-serif;font-size:.9375rem;font-weight:500;text-decoration:none;transition:background-color .15s}.ds-btn-primary svg{flex-shrink:0}.ds-btn-primary:hover{background:var(--color-ink-muted)}.ds-btn-primary:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Botón principal con borde (rutas)",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "El principal de las superficies de trabajo: borde de gris de control; al pasar, borde de tinta y fondo de filete.",
+      "html": "<a class=\"ds-btn-outline\" href=\"#\"><span>Continuar: Lab 2. Interfaces y direcciones IP</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid var(--color-control);border-radius:2px;box-sizing:border-box;background:transparent;color:var(--color-ink);font-family:var(--font-ui),system-ui,sans-serif;font-size:.9375rem;font-weight:500;text-decoration:none;transition:background-color .15s,border-color .15s}.ds-btn-outline svg{flex-shrink:0}.ds-btn-outline:hover{border-color:var(--color-ink);background:var(--color-rule)}.ds-btn-outline:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
     {
       "name": "Barra superior",
       "kind": "nav",
@@ -405,17 +441,42 @@
       "description": "Cabecera de 40px de la consola con el equipo activo y su selector; el único campo del sistema.",
       "html": "<div class=\"ds-con\"><header class=\"ds-con-head\"><p>Consola de R1</p><select class=\"ds-select\" aria-label=\"Equipo\"><option>R1</option><option>R2</option></select></header><pre class=\"ds-con-body\">[admin@R1-Oficina] &gt; </pre></div>",
       "css": ".ds-con{background:var(--color-console);font-family:var(--font-ui),system-ui,sans-serif;}.ds-con-head{display:flex;align-items:center;gap:12px;height:40px;padding:0 16px;border-bottom:1px solid var(--color-rule)}.ds-con-head p{margin:0;font-size:.8125rem;color:var(--color-ink-muted)}.ds-select{margin-left:auto;height:28px;padding:0 8px;border:1px solid var(--color-rule);border-radius:2px;background:var(--color-console);color:var(--color-ink);font:inherit;font-size:.8125rem}.ds-select:hover{border-color:var(--color-rule-strong)}.ds-select:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-con-body{margin:0;padding:16px;font-family:var(--font-console),ui-monospace,monospace;font-size:13.5px;line-height:1.35;color:var(--color-ink)}"
+    },
+    {
+      "name": "Fila de ruta",
+      "kind": "custom",
+      "refersTo": "path-row",
+      "description": "La fila de tarea aplicada a un lab: numeral, título, resumen, metadatos indivisibles con puntos, \"En curso\" en tinta media y la casilla.",
+      "html": "<ol class=\"ds-labs\"><li class=\"ds-lab\"><span class=\"ds-num\" aria-hidden=\"true\">1</span><div><h3><a href=\"#\">Acceso inicial y CLI</a></h3><p class=\"ds-sum\">Primer contacto con un router recién salido de fábrica.</p><p class=\"ds-meta\"><span>Inicial</span><span aria-hidden=\"true\"> · </span><span>10 min</span><span aria-hidden=\"true\"> · </span><span>4 tareas</span></p></div><span class=\"ds-box done\" aria-hidden=\"true\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"m232.49 80.49-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 1 1 17-17L96 183 215.51 63.51a12 12 0 0 1 17 17Z\"/></svg></span></li><li class=\"ds-lab\"><span class=\"ds-num\" aria-hidden=\"true\">2</span><div><h3><a href=\"#\">Interfaces y direcciones IP</a></h3><p class=\"ds-sum\">Nombra la WAN, enciende puertos y corrige las direcciones.</p><p class=\"ds-meta\"><span>Inicial</span><span aria-hidden=\"true\"> · </span><span>12 min</span><span aria-hidden=\"true\"> · </span><span>5 tareas</span><span aria-hidden=\"true\"> · </span><span class=\"ds-now\">En curso: 1 de 5</span></p></div><span class=\"ds-box\" aria-hidden=\"true\"></span></li></ol>",
+      "css": ".ds-labs{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:20px;margin:0;padding:0;list-style:none;border-bottom:1px solid var(--color-rule);font-family:var(--font-ui),system-ui,sans-serif;color:var(--color-ink)}.ds-lab{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:start;padding:20px 0;border-top:1px solid var(--color-rule)}.ds-num{margin-top:-6px;text-align:right;font-size:2.5rem;font-weight:300;line-height:1;font-variant-numeric:tabular-nums;color:var(--color-ink-faint)}.ds-lab h3{margin:0;font-size:.9375rem;font-weight:500;line-height:1.55}.ds-lab h3 a{color:var(--color-ink);text-decoration:none}.ds-lab h3 a:hover{text-decoration:underline}.ds-lab h3 a:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}.ds-sum{max-width:62ch;margin:4px 0 0;font-size:.875rem;line-height:1.55;color:var(--color-ink-muted)}.ds-meta{margin:8px 0 0;font-size:.8125rem;color:var(--color-ink-faint)}.ds-meta span{white-space:nowrap}.ds-meta .ds-now{color:var(--color-ink-muted)}.ds-box{display:block;width:18px;height:18px;margin-top:3px;border:1px solid var(--color-control);border-radius:2px;box-sizing:border-box}.ds-box.done{display:grid;place-items:center;border:0;background:var(--color-done);color:var(--color-ground)}"
+    },
+    {
+      "name": "Índice de rutas",
+      "kind": "card",
+      "refersTo": "path-row",
+      "description": "Ruta publicada entre filetes: nombre subrayado, descripción, metadatos, principal con borde y recuento; debajo, las rutas en preparación.",
+      "html": "<ul class=\"ds-paths\"><li class=\"ds-path\"><h2><a href=\"#\">MikroTik desde cero</a></h2><p class=\"ds-desc\">Al terminar sabrás configurar desde cero el router de una oficina pequeña.</p><p class=\"ds-meta\">Se practica en <span>MikroTik RouterOS v7</span><span aria-hidden=\"true\"> · </span><span>12 labs</span><span aria-hidden=\"true\"> · </span><span>205 min en total</span></p><div class=\"ds-act\"><a class=\"ds-btn-outline\" href=\"#\">Continuar: Lab 2. Interfaces y direcciones IP <svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a><p>1 de 12 labs terminados</p></div></li><li class=\"ds-path ds-soon\"><div><h2>Huawei desde cero</h2><p class=\"ds-meta\">Se practica en Huawei VRP</p></div><p class=\"ds-soon-k\">En preparación</p></li></ul>",
+      "css": ".ds-paths{max-width:48rem;margin:0;padding:0;list-style:none;border-bottom:1px solid var(--color-rule);font-family:var(--font-ui),system-ui,sans-serif;color:var(--color-ink)}.ds-path{padding:24px 0;border-top:1px solid var(--color-rule)}.ds-path h2{margin:0;font-size:1.0625rem;font-weight:600;line-height:1.55}.ds-path h2 a{color:var(--color-ink);text-decoration:underline;text-decoration-color:var(--color-control);text-decoration-thickness:1px;text-underline-offset:4px}.ds-path h2 a:hover{text-decoration-color:var(--color-ink)}.ds-desc{max-width:62ch;margin:6px 0 0;font-size:.9375rem;line-height:1.55;color:var(--color-ink-muted)}.ds-meta{margin:8px 0 0;font-size:.8125rem;color:var(--color-ink-faint)}.ds-meta span{white-space:nowrap}.ds-act{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:20px}.ds-act p{margin:0;font-size:.875rem;color:var(--color-ink-muted);font-variant-numeric:tabular-nums}.ds-btn-outline{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid var(--color-control);border-radius:2px;box-sizing:border-box;color:var(--color-ink);font-weight:500;text-decoration:none}.ds-btn-outline:hover{border-color:var(--color-ink);background:var(--color-rule)}.ds-soon{display:flex;justify-content:space-between;gap:32px}.ds-soon h2{color:var(--color-ink-muted)}.ds-soon-k{margin:4px 0 0;font-size:.875rem;color:var(--color-ink-faint)}.ds-paths a:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
+    },
+    {
+      "name": "Cita de consola",
+      "kind": "custom",
+      "refersTo": "console-quote",
+      "description": "Bloque de consola citado en la portada sobre grafito de consola: franja con el sistema y líneas en Geist Mono con el prompt en tinta tenue.",
+      "html": "<div class=\"ds-cq\"><p class=\"ds-cq-os\">MikroTik RouterOS v7</p><pre class=\"ds-cq-body\"><span><span class=\"ds-cq-p\">[admin@R1] &gt; </span>/ip address add address=192.168.88.1/24 interface=ether2</span></pre></div>",
+      "css": ".ds-cq{max-width:28rem;border-radius:2px;background:var(--color-console);font-family:var(--font-ui),system-ui,sans-serif;}.ds-cq-os{margin:0;padding:6px 12px;border-bottom:1px solid var(--color-rule);font-size:.75rem;color:var(--color-ink-faint)}.ds-cq-body{margin:0;padding:10px 12px;font-family:var(--font-console),ui-monospace,monospace;font-size:13.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--color-ink)}.ds-cq-body>span{display:block}.ds-cq-p{color:var(--color-ink-faint)}"
     }
   ],
   "narrative": {
     "northStar": "El cuaderno de prácticas que se corrige solo",
-    "overview": "La pantalla de lab es una hoja de ejercicios impresa en grafito: tareas numeradas con su casilla, una figura de topología rotulada \"Fig. 1\" con su pie y la consola al lado. No es un IDE. No hay pestañas de archivos, árbol de ficheros ni carril de iconos; las zonas se separan con filetes de 1px, no con tarjetas. La densidad es la de una guía de prácticas: mucho aire entre tareas, texto en una medida de lectura y una sola tipografía de interfaz.\n\nEl color es casi todo tinta sobre grafito. El único color con significado es el de estado, y vive en la casilla de cada tarea (verde cumplida, ámbar \"se cumplía y ya no\"). Numerales, progreso de la barra, contador de la pestaña y título de lab completado son monocromos. El rojo no es un estado de objetivo: un objetivo no falla, está pendiente o en regresión; el rojo queda para la confirmación destructiva de reiniciar.\n\nEs una herramienta de ingeniería, no una landing: oscuro único, sin degradados, sin cristal, sin sombras. La monoespaciada existe solo dentro de la consola; lo que se cita de la consola en tareas y pistas va en la misma sans con un fondo.",
+    "overview": "La pantalla de lab es una hoja de ejercicios impresa en grafito: tareas numeradas con su casilla, una figura de topología rotulada \"Fig. 1\" con su pie y la consola al lado. No es un IDE. No hay pestañas de archivos, árbol de ficheros ni carril de iconos; las zonas se separan con filetes de 1px, no con tarjetas. La densidad es la de una guía de prácticas: mucho aire entre tareas, texto en una medida de lectura y una sola tipografía de interfaz.\n\nEl color es casi todo tinta sobre grafito. El único color con significado es el de estado, y vive en la casilla de cada tarea (verde cumplida, ámbar \"se cumplía y ya no\"). Numerales, progreso de la barra, contador de la pestaña y título de lab completado son monocromos. El rojo no es un estado de objetivo: un objetivo no falla, está pendiente o en regresión; el rojo queda para la confirmación destructiva de reiniciar.\n\nEs una herramienta de ingeniería, y la portada y las rutas son páginas del mismo cuaderno, no una landing de producto: oscuro único, sin degradados, sin cristal, sin sombras. La portada persuade enseñando el motor en marcha (una fila de tarea que se marca sola sobre una consola, rotulada \"Fig. 1\") y un esquema de la pantalla de lab (\"Fig. 2\"); las rutas listan sus labs con la misma fila de la hoja. La monoespaciada existe solo en superficies de consola (la terminal del lab y las consolas citadas en la portada); lo que se cita de la consola dentro de una frase va en la misma sans con un fondo.",
     "keyCharacteristics": [
       "Grafito casi negro en tres escalones (consola, fondo, cajas de la figura) y tinta blanco papel en tres tonos.",
       "Filetes de 1px como única estructura; nada de tarjetas ni sombras.",
       "Numerales de tarea grandes y ligeros, en un solo tono en todo estado.",
       "La casilla de estado es el portador del color de estado.",
-      "Geist en la interfaz, Geist Mono solo en la consola.",
+      "Geist en la interfaz, Geist Mono solo en superficies de consola.",
+      "Un solo botón relleno de tinta, y solo en la superficie que persuade; las de trabajo usan el principal con borde.",
       "Esquinas casi rectas (2px) en todo."
     ],
     "rules": [
@@ -436,7 +497,7 @@
       },
       {
         "name": "La Regla de la Mono Encerrada",
-        "body": "Geist Mono solo dentro de la consola. El código citado en tareas y pistas es Geist en peso 500 sobre un chip de filete.",
+        "body": "Geist Mono solo en superficies de consola: la terminal del lab, la consola de la demostración y los bloques de consola citados sobre grafito de consola. Nunca en prosa, rótulos ni en el marco de la interfaz. El código citado dentro de una frase (tareas, pistas, notas) es Geist en peso 500 sobre un chip de filete.",
         "section": "typography"
       },
       {
@@ -458,6 +519,11 @@
         "name": "La Regla del Trazo que Dice el Medio",
         "body": "Cable activo: línea continua en gris de control. Asociación wifi activa: discontinua (6 4) en gris de control. Caídos, en filete marcado: cable discontinuo (4 4), wifi punteado (2 4).",
         "section": "shapes"
+      },
+      {
+        "name": "La Regla del Botón Principal",
+        "body": "Como mucho un botón relleno de tinta por superficie de persuasión (la portada). Las superficies de trabajo (lab, rutas) usan el principal con borde.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -466,6 +532,9 @@
       "**Do** mantener numerales, progreso, contadores y el título de lab completado en tinta, sin color.",
       "**Do** usar control (#8a929a) para bordes de casillas vacías y controles, para pasar 3:1 con un filete de 1px.",
       "**Do** citar código en tareas y pistas con Geist 500 sobre un chip de filete.",
+      "**Do** citar bloques de consola sobre grafito de consola, en Geist Mono y con el prompt en tinta tenue.",
+      "**Do** usar como mucho un botón principal relleno de tinta por superficie de persuasión, y el principal con borde (gris de control) en las superficies de trabajo.",
+      "**Do** mantener cada dato de los metadatos sin salto interno y cortar la línea entre datos.",
       "**Do** usar 2px de radio en todo lo que tenga esquina.",
       "**Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en un solo bloque en cada extremo de cable.",
       "**Do** contraescalar el texto de la figura para que mida 12px (13px los ids) en pantalla a cualquier zoom, y mantener 2px de radio en pantalla.",
@@ -473,7 +542,8 @@
     ],
     "donts": [
       "**Don't** usar rojo para un objetivo; el rojo es solo de acciones destructivas y de la salida del equipo en la consola.",
-      "**Don't** usar Geist Mono fuera de la consola.",
+      "**Don't** usar Geist Mono fuera de superficies de consola: nunca en prosa, rótulos ni en el marco de la interfaz.",
+      "**Don't** poner un segundo botón relleno en una pantalla ni un botón relleno en las superficies de trabajo (lab, rutas).",
       "**Don't** construir la pantalla como un IDE de tres paneles con pestañas de archivo, árbol de ficheros o carril de iconos.",
       "**Don't** envolver secciones en tarjetas, fondos elevados o sombras.",
       "**Don't** añadir degradados, efectos de cristal ni un color de acento de marca.",

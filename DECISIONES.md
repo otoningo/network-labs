@@ -337,3 +337,24 @@ Cada una cubre algo que no conviene escribir a mano:
 - Sin `/queue` en el simulador, el lab de Torch bloquea al equipo que más
   consume en vez de limitarlo. El asistente `/ip dhcp-server setup` no se
   simula y ninguna pista lo menciona.
+
+## D-038 · Rutas y "continuar"
+
+- Las rutas se construyen al compilar a partir de `path` y `order` de cada
+  lab. VRP y VyOS aparecen como "En preparación", sin enlace.
+- La acción principal de una ruta es "Empezar", "Continuar" (el último lab
+  tocado sin terminar) o "Repasar" cuando todo está hecho. Lo que depende del
+  progreso guardado ocupa su sitio sin verse hasta leer el almacenamiento,
+  para no mostrar un estado falso ni mover la página.
+
+## D-039 · Portada con el motor real
+
+- La demostración de la portada no es una animación: crea un store del lab 1,
+  escribe el comando y la casilla se marca porque el router cambió de nombre.
+  Con movimiento reducido muestra el estado final.
+- Un único botón relleno de tinta por superficie de persuasión (la portada);
+  en las superficies de trabajo el botón principal va con borde.
+- Las órdenes citadas en la comparación con IOS van en superficies de consola:
+  la mono sigue encerrada en la consola.
+- El nombre "nos-labs" sigue siendo provisional: el definitivo lo decide el
+  usuario.
