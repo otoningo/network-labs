@@ -10,12 +10,19 @@ export interface LabLink {
   readonly order: number;
 }
 
+/** Tema de la referencia que trata lo que se practica en el lab. */
+export interface TopicLink {
+  readonly id: string;
+  readonly title: LocalizedText;
+}
+
 export interface LabNav {
   readonly previous: LabLink | null;
   readonly next: LabLink | null;
+  readonly topics: readonly TopicLink[];
 }
 
-const NavContext = createContext<LabNav>({ previous: null, next: null });
+const NavContext = createContext<LabNav>({ previous: null, next: null, topics: [] });
 
 export function LabNavProvider({
   nav,

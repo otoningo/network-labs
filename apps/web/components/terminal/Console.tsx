@@ -10,8 +10,9 @@ import { type ConsoleSession, loadXterm, type SessionTexts, sessionFor } from '.
  * Consola del equipo activo: una franja con el equipo (y el selector si hay
  * varios) y la terminal. La instancia de xterm vive en una ConsoleSession por
  * store, así que remontar este componente no pierde la pantalla ni el historial.
+ * Sin `autoFocus` (una página de lectura, como la referencia) no toma el foco al cargar.
  */
-export function Console() {
+export function Console({ autoFocus = true }: { readonly autoFocus?: boolean } = {}) {
   const store = useLabStoreApi();
   const { locale, messages } = useI18n();
   const t = messages.terminal;
@@ -72,8 +73,8 @@ export function Console() {
   }, [session, texts, label, keysId]);
 
   useEffect(() => {
-    session?.focusOnFirstLoad();
-  }, [session]);
+    if (autoFocus) session?.focusOnFirstLoad();
+  }, [session, autoFocus]);
 
   return (
     <section

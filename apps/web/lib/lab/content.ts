@@ -37,7 +37,7 @@ export const labById = (id: string): LabDefinition | undefined =>
   allLabs().find((lab) => lab.id === id);
 
 /** Labs anterior y siguiente dentro de la misma ruta, por número de orden. */
-export function labNav(id: string): LabNav {
+export function labNav(id: string): Pick<LabNav, 'previous' | 'next'> {
   const lab = labById(id);
   if (!lab?.path || lab.order === undefined) return { previous: null, next: null };
   const siblings = allLabs().filter((l) => l.path === lab.path && l.order !== undefined);

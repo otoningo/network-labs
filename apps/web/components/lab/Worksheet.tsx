@@ -41,6 +41,7 @@ export function Worksheet() {
               </span>
               {fill(t.minutes, { n: lab.minutes })}
             </p>
+            <RelatedTopics />
           </header>
 
           <h2 id="lab-tasks-heading" className="mt-10 text-sm font-semibold text-ink-muted">
@@ -94,6 +95,33 @@ function Announcer({ message }: { readonly message: string }) {
       {message}
     </div>,
     target,
+  );
+}
+
+/** Temas de la referencia que explican los comandos del lab, en una línea discreta. */
+function RelatedTopics() {
+  const { locale, messages } = useI18n();
+  const { topics } = useLabNav();
+  if (topics.length === 0) return null;
+  return (
+    <p className="mt-1.5 text-xs text-ink-faint">
+      {messages.lab.reference}{' '}
+      {topics.map((topic, index) => (
+        <span key={topic.id}>
+          {index > 0 && (
+            <span aria-hidden className="mx-1.5">
+              ·
+            </span>
+          )}
+          <Link
+            href={`/${locale}/referencia/${topic.id}`}
+            className="whitespace-nowrap text-ink-muted underline decoration-rule-strong underline-offset-4 hover:text-ink hover:decoration-ink"
+          >
+            {topic.title[locale]}
+          </Link>
+        </span>
+      ))}
+    </p>
   );
 }
 

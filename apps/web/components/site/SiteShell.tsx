@@ -7,7 +7,7 @@ import { LanguageSwitch } from '@/components/ui/LanguageSwitch';
 import { useI18n } from '@/lib/i18n/context';
 
 /**
- * Marco de las páginas fuera del lab (portada, rutas): barra con el nombre y
+ * Marco de las páginas fuera del lab (portada, rutas, referencia): barra con el nombre y
  * la navegación, el contenido en `<main id="main">` y el pie con el aviso de
  * no afiliación. La pantalla de lab tiene su propia barra.
  */
@@ -33,8 +33,10 @@ export function SiteShell({ children }: { readonly children: ReactNode }) {
 function SiteHeader() {
   const { locale, messages } = useI18n();
   const pathname = usePathname();
-  const pathsHref = `/${locale}/rutas`;
-  const inPaths = pathname.startsWith(pathsHref);
+  const links = [
+    { href: `/${locale}/rutas`, label: messages.site.paths },
+    { href: `/${locale}/referencia`, label: messages.site.reference },
+  ];
   return (
     <header className="border-b border-rule">
       <div className="mx-auto flex h-(--bar-height) max-w-6xl items-center gap-6 px-4 sm:px-6">
@@ -42,13 +44,22 @@ function SiteHeader() {
           {messages.app.name}
         </Link>
         <nav aria-label={messages.site.nav} className="text-sm">
-          <Link
-            href={pathsHref}
-            aria-current={inPaths ? 'page' : undefined}
-            className={`no-underline ${inPaths ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
-          >
-            {messages.site.paths}
-          </Link>
+          <ul className="flex items-center gap-5">
+            {links.map(({ href, label }) => {
+              const current = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    aria-current={current ? 'page' : undefined}
+                    className={`no-underline ${current ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
         <div className="ml-auto">
           <LanguageSwitch />
