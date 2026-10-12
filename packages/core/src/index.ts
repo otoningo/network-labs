@@ -10,6 +10,7 @@ export * from './engine/runtime';
 export * from './engine/storage';
 export * from './engine/trace';
 export * from './lab/load';
+export * from './lab/reference';
 export * from './lab/schema';
 export * from './model/brand';
 export * from './model/collections';

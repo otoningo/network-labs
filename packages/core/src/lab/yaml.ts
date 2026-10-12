@@ -6,15 +6,28 @@
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { err, ok, type Result } from '../model/result';
+import { type ReferenceTopic, ReferenceTopicSchema } from './reference';
 import { type LabDefinition, LabSchema } from './schema';
 
-export function parseLabYaml(text: string): Result<LabDefinition, string> {
-  let raw: unknown;
+function readYaml(text: string): Result<unknown, string> {
   try {
-    raw = parse(text);
+    return ok(parse(text));
   } catch (error) {
     return err(`YAML inválido: ${error instanceof Error ? error.message : String(error)}`);
   }
-  const result = LabSchema.safeParse(raw);
+}
+
+export function parseLabYaml(text: string): Result<LabDefinition, string> {
+  const raw = readYaml(text);
+  if (!raw.ok) return raw;
+  const result = LabSchema.safeParse(raw.value);
+  return result.success ? ok(result.data) : err(z.prettifyError(result.error));
+}
+
+/** Un tema de la referencia de comandos (content/reference). */
+export function parseReferenceYaml(text: string): Result<ReferenceTopic, string> {
+  const raw = readYaml(text);
+  if (!raw.ok) return raw;
+  const result = ReferenceTopicSchema.safeParse(raw.value);
   return result.success ? ok(result.data) : err(z.prettifyError(result.error));
 }

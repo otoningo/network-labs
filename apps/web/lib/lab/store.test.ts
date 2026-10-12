@@ -108,6 +108,18 @@ describe('store del lab', () => {
     expect(state.prompt()).toBe('[admin@MikroTik] /ip/address> ');
   });
 
+  it('proponer una línea no la ejecuta y dos propuestas iguales se distinguen', () => {
+    const store = createLabStore(lab1());
+    const before = store.getState().net;
+    store.getState().suggest('/ip address print');
+    const first = store.getState().draft;
+    store.getState().suggest('/ip address print');
+    expect(store.getState().draft?.text).toBe('/ip address print');
+    expect(store.getState().draft?.seq).toBe((first?.seq ?? 0) + 1);
+    expect(store.getState().net).toBe(before);
+    expect(store.getState().log).toEqual([]);
+  });
+
   it('reiniciar vuelve al estado de fábrica y cambia la época', () => {
     const store = createLabStore(lab1());
     store.getState().hydrate(null);

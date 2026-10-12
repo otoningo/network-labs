@@ -1,0 +1,112 @@
+# Referencia de comandos: tema piloto. Los ejemplos corren en orden sobre el
+# router de práctica (content/sandbox/routeros.yaml); los marcados con
+# `fails: true` deben fallar, porque enseñan un error típico.
+id: direcciones-ip
+vendor: routeros
+order: 4
+title:
+  es: Direcciones IP
+  en: IP addresses
+summary:
+  es: Asignar, revisar, cambiar y quitar direcciones IPv4 en las interfaces.
+  en: Assign, check, change and remove IPv4 addresses on interfaces.
+fromIos:
+  es: >-
+    En IOS la dirección vive dentro de la interfaz (`interface` y luego `ip address`). En
+    RouterOS es al revés: las direcciones son una tabla propia en `/ip address`, y cada fila
+    dice a qué interfaz pertenece. Se escriben con prefijo (`/24`), no con máscara, y no hace
+    falta `no shutdown`: los puertos ethernet ya vienen habilitados.
+  en: >-
+    In IOS the address lives inside the interface (`interface`, then `ip address`). RouterOS
+    turns it around: addresses are their own table under `/ip address`, and each row says
+    which interface it belongs to. They are written with a prefix (`/24`), not a mask, and
+    there is no `no shutdown`: ethernet ports come enabled.
+labs: [ros-01-acceso-inicial, ros-02-interfaces-direcciones]
+
+commands:
+  - id: add
+    syntax: /ip address add address=<ip/prefijo> interface=<interfaz>
+    summary:
+      es: Añade una dirección a una interfaz. La red y el broadcast se calculan solos.
+      en: Adds an address to an interface. Network and broadcast are worked out for you.
+    args:
+      - name: address
+        text:
+          es: La dirección con su prefijo, por ejemplo 192.168.88.1/24.
+          en: The address with its prefix, for example 192.168.88.1/24.
+      - name: interface
+        text:
+          es: Interfaz donde se asigna (ether2, bridge1, vlan10…).
+          en: Interface it is assigned to (ether2, bridge1, vlan10…).
+      - name: comment
+        text:
+          es: Nota opcional que aparece encima de la fila en print.
+          en: Optional note shown above the row in print.
+    examples:
+      - command: /ip address add address=192.168.88.1/24 interface=ether2
+      - command: /ip address add address=10.10.10.1/24 interface=ether3 comment="red de pruebas"
+        note:
+          es: Con comentario, para saber luego para qué era.
+          en: With a comment, so you know later what it was for.
+    ios: |-
+      interface GigabitEthernet0/1
+       ip address 192.168.88.1 255.255.255.0
+       no shutdown
+    pitfalls:
+      - es: Sin prefijo la dirección queda como /32 y no alcanza a nadie de la LAN.
+        en: Without a prefix the address becomes a /32 and reaches nobody on the LAN.
+      - es: La misma dirección dos veces en la misma interfaz da error.
+        en: The same address twice on the same interface is an error.
+
+  - id: add-errors
+    syntax: /ip address add address=<ip/prefijo> interface=<interfaz>
+    summary:
+      es: Errores típicos al añadir, con la respuesta del equipo.
+      en: Typical mistakes when adding, with the device's answer.
+    examples:
+      - command: /ip address add address=192.168.88.1/24 interface=ether9
+        fails: true
+        note:
+          es: La interfaz no existe en este router.
+          en: The interface does not exist on this router.
+      - command: /ip address add address=192.168.300.1/24 interface=ether2
+        fails: true
+        note:
+          es: No es una IPv4 válida.
+          en: Not a valid IPv4 address.
+
+  - id: print
+    syntax: /ip address print [detail] [where <condición>]
+    summary:
+      es: Lista las direcciones. Cada fila lleva un número que sirve para set y remove.
+      en: Lists the addresses. Each row has a number you can use with set and remove.
+    examples:
+      - command: /ip address print
+      - command: /ip address print where interface=ether2
+        note:
+          es: Solo las de una interfaz.
+          en: Only those on one interface.
+      - command: /ip address print detail
+    ios: show ip interface brief
+
+  - id: set
+    syntax: /ip address set <número|condición> <campo>=<valor>
+    summary:
+      es: Cambia una dirección existente sin borrarla. Se elige por su número del último print o con find.
+      en: Changes an existing address without deleting it. Pick it by its number from the last print or with find.
+    examples:
+      - command: /ip address set [find address="10.10.10.1/24"] address=10.10.20.1/24
+        note:
+          es: Con find no dependes de la numeración.
+          en: With find you do not depend on the numbering.
+
+  - id: remove
+    syntax: /ip address remove <número|condición>
+    summary:
+      es: Borra una dirección.
+      en: Removes an address.
+    examples:
+      - command: /ip address remove [find interface=ether3]
+    ios: |-
+      interface GigabitEthernet0/2
+       no ip address

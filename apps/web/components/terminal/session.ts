@@ -161,6 +161,8 @@ export class ConsoleSession {
   private mounts = 0;
   private disposeTimer: ReturnType<typeof setTimeout> | undefined;
   private autoFocused = false;
+  /** Línea propuesta que llegó con la consola ocupada; se escribe al volver al prompt. */
+  private pendingDraft: string | null = null;
 
   private mode: Mode = 'booting';
   private device: DeviceId;
@@ -334,6 +336,22 @@ export class ConsoleSession {
     }
     if (state.hydrated && !previous.hydrated && this.mode === 'booting') this.afterHydration();
     if (state.activeDevice !== this.device) this.switchTo(state.activeDevice);
+    if (state.draft && state.draft !== previous.draft) this.takeDraft(state.draft.text);
+  }
+
+  /**
+   * Una línea propuesta desde fuera ("Probar" en la referencia): queda escrita
+   * en el prompt para que el estudiante la lea, la cambie y pulse Enter. Si la
+   * consola está ocupada (vista en vivo, confirmación), se espera al prompt.
+   */
+  private takeDraft(text: string): void {
+    if (this.mode !== 'prompt') {
+      this.pendingDraft = text;
+      return;
+    }
+    this.pendingDraft = null;
+    this.edit(lineOf(text));
+    this.focus();
   }
 
   /** Banner y, si el progreso ya está restaurado, el prompt. */
@@ -413,6 +431,10 @@ export class ConsoleSession {
     this.mode = prompt === '' ? 'confirm' : 'prompt';
     this.promptText = prompt === '' ? (question ?? '') : prompt;
     this.line = this.mode === 'prompt' ? keep : EMPTY_LINE;
+    if (this.mode === 'prompt' && this.pendingDraft !== null) {
+      this.line = lineOf(this.pendingDraft);
+      this.pendingDraft = null;
+    }
     this.cursorRow = 0;
     this.historyOf().rewind();
     this.repaint();

@@ -39,6 +39,12 @@ export interface LabState {
   readonly hydrated: boolean;
   /** Cambia con cada reinicio del lab; la terminal lo usa para limpiar la pantalla. */
   readonly epoch: number;
+  /**
+   * Línea propuesta para la consola (el botón "Probar" de la referencia). La
+   * consola la escribe en el prompt sin ejecutarla; `seq` distingue dos
+   * propuestas iguales seguidas.
+   */
+  readonly draft: { readonly text: string; readonly seq: number } | null;
 
   run(line: string): ConsoleResult;
   key(chord: KeyChord): ConsoleResult;
@@ -54,6 +60,8 @@ export interface LabState {
   setActiveDevice(id: DeviceId): void;
   hydrate(progress: LabProgress | null): void;
   reset(): void;
+  /** Propone una línea a la consola activa, sin ejecutarla. */
+  suggest(text: string): void;
   snapshot(): LabProgress;
 }
 
@@ -159,6 +167,7 @@ export function createLabStore(lab: LabDefinition): LabStore {
       ...initial(),
       hydrated: false,
       epoch: 0,
+      draft: null,
 
       run: (line) => {
         const device = get().activeDevice;
@@ -171,6 +180,7 @@ export function createLabStore(lab: LabDefinition): LabStore {
       prompt: () => active().prompt(get().net),
       banner: () => active().banner(get().net),
       reconnect: () => active().reopen(get().net),
+      suggest: (text) => set({ draft: { text, seq: (get().draft?.seq ?? 0) + 1 } }),
       advance: (seconds) => set({ net: tick(get().net, seconds) }),
 
       revealHint: (objectiveId) => {

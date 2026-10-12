@@ -358,3 +358,17 @@ Cada una cubre algo que no conviene escribir a mano:
   la mono sigue encerrada en la consola.
 - El nombre "nos-labs" sigue siendo provisional: el definitivo lo decide el
   usuario.
+
+## D-040 · Referencia de comandos
+
+- Además de practicar, un apartado para aprender los comandos: un tema por
+  archivo en `content/reference/<sistema>/`, con qué hace cada comando, su
+  sintaxis, argumentos, ejemplos, errores típicos y el equivalente en IOS.
+  Elegido por el usuario frente a ejercicios de repaso, consola libre o una
+  chuleta suelta.
+- Cada ejemplo se ejecuta en las pruebas sobre el router de práctica
+  (`content/sandbox/`): los normales deben funcionar y los marcados `fails`
+  deben fallar. La referencia no puede enseñar algo que el simulador rechace.
+- "Probar" escribe el ejemplo en la consola del router de práctica sin
+  ejecutarlo (`suggest` del store): el estudiante lo lee, lo cambia y pulsa
+  Enter.

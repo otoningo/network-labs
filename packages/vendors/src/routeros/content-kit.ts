@@ -3,7 +3,7 @@
  * lo hace la web y conducir varias consolas sobre la misma red.
  */
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { evaluateObjectives, type LabRuntime, loadLab, type Network } from '@nos/core';
 import { parseLabYaml } from '@nos/core/lab-yaml';
 import { routerosStartup } from './driver';
@@ -15,7 +15,7 @@ export const LABS_DIR = join(import.meta.dirname, '../../../../content/labs/rout
 export const labFiles = (): string[] => readdirSync(LABS_DIR).filter((f) => f.endsWith('.yaml'));
 
 export function loadLabFile(file: string): LabRuntime {
-  const parsed = parseLabYaml(readFileSync(join(LABS_DIR, file), 'utf8'));
+  const parsed = parseLabYaml(readFileSync(isAbsolute(file) ? file : join(LABS_DIR, file), 'utf8'));
   if (!parsed.ok) throw new Error(`${file}: ${parsed.error}`);
   const runtime = loadLab(parsed.value, {
     platforms: { routeros: ROUTEROS_PLATFORM },

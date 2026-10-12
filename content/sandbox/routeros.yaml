@@ -1,0 +1,76 @@
+# Router de práctica de la referencia de comandos: sin tareas que cumplir.
+# Los ejemplos de content/reference/routeros se prueban sobre esta topología.
+# El esquema de lab exige un objetivo; la referencia no lo muestra.
+id: sandbox-routeros
+vendor: routeros
+title:
+  es: Router de práctica
+  en: Practice router
+summary:
+  es: Un router de fábrica con un proveedor, dos PC y un portátil inalámbrico, para probar comandos.
+  en: A factory router with a provider, two PCs and a wireless laptop, to try commands on.
+difficulty: beginner
+minutes: 5
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor, en: Provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+        dhcp:
+          pool: 203.0.113.10-203.0.113.20
+          dns: [203.0.113.1]
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: routeros
+      board: sim-r5w
+      label: { es: Router de práctica, en: Practice router }
+      position: { x: 380, y: 200 }
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC fija, en: Static PC }
+      position: { x: 660, y: 100 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+        dns: [192.168.88.1]
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC por DHCP, en: DHCP PC }
+      position: { x: 660, y: 300 }
+      host:
+        ip: dhcp
+    - id: LAP
+      os: host
+      board: sim-host-w
+      label: { es: Portátil, en: Laptop }
+      position: { x: 380, y: 420 }
+      host:
+        ip: dhcp
+        wifi: { ssid: Practica, passphrase: practica2026 }
+  links:
+    - [ISP:eth0, R1:ether1]
+    - [R1:ether2, PC1:eth0]
+    - [R1:ether3, PC2:eth0]
+
+objectives:
+  - id: explorar
+    text:
+      es: Explora el router con `?` y Tab.
+      en: Explore the router with `?` and Tab.
+    check:
+      interfaceRunning: { device: R1, iface: ether1 }
+    hints:
+      - es: No hay nada que cumplir aquí.
+        en: There is nothing to complete here.
+
+explanation:
+  es: Router de práctica.
+  en: Practice router.
