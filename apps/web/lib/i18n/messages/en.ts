@@ -18,8 +18,8 @@ export const en: Messages = {
   site: {
     skipToContent: 'Skip to content',
     nav: 'Main navigation',
-    paths: 'Paths',
-    reference: 'Reference',
+    paths: 'Practise',
+    reference: 'Learn',
   },
   lab: {
     paths: { 'mikrotik-desde-cero': 'MikroTik from scratch' },
@@ -196,85 +196,85 @@ export const en: Messages = {
   },
   landing: {
     meta: {
-      title: 'Practice the MikroTik RouterOS CLI from what you know of IOS · nos-labs',
+      title: 'nos-labs · Learn and practise the RouterOS CLI from what you know of IOS',
       description:
-        'Short browser labs to practice the CLI of MikroTik RouterOS, then Huawei VRP and VyOS, starting from Cisco IOS. Tasks are checked against the state of the simulated network.',
+        'Learn MikroTik RouterOS commands next to their IOS equivalent and practise them in short browser labs. Tasks are checked against what the simulated network does.',
     },
+    nav: 'Home sections',
     hero: {
-      title:
-        'Practice the MikroTik RouterOS CLI in your browser, starting from what you know of IOS.',
-      later: 'Huawei VRP and VyOS come next.',
-      lead: 'Tasks are checked against what the simulated network does, not against the commands you type.',
+      title: 'Type one line.',
+      title2: 'See what it does to the network.',
+      lead: 'Learn and practise the MikroTik RouterOS CLI starting from what you already know of IOS. A real console in the browser: what you type reaches a simulated network and is checked by what it does, not by how you wrote it.',
       start: 'Start lab 1',
       resume: 'Continue: Lab {n}. {title}',
       resumeShort: 'Continue: Lab {n}',
       first: 'Open lab 1',
-      path: 'See the {n} labs on the path',
-      note: 'No account, nothing to install. Progress is saved in this browser.',
+      note: 'No account, nothing to install. Huawei VRP and VyOS come next.',
     },
-    demo: {
-      label: 'Demo of the lab engine',
-      described: 'On the {device} console, {command} is typed and Enter is pressed.',
+    sheet: {
+      label: 'Live {device} console',
+      described: 'In the {device} console, {command} is typed and Enter is pressed.',
       result: 'Task done. The network reports {evidence}.',
       replay: 'Replay',
-      replayLabel: 'Replay the demo',
-      figure: 'Fig. 1.',
+      replayLabel: 'Type the command again',
       caption:
-        'The lab 1 engine, live. The box gets ticked because the router now has that name, not because the command matched an expected one.',
+        'The box ticks because the PC really goes out with the public IP now, not because the command matched an expected one.',
     },
-    compare: {
-      title: 'What you already know from IOS',
-      lead: 'Everyday tasks, written on each system. The underlying difference: RouterOS has no configuration mode, and every command applies when you press Enter.',
-      ios: 'Cisco IOS',
-      routeros: 'MikroTik RouterOS v7',
+    journey: {
+      title: 'What happens when you press Enter',
+      lead: 'The office PC opens {name}. The simulator works out every hop; each layer is a fold, and on arrival it unfolds.',
+      steps: 'Steps of the journey',
+      jump: 'Go to step {n}: {name}',
+      layers: {
+        data: 'Data',
+        tcp: 'TCP',
+        ip: 'IP',
+        ethernet: 'Ethernet',
+      },
+      step: {
+        write: {
+          name: 'The request',
+          text: '{device} opens https://{name}: the request leaves as data.',
+        },
+        tcp: { name: 'TCP', text: 'First fold: bound for server port {dstPort}.' },
+        ip: { name: 'IP', text: 'Second fold: from {src} to {dst}.' },
+        ethernet: { name: 'Ethernet', text: 'Third fold: it leaves {device} through {out}.' },
+        nat: {
+          name: '{device} translates',
+          text: 'The rule you just typed rewrites the sender: {from} becomes {to}.',
+        },
+        isp: { name: 'Provider', text: 'It crosses the provider network towards {name}.' },
+        delivered: { name: 'Delivered', text: 'It unfolds whole at {name}, port {port}.' },
+      },
+      device: { PC1: 'Office PC', R1: 'Router', ISP: 'Provider', target: 'Destination' },
+      reduced: 'The journey step by step, without animation.',
+    },
+    learn: {
+      title: 'Learn',
+      lead: 'The command reference: what each one does, its syntax, typical mistakes and its IOS equivalent. Every example can be tried on a practice router.',
+      cta: 'Open the reference',
+      count: '{n} topics, from the CLI to backups',
+      ios: 'In IOS',
+      routeros: 'In RouterOS',
       rows: {
-        hostname: {
-          task: 'Rename the device',
-          note: 'The name is not a standalone command: it lives in the `/system identity` menu.',
-        },
-        address: {
-          task: 'Put an IP address on an interface',
-          note: 'The address is written with a prefix length and assigned from `/ip address`, naming the interface. Ethernet ports come up enabled.',
-        },
-        route: {
-          task: 'Add a default route',
-          note: 'The destination is written as a prefix and the next hop goes in `gateway`.',
-        },
-        table: {
-          task: 'Show the routing table',
-          note: '`print` lists the contents of any menu, and `where` filters what it shows.',
-        },
+        hostname: 'Change the device name',
+        address: 'Put an address on an interface',
+        route: 'Add a default route',
+        table: 'Show the routing table',
       },
     },
-    path: {
-      lead: '{n} labs of {min} to {max} minutes each, from first contact with a router fresh out of the box to the full network of an office.',
-      done: 'finished',
-      upcomingTitle: 'Coming paths',
-      upcoming: 'In preparation',
-      os: { vrp: 'Huawei VRP', vyos: 'VyOS' },
+    practice: {
+      title: 'Practise',
+      lead: 'Short labs with one real task each: you choose the way, and the box ticks when the network does it.',
+      cta: 'See the whole path',
+      path: 'MikroTik from scratch',
+      minutes: '{n} min',
+      done: 'done',
+      upcoming: 'Next: Huawei VRP and VyOS, in preparation.',
     },
-    how: {
-      title: 'What a lab looks like',
-      zones: {
-        tasks: {
-          name: 'Tasks',
-          text: 'What has to be achieved, phrased the way the office would ask for it. The box ticks itself when the network does it, by whatever route you choose.',
-        },
-        figure: {
-          name: 'Topology',
-          text: 'The devices and cables of the lab, with each port address read from the live network.',
-        },
-        console: {
-          name: 'Console',
-          text: 'The device CLI with its own prompt and errors. `?` shows help and Tab completes.',
-        },
-      },
-      hints:
-        'If you get stuck, hints arrive one at a time, from subtle to explicit, and none of them hands you the whole command.',
-      progress:
-        'Progress stays in this browser, with no account. When you come back, the lab is restored by running what you typed again.',
-      figure: 'Fig. 2.',
-      caption: 'The three zones of a lab. On a phone they become tabs.',
+    close: {
+      title: 'The sheet is blank.',
+      lead: 'Lab 1 starts with a factory router and one task. What you type stays in this browser.',
     },
   },
   reference: {

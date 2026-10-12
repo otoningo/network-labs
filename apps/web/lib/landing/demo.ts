@@ -1,12 +1,18 @@
 /**
- * Datos de la portada que tocan el motor: la demostración del lab 1 y la
+ * Datos de la portada que tocan el motor: la demostración del NAT y la
  * comparación IOS frente a RouterOS. Viven aquí, y no en los componentes,
  * para que las pruebas comprueben que el simulador los acepta de verdad.
  */
 
-/** Tarea del lab 1 que resuelve la demostración y el comando que la resuelve. */
-export const DEMO_OBJECTIVE = 'identity';
-export const DEMO_COMMAND = '/system identity set name=R1-Oficina';
+/**
+ * La demostración de la portada: en el router de práctica ya configurado (LAN,
+ * WAN y ruta), el visitante ve escribir la regla de NAT; la tarea se cumple
+ * porque la PC sale con la IP pública, y el viaje del paquete muestra después
+ * qué hace esa misma regla con el remite.
+ */
+export const DEMO_OBJECTIVE = 'nat';
+export const DEMO_COMMAND =
+  '/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade';
 
 /** Una línea de consola citada: el prompt va en tinta tenue y el comando en tinta. */
 export interface QuotedLine {

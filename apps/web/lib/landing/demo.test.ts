@@ -1,7 +1,7 @@
 /**
  * La portada no puede prometer lo que el motor no hace: la demostración
- * resuelve una tarea real y los comandos de RouterOS de la comparación se
- * ejecutan sin error en el simulador.
+ * resuelve una tarea real, el viaje del paquete usa esa misma regla y los
+ * comandos de RouterOS de la comparación se ejecutan sin error.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,40 +11,39 @@ import { messagesFor } from '../i18n';
 import { describeEvidence, evidenceOf } from '../lab/evidence';
 import { createLabStore } from '../lab/store';
 import { COMPARE_ROWS, DEMO_COMMAND, DEMO_OBJECTIVE } from './demo';
+import { demoLab, JOURNEY_SCRIPT } from './journey';
 
-const lab1 = () => {
-  const file = join(
-    import.meta.dirname,
-    '../../../../content/labs/routeros/01-acceso-inicial.yaml',
-  );
+const sandbox = () => {
+  const file = join(import.meta.dirname, '../../../../content/sandbox/routeros.yaml');
   const parsed = parseLabYaml(readFileSync(file, 'utf8'));
   if (!parsed.ok) throw new Error(parsed.error);
   return parsed.value;
 };
 
 describe('portada', () => {
-  it('la demostración cumple la tarea del lab 1 y cambia el prompt', () => {
-    const store = createLabStore(lab1());
-    expect(store.getState().runtime.lab.objectives.map((o) => o.id)).toContain(DEMO_OBJECTIVE);
-    expect(store.getState().prompt()).toBe('[admin@MikroTik] > ');
+  it('la demostración arranca sin cumplir y la regla de NAT la cumple', () => {
+    const store = createLabStore(demoLab(sandbox()));
+    expect(store.getState().objectives[DEMO_OBJECTIVE]).toBe('pending');
     const result = store.getState().run(DEMO_COMMAND);
-    expect(result.ok).toBe(true);
+    expect(result.ok, result.output).toBe(true);
     expect(store.getState().objectives[DEMO_OBJECTIVE]).toBe('done');
-    expect(store.getState().prompt()).toBe('[admin@R1-Oficina] > ');
     const report = evidenceOf(store.getState(), DEMO_OBJECTIVE).map((e) =>
       describeEvidence(e, messagesFor('es')),
     );
-    expect(report).toEqual(['R1: identity = R1-Oficina']);
+    expect(report).toEqual(['tcp/443 PC1 → 93.184.216.34: llega como 203.0.113.2']);
   });
 
-  it('los comandos de RouterOS de la comparación los acepta el simulador', () => {
-    const store = createLabStore(lab1());
+  it('el viaje termina con la misma línea que escribe la demostración', () => {
+    expect(JOURNEY_SCRIPT.at(-1)).toBe(DEMO_COMMAND);
+  });
+
+  it('los comandos de RouterOS de la comparación los acepta un router de fábrica', () => {
+    const store = createLabStore(sandbox());
     for (const row of COMPARE_ROWS) {
       for (const line of row.routeros) {
         const result = store.getState().run(line.command);
         expect(result.ok, `${line.command}\n${result.output}`).toBe(true);
       }
     }
-    expect(store.getState().prompt()).toBe('[admin@R1] > ');
   });
 });

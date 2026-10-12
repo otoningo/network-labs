@@ -10,36 +10,48 @@ import { useI18n } from '@/lib/i18n/context';
  * Marco de las páginas fuera del lab (portada, rutas, referencia): barra con el nombre y
  * la navegación, el contenido en `<main id="main">` y el pie con el aviso de
  * no afiliación. La pantalla de lab tiene su propia barra.
+ *
+ * La portada usa la variante `landing`: el mismo marco sobre el washi bermellón,
+ * con sus propios tokens (clase `.landing` en globals.css).
  */
-export function SiteShell({ children }: { readonly children: ReactNode }) {
+export function SiteShell({
+  children,
+  variant = 'default',
+}: {
+  readonly children: ReactNode;
+  readonly variant?: 'default' | 'landing';
+}) {
   const { messages } = useI18n();
+  const landing = variant === 'landing';
   return (
-    <div className="flex min-h-dvh flex-col bg-ground">
+    <div className={`flex min-h-dvh flex-col ${landing ? 'landing' : 'bg-ground'}`}>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-sheet focus:px-3 focus:py-2"
       >
         {messages.site.skipToContent}
       </a>
-      <SiteHeader />
+      <SiteHeader landing={landing} />
       <main id="main" className="flex-1">
         {children}
       </main>
-      <SiteFooter />
+      <SiteFooter landing={landing} />
     </div>
   );
 }
 
-function SiteHeader() {
+function SiteHeader({ landing }: { readonly landing: boolean }) {
   const { locale, messages } = useI18n();
   const pathname = usePathname();
   const links = [
-    { href: `/${locale}/rutas`, label: messages.site.paths },
     { href: `/${locale}/referencia`, label: messages.site.reference },
+    { href: `/${locale}/rutas`, label: messages.site.paths },
   ];
   return (
-    <header className="border-b border-rule">
-      <div className="mx-auto flex h-(--bar-height) max-w-6xl items-center gap-6 px-4 sm:px-6">
+    <header className={landing ? 'landing-header' : 'border-b border-rule'}>
+      <div
+        className={`mx-auto flex h-(--bar-height) items-center gap-6 px-4 ${landing ? 'max-w-7xl sm:px-8' : 'max-w-6xl sm:px-6'}`}
+      >
         <Link href={`/${locale}`} className="font-semibold tracking-tight text-ink no-underline">
           {messages.app.name}
         </Link>
@@ -69,11 +81,11 @@ function SiteHeader() {
   );
 }
 
-function SiteFooter() {
+function SiteFooter({ landing }: { readonly landing: boolean }) {
   const { messages } = useI18n();
   return (
-    <footer className="border-t border-rule">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <footer className={landing ? 'landing-footer' : 'border-t border-rule'}>
+      <div className={`mx-auto px-4 py-6 ${landing ? 'max-w-7xl sm:px-8' : 'max-w-6xl sm:px-6'}`}>
         <p className="max-w-[72ch] text-xs text-ink-faint">{messages.app.disclaimer}</p>
       </div>
     </footer>

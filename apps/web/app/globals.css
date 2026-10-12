@@ -155,3 +155,423 @@ a {
 .xterm .xterm-viewport {
   scrollbar-width: none;
 }
+
+/*
+ * Portada (D-041): mundo "grulla plegada". Tokens propios de la portada; el
+ * resto de la web sigue con el cuaderno de prácticas. Las superficies
+ * redefinen --color-ink* para que los componentes compartidos hereden la
+ * tinta correcta sobre washi, sumi o crema.
+ */
+.landing {
+  --washi: #be3820;
+  --washi-deep: #b0341d;
+  --washi-edge: #962c18;
+  --washi-edge-deep: #7a2413;
+  --washi-back: #efd9cc;
+  --washi-back-ink: #9e2a1f;
+  --washi-texture: url("/landing/washi.png");
+  --fold-white: #f4efe6;
+  --washi-cream: #ebe3d3;
+  --sumi: #131214;
+  --sumi-raised: #1d1b1e;
+  --gold: #d4af37;
+  --crease: rgb(244 239 230 / 0.28);
+  --crease-ink: rgb(19 18 20 / 0.18);
+  background: var(--sumi);
+  color: var(--fold-white);
+}
+
+.landing ::selection {
+  background: var(--fold-white);
+  color: var(--sumi);
+}
+
+.on-washi,
+.landing-header {
+  --color-ink: var(--fold-white);
+  --color-ink-muted: #f8e7de;
+  --color-ink-faint: #f6e0d6;
+  --color-rule: rgb(244 239 230 / 0.28);
+  --color-rule-strong: rgb(244 239 230 / 0.45);
+  --color-control: var(--fold-white);
+  --color-focus: var(--fold-white);
+  background-color: var(--washi);
+  color: var(--fold-white);
+}
+
+.on-sumi,
+.landing-footer {
+  --color-ink: var(--fold-white);
+  --color-ink-muted: #cfc8be;
+  --color-ink-faint: #a39c92;
+  --color-rule: #2c2a2d;
+  --color-rule-strong: #3d3a3e;
+  --color-focus: var(--fold-white);
+  background-color: var(--sumi);
+  color: var(--fold-white);
+}
+
+.on-cream {
+  --color-ink: #161416;
+  --color-ink-muted: #45413d;
+  --color-ink-faint: #625d57;
+  --color-rule: #cfc5b3;
+  --color-rule-strong: #b3a891;
+  --color-control: #625d57;
+  --color-focus: #161416;
+  background-color: var(--washi-cream);
+  color: #161416;
+}
+
+/* Fibra de kozo: la placa de public/landing/washi.png (scripts/washi-texture.mjs) sobre el color. */
+.washi-fiber {
+  background-image: var(--washi-texture);
+  background-size: 320px 320px;
+}
+
+/* En la crema, otra placa: solo vetas más claras que el fondo, sin motas. */
+.on-cream.washi-fiber {
+  background-image: url("/landing/washi-cream.png");
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-ui), ui-sans-serif, sans-serif;
+}
+
+/* Rótulos del diagrama de plegado: versalitas espaciadas. */
+.fold-label {
+  font-family: var(--font-display), var(--font-ui), sans-serif;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ── Viaje del paquete: escenario de plegado (FoldJourney) ─────────────── */
+
+/* Con movimiento reducido o una pantalla muy baja, el viaje es una lista quieta; se decide en CSS, antes de pintar. */
+.journey-static {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce), (max-height: 479px) {
+  .journey-animated {
+    display: none;
+  }
+
+  .journey-static {
+    display: block;
+  }
+}
+
+.fold-stage {
+  --size: 320px;
+  --f1: 0;
+  --f2: 0;
+  --f3: 0;
+  --scale: 1;
+  --nat: 0;
+  --slip: 0;
+}
+
+.fold-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size);
+  height: var(--size);
+  transform: translate(var(--tx, 0), var(--ty, 0)) scale(var(--scale));
+  transform-origin: 0 0;
+  transform-style: preserve-3d;
+  perspective: calc(var(--size) * 4);
+  filter: drop-shadow(0 18px 26px rgb(0 0 0 / 0.5));
+  will-change: transform;
+}
+
+.fold-piece,
+.fold-flap {
+  position: absolute;
+  display: none;
+}
+
+.fold-piece,
+.fold-face {
+  background-color: var(--washi);
+  background-image: var(--washi-texture);
+  background-size: 320px 320px;
+  box-shadow: inset 0 0 0 1px var(--crease);
+}
+
+/* Las capas se alternan de cara: bermellón, revés claro, bermellón, revés claro. */
+.fold-piece.is-back,
+.fold-face.is-back {
+  background-color: var(--washi-back);
+  box-shadow: inset 0 0 0 1px rgb(158 42 31 / 0.25);
+  color: var(--washi-back-ink);
+}
+
+.fold-piece {
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 10% 12%;
+  color: var(--fold-white);
+}
+
+.fold-s0 {
+  inset: 0;
+  justify-content: flex-start;
+  padding: 8%;
+}
+
+.fold-flap {
+  transform-style: preserve-3d;
+}
+
+.fold-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8%;
+  backface-visibility: hidden;
+  color: var(--fold-white);
+}
+
+.fold-face.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.fold-s2-flap .fold-face.is-flipped {
+  transform: rotateX(180deg);
+}
+
+/* La solapa se oscurece al pasar por la vertical: papel en sombra, no una tapa gris. */
+.fold-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--washi-edge-deep);
+  opacity: calc(sin(var(--f, 0) * 180deg) * 0.6);
+  pointer-events: none;
+}
+
+.fold-s1-flap {
+  --f: var(--f1);
+}
+
+.fold-s2-flap {
+  --f: var(--f2);
+}
+
+.fold-s3-flap {
+  --f: var(--f3);
+}
+
+/* Rótulo de capa dentro de una pieza estrecha: menos espaciado para que quepa. */
+.fold-piece .fold-label,
+.fold-face .fold-label {
+  letter-spacing: 0.1em;
+}
+
+/* El último pliegue deja una tira alta y estrecha: el rótulo va de canto, como en un lomo. */
+.fold-s3-base,
+.fold-s3-flap .fold-face {
+  align-items: center;
+  justify-content: center;
+  padding: 10% 0;
+}
+
+.fold-s3-base .fold-label,
+.fold-s3-flap .fold-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.fold-stage[data-stage="0"] .fold-s0 {
+  display: flex;
+}
+
+.fold-stage[data-stage="1"] .fold-s1-base {
+  display: flex;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  box-shadow:
+    inset 0 0 0 1px var(--crease),
+    inset -1px 0 0 rgb(40 6 2 / 0.4);
+}
+
+.fold-stage[data-stage="1"] .fold-s1-flap {
+  display: block;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform: rotateY(calc(var(--f1) * -180deg));
+}
+
+/* Desde el segundo pliegue la hoja tiene grosor: cantos apilados bajo la pieza. */
+.fold-stage[data-stage="2"] .fold-s2-base {
+  display: flex;
+  top: 50%;
+  left: 0;
+  width: 50%;
+  height: 50%;
+  box-shadow:
+    inset 0 0 0 1px rgb(158 42 31 / 0.25),
+    inset 0 1px 0 rgb(40 6 2 / 0.3),
+    0 2px 0 var(--washi-edge);
+}
+
+.fold-stage[data-stage="2"] .fold-s2-flap {
+  display: block;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 50%;
+  transform-origin: center bottom;
+  transform: rotateX(calc(var(--f2) * -180deg));
+}
+
+.fold-stage[data-stage="3"] .fold-s3-base {
+  display: flex;
+  top: 50%;
+  left: 0;
+  width: 25%;
+  height: 50%;
+  box-shadow:
+    inset 0 0 0 1px var(--crease),
+    inset -1px 0 0 rgb(40 6 2 / 0.4),
+    0 2px 0 var(--washi-edge),
+    0 4px 0 var(--washi-edge-deep);
+}
+
+.fold-stage[data-stage="3"] .fold-s3-flap {
+  display: block;
+  top: 50%;
+  left: 25%;
+  width: 25%;
+  height: 50%;
+  transform-origin: left center;
+  transform: rotateY(calc(var(--f3) * -180deg));
+}
+
+/* La red: un cable que se entinta al paso del paquete, con sus equipos. */
+.fold-route {
+  position: absolute;
+  top: var(--route-y, 80%);
+  right: 0;
+  left: 0;
+  height: 0;
+}
+
+.fold-route::before,
+.fold-route::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--x0, 12%);
+}
+
+.fold-route::before {
+  width: calc(var(--x3, 90%) - var(--x0, 12%));
+  border-top: 1px solid var(--crease);
+}
+
+.fold-route::after {
+  top: -0.5px;
+  width: max(0px, calc(var(--ink-x, 0px) - var(--x0, 12%)));
+  border-top: 2px solid var(--fold-white);
+}
+
+.fold-station {
+  position: absolute;
+  top: -24px;
+  z-index: 1;
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--color-ink-faint);
+  transition: color 0.4s var(--ease-out);
+}
+
+.fold-station-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 2px;
+  background-color: var(--sumi);
+  transition:
+    border-color 0.4s var(--ease-out),
+    color 0.4s var(--ease-out);
+}
+
+.fold-station.is-reached {
+  color: var(--fold-white);
+}
+
+.fold-station.is-reached .fold-station-mark {
+  border-color: var(--fold-white);
+}
+
+.fold-iface {
+  position: absolute;
+  top: -1.9rem;
+  font-size: var(--text-2xs);
+  color: var(--color-ink-faint);
+}
+
+/* La etiqueta del paquete: el remite viejo se tacha y aparece el nuevo. */
+.fold-slip {
+  position: absolute;
+  top: var(--py, 0);
+  left: var(--px, 0);
+  z-index: 5;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background-color: var(--fold-white);
+  color: var(--sumi);
+  opacity: var(--slip);
+  transition: opacity 0.35s var(--ease-out);
+  box-shadow: 0 10px 22px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+
+.fold-slip-old {
+  display: block;
+  text-decoration: line-through;
+  text-decoration-color: rgb(158 42 31 / var(--nat));
+  opacity: calc(1 - var(--nat) * 0.5);
+}
+
+.fold-slip-new {
+  display: block;
+  color: var(--washi-back-ink);
+  font-weight: 600;
+  opacity: var(--nat);
+}
+
+/* La barra de la portada continúa el fondo del hero. */
+.landing-header.landing-header {
+  background-color: var(--washi-deep);
+}
+
+@media (max-width: 639px) {
+  .fold-station-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .fold-station {
+    top: -17px;
+  }
+
+  .fold-station .fold-label {
+    letter-spacing: 0.08em;
+  }
+}

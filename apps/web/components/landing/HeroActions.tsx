@@ -3,7 +3,6 @@
 import type { LocalizedText } from '@nos/core';
 import { ArrowRight } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { ICON_WEIGHT } from '@/components/lab/worksheet/StatusBox';
 import { fill } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
 import { useProgressSummary } from '@/lib/progress/summary';
@@ -15,18 +14,12 @@ export interface HeroLab {
 }
 
 /**
- * Acciones de la portada. Sin progreso guardado, la principal abre el lab 1;
- * con un lab a medias, pasa a "Continuar" y el lab 1 queda como enlace discreto.
- * Hasta leer el almacenamiento se muestra el lab 1, y el enlace discreto ocupa
- * su sitio aunque esté oculto: el cambio no mueve nada.
+ * La acción del hero: blanco de pliegue sobre el bermellón, con el punto
+ * dorado. Sin progreso abre el lab 1; con un lab a medias pasa a "Continuar" y
+ * el lab 1 queda como enlace discreto. Hasta leer el almacenamiento se muestra
+ * el lab 1, y el enlace discreto ocupa su sitio aunque esté oculto.
  */
-export function HeroActions({
-  labs,
-  pathId,
-}: {
-  readonly labs: readonly HeroLab[];
-  readonly pathId: string;
-}) {
+export function HeroActions({ labs }: { readonly labs: readonly HeroLab[] }) {
   const { locale, messages } = useI18n();
   const t = messages.landing.hero;
   const { loaded, resume } = useProgressSummary();
@@ -40,44 +33,39 @@ export function HeroActions({
   const href = (id: string) => `/${locale}/lab/${id}`;
 
   return (
-    <div className="mt-8">
-      <Link
-        href={href(primary.id)}
-        aria-label={label}
-        className="inline-flex h-11 max-w-full items-center gap-2 rounded-sm bg-ink px-4 font-medium text-ground no-underline transition-colors hover:bg-ink-muted"
-      >
-        {resumed ? (
-          // En el teléfono el título del lab no cabe en un botón: se acorta la
-          // etiqueta visible; el nombre accesible del enlace conserva el título completo.
-          <span>
-            <span className="sm:hidden">{fill(t.resumeShort, { n: resumed.order })}</span>
-            <span className="hidden sm:inline">{label}</span>
-          </span>
-        ) : (
-          <span>{label}</span>
-        )}
-        <ArrowRight size={15} weight={ICON_WEIGHT} aria-hidden className="shrink-0" />
-      </Link>
-
-      <p className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm">
+    <div className="mt-10">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
         <Link
-          href={`/${locale}/rutas/${pathId}`}
-          className="text-ink underline decoration-control hover:decoration-ink"
+          href={href(primary.id)}
+          aria-label={label}
+          className="group inline-flex h-12 max-w-full items-center gap-3 rounded-[2px] bg-(--fold-white) px-5 font-medium text-(--sumi) no-underline shadow-[0_10px_24px_rgb(60_8_4/0.35)] transition-transform duration-200 hover:-translate-y-px active:translate-y-px"
         >
-          {fill(t.path, { n: labs.length })}
+          {resumed ? (
+            <span>
+              <span className="sm:hidden">{fill(t.resumeShort, { n: resumed.order })}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </span>
+          ) : (
+            <span>{label}</span>
+          )}
+          <ArrowRight
+            size={16}
+            weight="bold"
+            aria-hidden
+            className="shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"
+          />
         </Link>
         <Link
           href={href(first.id)}
           // `invisible` lo saca también del orden de tabulación y de los lectores de pantalla.
-          className={`text-ink-muted underline decoration-rule-strong hover:text-ink hover:decoration-ink ${
+          className={`text-sm underline decoration-(--crease) underline-offset-4 hover:decoration-(--fold-white) ${
             resumed ? '' : 'invisible'
           }`}
         >
           {t.first}
         </Link>
-      </p>
-
-      <p className="mt-6 text-xs text-ink-faint">{t.note}</p>
+      </div>
+      <p className="mt-5 text-sm">{t.note}</p>
     </div>
   );
 }
