@@ -1,5 +1,5 @@
 ---
-name: nos-labs
+name: Network Labs
 description: Labs de CLI de red en el navegador; una hoja de ejercicios que se corrige sola junto a la consola.
 colors:
   ground: "#141618"
@@ -361,7 +361,7 @@ components:
     size: "18px"
 ---
 
-# Design System: nos-labs
+# Design System: Network Labs
 
 ## Overview
 

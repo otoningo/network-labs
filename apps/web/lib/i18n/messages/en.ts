@@ -3,12 +3,12 @@ import type { Messages } from '../format';
 /** English UI strings. Must cover every key of the Spanish source (checked by the type). */
 export const en: Messages = {
   meta: {
-    title: 'nos-labs',
+    title: 'Network Labs',
     description: 'Browser labs to practice the CLI of network operating systems.',
-    labTitle: '{title} · nos-labs',
+    labTitle: '{title} · Network Labs',
   },
   app: {
-    name: 'nos-labs',
+    name: 'Network Labs',
     skipToConsole: 'Skip to the console',
     language: 'Language',
     languageNames: { es: 'Español', en: 'English' },
@@ -160,9 +160,9 @@ export const en: Messages = {
   },
   paths: {
     meta: {
-      title: 'Paths · nos-labs',
+      title: 'Paths · Network Labs',
       description: 'Paths of short browser labs to practice the CLI of network operating systems.',
-      pathTitle: '{title} · nos-labs',
+      pathTitle: '{title} · Network Labs',
     },
     title: 'Paths',
     intro:
@@ -196,7 +196,7 @@ export const en: Messages = {
   },
   landing: {
     meta: {
-      title: 'nos-labs · Learn and practise the RouterOS CLI from what you know of IOS',
+      title: 'Network Labs · Learn and practise the RouterOS CLI from what you know of IOS',
       description:
         'Learn MikroTik RouterOS commands next to their IOS equivalent and practise them in short browser labs. Tasks are checked against what the simulated network does.',
     },
@@ -279,10 +279,10 @@ export const en: Messages = {
   },
   reference: {
     meta: {
-      title: 'Command reference · nos-labs',
+      title: 'Command reference · Network Labs',
       description:
         'MikroTik RouterOS v7 commands topic by topic, with their syntax, examples you try on a simulated router and their Cisco IOS equivalent.',
-      topicTitle: '{title} · Command reference · nos-labs',
+      topicTitle: '{title} · Command reference · Network Labs',
     },
     title: 'Command reference',
     intro:

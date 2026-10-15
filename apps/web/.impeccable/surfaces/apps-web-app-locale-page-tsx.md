@@ -13,7 +13,7 @@ Audience: estudiantes que saben IOS y quieren aprender RouterOS (luego VRP y VyO
 
 Memorable moment: al bajar, una hoja bermellón se pliega capa a capa (datos, TCP, IP, Ethernet) y viaja por la red; en el router el NAT le reescribe el remite y en el destino se despliega.
 
-Unresolved: el nombre del producto sigue siendo provisional.
+Unresolved: ninguno. El producto se llama Network Labs (D-042).
 
 ## Direction contract
 

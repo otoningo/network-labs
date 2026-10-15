@@ -50,8 +50,7 @@ Como los usuarios ya saben IOS, IOS sirve como punto de comparación.
 - No empaquetar imágenes, binarios ni documentación de fabricantes; no usar
   nombres ni logos de fabricantes como marca propia; aviso de no afiliación
   en el pie de página.
-- Nombre del producto: "nos-labs" provisional; el definitivo se decide en la
-  fase de portada.
+- Nombre del producto: Network Labs (D-042).
 
 ## Brand Commitments
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <title>nos-labs</title>
-  <!-- Marca de nos-labs: un prompt (> y cursor de bloque) en tinta sobre grafito. -->
+  <title>Network Labs</title>
+  <!-- Marca de Network Labs: un prompt (> y cursor de bloque) en tinta sobre grafito. -->
   <rect width="32" height="32" rx="3" fill="#141618"/>
   <rect x="0.5" y="0.5" width="31" height="31" rx="2.5" fill="none" stroke="#3a3f45"/>
   <path d="M8 10.5 13.5 16 8 21.5" fill="none" stroke="#e3e6e8" stroke-width="2.75" stroke-linecap="square" stroke-linejoin="miter"/>

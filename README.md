@@ -1,7 +1,7 @@
-# nos-labs
+# Network Labs
 
 Labs cortos en el navegador para aprender el CLI de sistemas operativos de red
-(RouterOS, VRP, VyOS, IOS) sin instalar nada. Nombre provisional.
+(RouterOS, VRP, VyOS, IOS) sin instalar nada.
 
 ## Estructura
 

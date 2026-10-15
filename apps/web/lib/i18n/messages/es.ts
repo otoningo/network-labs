@@ -5,12 +5,12 @@
  */
 export const es = {
   meta: {
-    title: 'nos-labs',
+    title: 'Network Labs',
     description: 'Labs en el navegador para practicar el CLI de sistemas operativos de red.',
-    labTitle: '{title} · nos-labs',
+    labTitle: '{title} · Network Labs',
   },
   app: {
-    name: 'nos-labs',
+    name: 'Network Labs',
     skipToConsole: 'Saltar a la consola',
     language: 'Idioma',
     languageNames: { es: 'Español', en: 'English' },
@@ -162,10 +162,10 @@ export const es = {
   },
   paths: {
     meta: {
-      title: 'Rutas · nos-labs',
+      title: 'Rutas · Network Labs',
       description:
         'Rutas de labs cortos para practicar en el navegador el CLI de sistemas operativos de red.',
-      pathTitle: '{title} · nos-labs',
+      pathTitle: '{title} · Network Labs',
     },
     title: 'Rutas',
     intro:
@@ -199,7 +199,7 @@ export const es = {
   },
   landing: {
     meta: {
-      title: 'nos-labs · Aprende y practica el CLI de RouterOS desde lo que sabes de IOS',
+      title: 'Network Labs · Aprende y practica el CLI de RouterOS desde lo que sabes de IOS',
       description:
         'Aprende los comandos de MikroTik RouterOS con su equivalente en IOS y practícalos en labs cortos en el navegador. Las tareas se comprueban contra lo que hace la red simulada.',
     },
@@ -282,10 +282,10 @@ export const es = {
   },
   reference: {
     meta: {
-      title: 'Referencia de comandos · nos-labs',
+      title: 'Referencia de comandos · Network Labs',
       description:
         'Los comandos de MikroTik RouterOS v7 tema por tema, con su sintaxis, ejemplos que se prueban en un router simulado y su equivalente en Cisco IOS.',
-      topicTitle: '{title} · Referencia de comandos · nos-labs',
+      topicTitle: '{title} · Referencia de comandos · Network Labs',
     },
     title: 'Referencia de comandos',
     intro:

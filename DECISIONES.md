@@ -395,3 +395,12 @@ Cada una cubre algo que no conviene escribir a mano:
   por encima de 4.5:1 en el 95 % del papel.
 - El menú pasa a "Aprender" (referencia) y "Practicar" (rutas), y la portada
   tiene un bloque para cada uno.
+
+## D-042 · Nombre: Network Labs
+
+- El producto se llama Network Labs (elegido por el usuario); sustituye al
+  provisional "nos-labs" en la web, los títulos, el icono y el paquete raíz
+  (`network-labs`).
+- La clave del progreso guardado sigue siendo `nos-labs:progress:v1:` para no
+  perder el progreso de quien ya practicó; es interna y no se ve.
+- Los paquetes internos `@nos/*` no cambian de nombre.
