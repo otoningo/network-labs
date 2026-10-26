@@ -373,7 +373,7 @@ Cada una cubre algo que no conviene escribir a mano:
   ejecutarlo (`suggest` del store): el estudiante lo lee, lo cambia y pulsa
   Enter.
 
-## D-041 · Portada "grulla plegada"
+## D-041 · Portada "grulla plegada" (sustituida por D-043)
 
 - La portada se rediseña entera; lab, rutas y referencia conservan su mundo.
   El usuario eligió el concepto "grulla plegada" entre los de la página de
@@ -404,3 +404,23 @@ Cada una cubre algo que no conviene escribir a mano:
 - La clave del progreso guardado sigue siendo `nos-labs:progress:v1:` para no
   perder el progreso de quien ya practicó; es interna y no se ve.
 - Los paquetes internos `@nos/*` no cambian de nombre.
+
+## D-043 · La portada vuelve al cuaderno
+
+- Sustituye a D-041. La portada "grulla plegada" (bermellón, Jost, viaje por
+  scroll) no encajaba con el resto de la web; el usuario pidió que la portada
+  fuera acorde a lab, rutas y referencia. Vuelve al cuaderno: grafito, Geist,
+  filetes de 1px y color solo para el estado. Se borran sus componentes, sus
+  tokens `.landing`, las placas de papel y la fuente Jost.
+- Estructura elegida por el usuario en la página de decisión: el traductor
+  IOS → RouterOS. Cuatro tareas (nombre, dirección, ruta por defecto, NAT):
+  la cita de IOS es texto y la línea de RouterOS se teclea en una consola real
+  sobre el router de práctica; la casilla se marca porque la red cambió. Las
+  pruebas comprueban que cada línea cumple su tarea en el motor.
+- Debajo, los dos capítulos lado a lado: Aprender (los 13 temas) y Practicar
+  (los 12 labs con su casilla).
+- Además: buscador de comandos en la referencia (por la sintaxis de RouterOS,
+  por lo que se escribiría en IOS o por lo que hace el comando), una página
+  404 propia en los dos idiomas (`app/global-not-found.tsx`, porque el layout
+  raíz vive en `[locale]`) y la línea de temas de referencia del lab ya se
+  corta en el teléfono.

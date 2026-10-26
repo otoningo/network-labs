@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-12T18:25:42.617028+00:00",
+  "generatedAt": "2026-10-26T17:15:49.475Z",
   "title": "Design System: Network Labs",
   "extensions": {
     "colorMeta": {
@@ -243,342 +243,12 @@
           "#d1d6d9",
           "#f1f3f4"
         ]
-      },
-      "washi": {
-        "role": "primary",
-        "displayName": "Washi bermellón",
-        "canonical": "#be3820",
-        "tonalRamp": [
-          "#1e0100",
-          "#4a0700",
-          "#7c1401",
-          "#ae280e",
-          "#d64f37",
-          "#fe755b",
-          "#feb4a4",
-          "#ffe9e4"
-        ]
-      },
-      "washi-deep": {
-        "role": "primary",
-        "displayName": "Bermellón hondo",
-        "canonical": "#b0341d",
-        "tonalRamp": [
-          "#1e0100",
-          "#4a0800",
-          "#7c1401",
-          "#aa2e17",
-          "#d2543c",
-          "#fa795f",
-          "#feb4a4",
-          "#fee9e4"
-        ]
-      },
-      "washi-edge": {
-        "role": "primary",
-        "displayName": "Canto del papel",
-        "canonical": "#962c18",
-        "tonalRamp": [
-          "#1e0100",
-          "#490900",
-          "#7b1501",
-          "#a33924",
-          "#ca5c46",
-          "#f28068",
-          "#ffb4a3",
-          "#ffe9e4"
-        ]
-      },
-      "washi-edge-deep": {
-        "role": "primary",
-        "displayName": "Canto hondo",
-        "canonical": "#7a2413",
-        "tonalRamp": [
-          "#1e0100",
-          "#490900",
-          "#751f0e",
-          "#9a4230",
-          "#c06450",
-          "#e78772",
-          "#feb4a3",
-          "#ffe9e4"
-        ]
-      },
-      "washi-back": {
-        "role": "neutral",
-        "displayName": "Revés del papel",
-        "canonical": "#efd9cc",
-        "tonalRamp": [
-          "#150702",
-          "#312117",
-          "#4f3e33",
-          "#705d52",
-          "#927e72",
-          "#b5a094",
-          "#dac4b8",
-          "#ffeade"
-        ]
-      },
-      "washi-back-ink": {
-        "role": "primary",
-        "displayName": "Tinta del revés",
-        "canonical": "#9e2a1f",
-        "tonalRamp": [
-          "#1f0000",
-          "#4d0000",
-          "#800200",
-          "#a73327",
-          "#ce5748",
-          "#f67b6a",
-          "#feb3a7",
-          "#fee9e5"
-        ]
-      },
-      "fold-white": {
-        "role": "neutral",
-        "displayName": "Blanco de pliegue",
-        "canonical": "#f4efe6",
-        "tonalRamp": [
-          "#0e0b06",
-          "#28251e",
-          "#45413a",
-          "#656159",
-          "#86827a",
-          "#a9a49c",
-          "#cdc8c0",
-          "#f3eee5"
-        ]
-      },
-      "washi-cream": {
-        "role": "neutral",
-        "displayName": "Crema de washi",
-        "canonical": "#ebe3d3",
-        "tonalRamp": [
-          "#100a02",
-          "#2a2418",
-          "#484134",
-          "#676053",
-          "#898273",
-          "#aca495",
-          "#d0c8b9",
-          "#f6eede"
-        ]
-      },
-      "sumi": {
-        "role": "neutral",
-        "displayName": "Negro sumi",
-        "canonical": "#131214",
-        "tonalRamp": [
-          "#0c0b0d",
-          "#262427",
-          "#434144",
-          "#626163",
-          "#838284",
-          "#a6a4a7",
-          "#cac8cb",
-          "#efeef1"
-        ]
-      },
-      "gold": {
-        "role": "secondary",
-        "displayName": "Oro del paso activo",
-        "canonical": "#d4af37",
-        "tonalRamp": [
-          "#100a00",
-          "#2f2401",
-          "#514001",
-          "#775e00",
-          "#9e7e06",
-          "#c5a122",
-          "#ebc551",
-          "#ffeebe"
-        ]
-      },
-      "crease": {
-        "role": "neutral",
-        "displayName": "Pliegue",
-        "canonical": "rgb(244 239 230 / 0.28)",
-        "tonalRamp": [
-          "#0e0b06",
-          "#28251e",
-          "#45413a",
-          "#656159",
-          "#86827a",
-          "#a9a49c",
-          "#cdc8c0",
-          "#f3eee5"
-        ]
-      },
-      "washi-ink-muted": {
-        "role": "neutral",
-        "displayName": "Tinta media sobre bermellón",
-        "canonical": "#f8e7de",
-        "tonalRamp": [
-          "#130804",
-          "#2e221b",
-          "#4c3f38",
-          "#6c5e56",
-          "#8e7f77",
-          "#b1a199",
-          "#d6c5bd",
-          "#fcebe2"
-        ]
-      },
-      "washi-ink-faint": {
-        "role": "neutral",
-        "displayName": "Tinta tenue sobre bermellón",
-        "canonical": "#f6e0d6",
-        "tonalRamp": [
-          "#170602",
-          "#332018",
-          "#523c34",
-          "#725b52",
-          "#957c72",
-          "#b89f94",
-          "#ddc3b8",
-          "#fee9e1"
-        ]
-      },
-      "sumi-ink-muted": {
-        "role": "neutral",
-        "displayName": "Tinta media sobre sumi",
-        "canonical": "#cfc8be",
-        "tonalRamp": [
-          "#0f0a05",
-          "#29241d",
-          "#474139",
-          "#666057",
-          "#888178",
-          "#aba49a",
-          "#cfc8be",
-          "#f5ede3"
-        ]
-      },
-      "sumi-ink-faint": {
-        "role": "neutral",
-        "displayName": "Tinta tenue sobre sumi",
-        "canonical": "#a39c92",
-        "tonalRamp": [
-          "#0f0a04",
-          "#2a241c",
-          "#474138",
-          "#676057",
-          "#888178",
-          "#aba49a",
-          "#cfc8be",
-          "#f5ede3"
-        ]
-      },
-      "sumi-rule": {
-        "role": "neutral",
-        "displayName": "Filete sobre sumi",
-        "canonical": "#2c2a2d",
-        "tonalRamp": [
-          "#0c0a0d",
-          "#262427",
-          "#434144",
-          "#626064",
-          "#848185",
-          "#a6a4a8",
-          "#cbc8cc",
-          "#f0edf1"
-        ]
-      },
-      "sumi-rule-strong": {
-        "role": "neutral",
-        "displayName": "Filete marcado sobre sumi",
-        "canonical": "#3d3a3e",
-        "tonalRamp": [
-          "#0d0a0d",
-          "#272428",
-          "#444145",
-          "#636064",
-          "#848185",
-          "#a7a3a8",
-          "#cbc8cc",
-          "#f1edf2"
-        ]
-      },
-      "cream-ink": {
-        "role": "neutral",
-        "displayName": "Tinta sobre crema",
-        "canonical": "#161416",
-        "tonalRamp": [
-          "#0c0a0c",
-          "#262426",
-          "#434143",
-          "#636063",
-          "#848184",
-          "#a7a4a7",
-          "#cbc8cb",
-          "#f0edf0"
-        ]
-      },
-      "cream-ink-muted": {
-        "role": "neutral",
-        "displayName": "Tinta media sobre crema",
-        "canonical": "#45413d",
-        "tonalRamp": [
-          "#0e0a07",
-          "#282421",
-          "#45413d",
-          "#65605c",
-          "#86817d",
-          "#a9a49f",
-          "#cdc8c3",
-          "#f3ede8"
-        ]
-      },
-      "cream-ink-faint": {
-        "role": "neutral",
-        "displayName": "Tinta tenue sobre crema",
-        "canonical": "#625d57",
-        "tonalRamp": [
-          "#0e0a06",
-          "#29241f",
-          "#46413b",
-          "#65605a",
-          "#87817b",
-          "#aaa49d",
-          "#cec8c1",
-          "#f3ede6"
-        ]
-      },
-      "cream-rule": {
-        "role": "neutral",
-        "displayName": "Filete sobre crema",
-        "canonical": "#cfc5b3",
-        "tonalRamp": [
-          "#110a01",
-          "#2c2416",
-          "#494132",
-          "#696050",
-          "#8a8170",
-          "#ada492",
-          "#d2c8b6",
-          "#f8eddb"
-        ]
-      },
-      "cream-rule-strong": {
-        "role": "neutral",
-        "displayName": "Pliegue sobre crema",
-        "canonical": "#b3a891",
-        "tonalRamp": [
-          "#110a00",
-          "#2d2410",
-          "#4a412d",
-          "#6a604b",
-          "#8c816b",
-          "#afa48d",
-          "#d3c8b0",
-          "#f9edd5"
-        ]
       }
     },
     "typographyMeta": {
       "hero": {
         "displayName": "Hero",
-        "purpose": "Era el titular de la portada del cuaderno; retirado con D-041, sin uso hoy."
+        "purpose": "Titular de la portada, en dos líneas: la primera en tinta y la segunda en tinta media."
       },
       "display": {
         "displayName": "Display",
@@ -590,7 +260,7 @@
       },
       "section": {
         "displayName": "Section",
-        "purpose": "Títulos de sección dentro de una página del cuaderno; sus usos en la portada se retiraron con D-041."
+        "purpose": "Títulos de sección dentro de una página del cuaderno: Aprender y Practicar en la portada."
       },
       "headline": {
         "displayName": "Headline",
@@ -623,67 +293,9 @@
       "console-quote": {
         "displayName": "Console quote",
         "purpose": "Bloques de consola citados en la portada (Geist Mono, interlineado 1.45)."
-      },
-      "landing-hero": {
-        "displayName": "Portada · Hero",
-        "purpose": "Titular del hero en Jost 300, dos líneas, la segunda en 400."
-      },
-      "landing-verb": {
-        "displayName": "Portada · Verbo",
-        "purpose": "\"Aprender\" y \"Practicar\" en bermellón sobre crema."
-      },
-      "landing-close": {
-        "displayName": "Portada · Cierre",
-        "purpose": "Titular de la banda de cierre."
-      },
-      "landing-section": {
-        "displayName": "Portada · Sección",
-        "purpose": "Titular del viaje, animado y quieto."
-      },
-      "fold-label": {
-        "displayName": "Rótulo de plegado",
-        "purpose": "Versalitas espaciadas (mayúsculas, 0.18em) para pasos, capas, equipos y listas; nunca antetítulo."
-      },
-      "fold-numeral": {
-        "displayName": "Numeral de paso",
-        "purpose": "01 a 07 en la columna de pasos y en la lista quieta."
-      },
-      "sheet-console": {
-        "displayName": "Consola de la hoja",
-        "purpose": "La consola escrita en blanco de pliegue sobre la hoja del hero."
-      },
-      "landing-quote": {
-        "displayName": "Cita de Aprender",
-        "purpose": "Citas IOS y RouterOS sobre sumi en la página crema."
       }
     },
-    "shadows": [
-      {
-        "name": "landing-sheet",
-        "value": "0 24px 48px rgb(60 8 4 / 0.45)",
-        "purpose": "Portada: la hoja con consola del hero sobre la mesa."
-      },
-      {
-        "name": "landing-button",
-        "value": "0 10px 24px rgb(60 8 4 / 0.35)",
-        "purpose": "Portada: el botón de pliegue del hero."
-      },
-      {
-        "name": "landing-flight",
-        "value": "drop-shadow(0 18px 26px rgb(0 0 0 / 0.5))",
-        "purpose": "Portada: la hoja que se pliega y viaja (filter)."
-      },
-      {
-        "name": "landing-slip",
-        "value": "0 10px 22px rgb(0 0 0 / 0.35)",
-        "purpose": "Portada: la etiqueta del paquete."
-      },
-      {
-        "name": "landing-edges",
-        "value": "0 2px 0 #962c18, 0 4px 0 #7a2413",
-        "purpose": "Portada: cantos apilados bajo las piezas plegadas, una línea por capa doblada; solo ahí."
-      }
-    ],
+    "shadows": [],
     "motion": [
       {
         "name": "ease-out",
@@ -704,46 +316,6 @@
         "name": "reduced-motion",
         "value": "0.01ms",
         "purpose": "prefers-reduced-motion anula animaciones y transiciones."
-      },
-      {
-        "name": "landing-journey",
-        "value": "scroll → un único requestAnimationFrame → variables CSS",
-        "purpose": "Portada: el viaje escribe --f1..--f3, --size, --scale, --tx, --ty, --nat, --slip, --route-y, --ink-x, --px, --py y --x0..--x3 en el escenario; React solo guarda el paso activo."
-      },
-      {
-        "name": "landing-fold-shade",
-        "value": "opacity: calc(sin(var(--f) * 180deg) * 0.6)",
-        "purpose": "Portada: la solapa se oscurece en canto hondo al pasar por la vertical."
-      },
-      {
-        "name": "landing-station",
-        "value": "0.4s ease-out",
-        "purpose": "Portada: estación alcanzada, color y borde a blanco de pliegue."
-      },
-      {
-        "name": "landing-slip",
-        "value": "0.35s ease-out opacity",
-        "purpose": "Portada: aparición de la etiqueta del paquete."
-      },
-      {
-        "name": "landing-step",
-        "value": "300ms",
-        "purpose": "Portada: el punto dorado crece de 0 a 1 y el paso cambia de tinta."
-      },
-      {
-        "name": "landing-button",
-        "value": "200ms translate ±1px",
-        "purpose": "Portada: el botón de pliegue sube al pasar y baja al pulsar."
-      },
-      {
-        "name": "landing-typing",
-        "value": "900ms + 34ms por carácter (vaivén 0-26ms) + 420ms",
-        "purpose": "Portada: tecleo de la regla de NAT en la hoja; una vez al entrar en pantalla."
-      },
-      {
-        "name": "landing-static",
-        "value": "(prefers-reduced-motion: reduce), (max-height: 479px)",
-        "purpose": "Portada: el CSS oculta el viaje animado y muestra la lista quieta antes de hidratar."
       }
     ],
     "breakpoints": [
@@ -762,10 +334,6 @@
       {
         "name": "sheet-md",
         "value": "28rem"
-      },
-      {
-        "name": "landing-short",
-        "value": "max-height: 479px"
       }
     ]
   },
@@ -779,10 +347,10 @@
       "css": ".ds-site{background:var(--color-ground);color:var(--color-ink);font-family:var(--font-ui),system-ui,sans-serif;}.ds-site-head{border-bottom:1px solid var(--color-rule)}.ds-site-in{display:flex;align-items:center;gap:24px;max-width:72rem;height:48px;margin:0 auto;padding:0 24px}.ds-site-name{font-weight:600;letter-spacing:-.025em;color:var(--color-ink);text-decoration:none}.ds-site-link{margin-right:20px;font-size:.875rem;color:var(--color-ink-muted);text-decoration:none}.ds-site-link:hover,.ds-site-link[aria-current]{color:var(--color-ink)}.ds-site-lang{display:flex;gap:4px;margin:0 0 0 auto;padding:0;list-style:none;font-size:.875rem}.ds-site-lang a{padding:2px 6px;border-radius:2px;text-transform:uppercase;text-decoration:none;color:var(--color-ink-faint)}.ds-site-lang a:hover{color:var(--color-ink-muted)}.ds-site-lang a[aria-current]{color:var(--color-ink)}.ds-site-main{min-height:96px}.ds-site-foot{border-top:1px solid var(--color-rule)}.ds-site-foot p{max-width:72ch;margin:0 auto;padding:24px;font-size:.75rem;line-height:1.55;color:var(--color-ink-faint)}.ds-site a:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
     },
     {
-      "name": "Botón principal relleno (retirado)",
+      "name": "Botón principal relleno (portada)",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Retirado de la portada con D-041; ninguna superficie del cuaderno lo usa hoy.",
+      "description": "El único botón relleno de la web: la acción principal de la portada (Empezar el lab 1 o Continuar).",
       "html": "<a class=\"ds-btn-primary\" href=\"#\"><span>Empezar el lab 1</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a>",
       "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:44px;max-width:100%;padding:0 16px;border-radius:2px;background:var(--color-ink);color:var(--color-ground);font-family:var(--font-ui),system-ui,sans-serif;font-size:.9375rem;font-weight:500;text-decoration:none;transition:background-color .15s}.ds-btn-primary svg{flex-shrink:0}.ds-btn-primary:hover{background:var(--color-ink-muted)}.ds-btn-primary:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}"
     },
@@ -897,81 +465,18 @@
       "description": "Bloque de consola citado en la referencia sobre grafito de consola: franja con el sistema y líneas en Geist Mono con el prompt en tinta tenue.",
       "html": "<div class=\"ds-cq\"><p class=\"ds-cq-os\">MikroTik RouterOS v7</p><pre class=\"ds-cq-body\"><span><span class=\"ds-cq-p\">[admin@R1] &gt; </span>/ip address add address=192.168.88.1/24 interface=ether2</span></pre></div>",
       "css": ".ds-cq{max-width:28rem;border-radius:2px;background:var(--color-console);font-family:var(--font-ui),system-ui,sans-serif;}.ds-cq-os{margin:0;padding:6px 12px;border-bottom:1px solid var(--color-rule);font-size:.75rem;color:var(--color-ink-faint)}.ds-cq-body{margin:0;padding:10px 12px;font-family:var(--font-console),ui-monospace,monospace;font-size:13.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--color-ink)}.ds-cq-body>span{display:block}.ds-cq-p{color:var(--color-ink-faint)}"
-    },
-    {
-      "name": "Portada · Marco en variante landing",
-      "kind": "nav",
-      "refersTo": "landing-header",
-      "description": "SiteShell variant=\"landing\": cabecera de 48px en bermellón hondo sin filete con Aprender y Practicar; pie sobre sumi sin filete; columna de 80rem.",
-      "html": "<div class=\"ds-lshell\"><header class=\"ds-lhead\"><div class=\"ds-lin\"><a class=\"ds-lname\" href=\"#\">Network Labs</a><nav aria-label=\"Sitio\"><a class=\"ds-llink\" href=\"#\">Aprender</a><a class=\"ds-llink\" href=\"#\">Practicar</a></nav><span class=\"ds-llang\"><a href=\"#\" aria-current=\"true\">ES</a><a href=\"#\">EN</a></span></div></header><div class=\"ds-lbody\"></div><footer class=\"ds-lfoot\"><p>Proyecto independiente con fines educativos. No está afiliado a MikroTik, Huawei, Cisco ni a ningún otro fabricante.</p></footer></div>",
-      "css": ".ds-lshell{background:#131214;color:#f4efe6;font-family:var(--font-ui),Geist,system-ui,sans-serif;}.ds-lhead{background:#b0341d}.ds-lin{display:flex;align-items:center;gap:24px;max-width:80rem;height:48px;margin:0 auto;padding:0 32px}.ds-lname{font-weight:600;letter-spacing:-.025em;color:#f4efe6;text-decoration:none}.ds-lhead nav{display:flex;gap:20px;font-size:.875rem}.ds-llink{color:#f8e7de;text-decoration:none}.ds-llink:hover,.ds-llink[aria-current]{color:#f4efe6}.ds-llang{margin-left:auto;display:flex;gap:4px;font-size:.875rem}.ds-llang a{padding:2px 6px;border-radius:2px;color:#f6e0d6;text-decoration:none}.ds-llang a[aria-current]{color:#f4efe6}.ds-lbody{height:64px;background:#b0341d}.ds-lfoot p{max-width:72ch;margin:0 auto;padding:24px 32px;font-size:.75rem;line-height:1.55;color:#a39c92}.ds-lshell a:focus-visible{outline:2px solid #f4efe6;outline-offset:2px}"
-    },
-    {
-      "name": "Portada · Botón de pliegue (hero)",
-      "kind": "button",
-      "refersTo": "button-fold",
-      "description": "El único botón relleno de la portada: blanco de pliegue sobre bermellón, texto sumi, sombra de papel; sube 1px al pasar.",
-      "html": "<div class=\"ds-fold-bg\"><a class=\"ds-btn-fold\" href=\"#\"><span>Empezar el lab 1</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a><a class=\"ds-fold-quiet\" href=\"#\">Abrir el lab 1</a></div>",
-      "css": ".ds-fold-bg{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;padding:32px;background:#b0341d;color:#f4efe6;font-family:var(--font-ui),Geist,system-ui,sans-serif;}.ds-btn-fold{display:inline-flex;align-items:center;gap:12px;height:48px;padding:0 20px;border-radius:2px;background:#f4efe6;color:#131214;font-weight:500;font-size:.9375rem;text-decoration:none;box-shadow:0 10px 24px rgb(60 8 4 / .35);transition:transform .2s}.ds-btn-fold svg{transition:transform .2s}.ds-btn-fold:hover{transform:translateY(-1px)}.ds-btn-fold:hover svg{transform:translateX(2px)}.ds-btn-fold:active{transform:translateY(1px)}.ds-btn-fold:focus-visible,.ds-fold-quiet:focus-visible{outline:2px solid #f4efe6;outline-offset:2px}.ds-fold-quiet{font-size:.875rem;color:#f4efe6;text-decoration:underline;text-decoration-color:rgb(244 239 230 / .28);text-underline-offset:4px}.ds-fold-quiet:hover{text-decoration-color:#f4efe6}"
-    },
-    {
-      "name": "Portada · Botón con borde (cierre)",
-      "kind": "button",
-      "refersTo": "button-fold-outline",
-      "description": "El botón de la banda de cierre: borde de blanco de pliegue; al pasar se rellena con texto sumi.",
-      "html": "<div class=\"ds-close-bg\"><a class=\"ds-btn-fold-o\" href=\"#\">Empezar el lab 1</a></div>",
-      "css": ".ds-close-bg{padding:32px;background:#be3820;color:#f4efe6;font-family:var(--font-ui),Geist,system-ui,sans-serif;}.ds-btn-fold-o{display:inline-flex;align-items:center;height:48px;padding:0 20px;border:1px solid #f4efe6;border-radius:2px;color:#f4efe6;font-weight:500;font-size:.9375rem;text-decoration:none;transition:background-color .15s,color .15s}.ds-btn-fold-o:hover{background:#f4efe6;color:#131214}.ds-btn-fold-o:focus-visible{outline:2px solid #f4efe6;outline-offset:2px}"
-    },
-    {
-      "name": "Portada · Columna de pasos",
-      "kind": "nav",
-      "refersTo": "step-list",
-      "description": "Diagrama numerado 01 a 07 tras un filete; el activo en tinta con el único punto dorado; cada paso salta a su punto del viaje.",
-      "html": "<div class=\"ds-steps-bg\"><ol class=\"ds-steps\"><li aria-current=\"step\"><button type=\"button\"><span class=\"ds-dot\"></span><span class=\"ds-sn\">01</span><span class=\"ds-sl\">La petición</span></button></li><li><button type=\"button\"><span class=\"ds-dot\"></span><span class=\"ds-sn\">02</span><span class=\"ds-sl\">TCP</span></button></li><li><button type=\"button\"><span class=\"ds-dot\"></span><span class=\"ds-sn\">03</span><span class=\"ds-sl\">IP</span></button></li><li><button type=\"button\"><span class=\"ds-dot\"></span><span class=\"ds-sn\">04</span><span class=\"ds-sl\">Ethernet</span></button></li></ol></div>",
-      "css": ".ds-steps-bg{padding:24px;background:#131214}.ds-steps{margin:0;padding:0;list-style:none;border-left:1px solid #2c2a2d}.ds-steps button{position:relative;display:flex;align-items:baseline;gap:12px;width:100%;padding:6px 0 6px 16px;border:0;background:none;color:#a39c92;text-align:left;cursor:pointer;transition:color .3s}.ds-steps button:hover{color:#cfc8be}.ds-steps li[aria-current] button{color:#f4efe6}.ds-dot{position:absolute;top:50%;left:-5px;width:9px;height:9px;border-radius:9999px;transform:translateY(-50%) scale(0);transition:transform .3s,background-color .3s}.ds-steps li[aria-current] .ds-dot{background:#d4af37;transform:translateY(-50%) scale(1)}.ds-sn{font-family:var(--font-display),Jost,var(--font-ui),sans-serif;font-size:.875rem;font-variant-numeric:tabular-nums}.ds-sl{font-family:var(--font-display),Jost,var(--font-ui),sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase}.ds-steps button:focus-visible{outline:2px solid #f4efe6;outline-offset:2px}"
-    },
-    {
-      "name": "Portada · Hoja con consola",
-      "kind": "custom",
-      "refersTo": "sheet-console",
-      "description": "Cuadrado de washi bermellón con guías de pliegue: la tarea con su casilla, la línea de verificación y la consola en Geist Mono en blanco de pliegue.",
-      "html": "<figure class=\"ds-sheet\"><svg class=\"ds-crease\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><g stroke=\"rgb(244 239 230 / .28)\" fill=\"none\" vector-effect=\"non-scaling-stroke\"><path d=\"M0 0 L100 100 M100 0 L0 100 M50 0 L50 100 M0 50 L100 50\" vector-effect=\"non-scaling-stroke\"/><path d=\"M50 0 L100 50 L50 100 L0 50 Z\" vector-effect=\"non-scaling-stroke\"/><path d=\"M25 0 L25 100 M75 0 L75 100\" stroke-dasharray=\"1.5 1.5\" vector-effect=\"non-scaling-stroke\"/></g></svg><div class=\"ds-sheet-in\"><div class=\"ds-task\"><p>Haz que las PC salgan a internet con la IP pública de R1.</p><span class=\"ds-tbox done\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-148,148a14,14,0,0,1-17,0l-56-56a14,14,0,1,1,17-17L96,183,215.51,63.51a14,14,0,0,1,17,17Z\"/></svg></span></div><p class=\"ds-ev\">R1: srcnat masquerade · PC1 sale como 203.0.113.2</p><pre class=\"ds-con\">[admin@R1] &gt; /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade\n[admin@R1] &gt; <span class=\"ds-cur\"></span></pre><figcaption>El router de práctica, en vivo. <button type=\"button\">Repetir</button></figcaption></div></figure>",
-      "css": ".ds-sheet{position:relative;margin:0;width:100%;max-width:26rem;aspect-ratio:1;background:#be3820;color:#f4efe6;box-shadow:0 24px 48px rgb(60 8 4 / .45);font-family:var(--font-ui),Geist,system-ui,sans-serif;}.ds-crease{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.ds-sheet-in{position:relative;display:flex;flex-direction:column;height:100%;padding:7%;box-sizing:border-box}.ds-task{display:grid;grid-template-columns:1fr auto;gap:16px}.ds-task p{margin:0;font-size:.9375rem;line-height:1.55}.ds-tbox{display:grid;place-items:center;width:20px;height:20px;border:1px solid #f4efe6;border-radius:2px}.ds-tbox.done{background:#f4efe6;color:#131214}.ds-ev{margin:4px 0 0;font-size:.8125rem;font-variant-numeric:tabular-nums}.ds-con{margin:auto 0 0;font-family:var(--font-console),\"Geist Mono\",ui-monospace,monospace;font-size:.8125rem;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.ds-cur{display:inline-block;width:.55em;height:1.1em;vertical-align:-.2em;background:#f4efe6}.ds-sheet figcaption{display:flex;justify-content:space-between;gap:16px;margin-top:20px;padding-top:12px;border-top:1px solid rgb(244 239 230 / .28);font-size:.8125rem}.ds-sheet button{border:0;background:none;color:inherit;font:inherit;padding:2px 4px;border-radius:2px;cursor:pointer}.ds-sheet button:hover{text-decoration:underline}.ds-sheet button:focus-visible{outline:2px solid #f4efe6;outline-offset:2px}"
-    },
-    {
-      "name": "Portada · Estaciones y etiqueta del viaje",
-      "kind": "custom",
-      "refersTo": "fold-station",
-      "description": "La red del viaje: cable de pliegue que se entinta, estaciones cuadradas con pictogramas Phosphor light y la etiqueta del paquete con el remite traducido.",
-      "html": "<div class=\"ds-route\"><div class=\"ds-cable\"><span class=\"ds-ink\"></span></div><div class=\"ds-st is-reached\" style=\"left:15%\"><span class=\"ds-mark\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M208,42H48A22,22,0,0,0,26,64V176a22,22,0,0,0,22,22h74v20H96a6,6,0,0,0,0,12h64a6,6,0,0,0,0-12H134V198h74a22,22,0,0,0,22-22V64A22,22,0,0,0,208,42ZM48,54H208a10,10,0,0,1,10,10v82H38V64A10,10,0,0,1,48,54ZM208,186H48a10,10,0,0,1-10-10V158H218v18A10,10,0,0,1,208,186Z\"/></svg></span><span class=\"ds-stl\">PC1</span></div><div class=\"ds-st\" style=\"left:55%\"><span class=\"ds-mark\"><svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232,114H134V86h10a14,14,0,0,0,14-14V40a14,14,0,0,0-14-14H112A14,14,0,0,0,98,40V72a14,14,0,0,0,14,14h10v28H24a6,6,0,0,0,0,12H58v36H48a14,14,0,0,0-14,14v32a14,14,0,0,0,14,14H80a14,14,0,0,0,14-14V176a14,14,0,0,0-14-14H70V126H186v36H176a14,14,0,0,0-14,14v32a14,14,0,0,0,14,14h32a14,14,0,0,0,14-14V176a14,14,0,0,0-14-14H198V126h34a6,6,0,0,0,0-12ZM110,72V40a2,2,0,0,1,2-2h32a2,2,0,0,1,2,2V72a2,2,0,0,1-2,2H112A2,2,0,0,1,110,72ZM82,176v32a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V176a2,2,0,0,1,2-2H80A2,2,0,0,1,82,176Zm128,0v32a2,2,0,0,1-2,2H176a2,2,0,0,1-2-2V176a2,2,0,0,1,2-2h32A2,2,0,0,1,210,176Z\"/></svg></span><span class=\"ds-stl\">R1</span></div><div class=\"ds-slip\"><span class=\"ds-stl\">IP</span><span class=\"ds-old\">192.168.88.254</span><span class=\"ds-new\">203.0.113.2</span></div></div>",
-      "css": ".ds-route{position:relative;height:200px;background:#131214;color:#a39c92;font-family:var(--font-ui),Geist,system-ui,sans-serif;}.ds-cable{position:absolute;top:130px;left:15%;right:15%;border-top:1px solid rgb(244 239 230 / .28)}.ds-ink{position:absolute;top:-1.5px;left:0;width:40%;border-top:2px solid #f4efe6}.ds-st{position:absolute;top:106px;transform:translateX(-50%);text-align:center;transition:color .4s cubic-bezier(.16,1,.3,1)}.ds-st.is-reached{color:#f4efe6}.ds-mark{display:grid;place-items:center;width:48px;height:48px;margin:0 auto;border:1px solid #3d3a3e;border-radius:2px;background:#131214;transition:border-color .4s}.ds-st.is-reached .ds-mark{border-color:#f4efe6}.ds-mark svg{width:62%;height:62%}.ds-stl{display:block;margin-top:10px;font-family:var(--font-display),Jost,var(--font-ui),sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase}.ds-slip{position:absolute;top:16px;left:30%;padding:8px 12px;border-radius:2px;background:#f4efe6;color:#131214;box-shadow:0 10px 22px rgb(0 0 0 / .35)}.ds-slip .ds-stl{margin:0}.ds-old,.ds-new{display:block;margin-top:4px;font-size:.875rem;font-variant-numeric:tabular-nums}.ds-old{text-decoration:line-through;text-decoration-color:#9e2a1f;opacity:.5}.ds-new{color:#9e2a1f;font-weight:600}"
-    },
-    {
-      "name": "Portada · Aprender y Practicar",
-      "kind": "custom",
-      "refersTo": "practice-row",
-      "description": "Página crema: verbo bermellón en Jost, cita IOS/RouterOS en Geist Mono sobre sumi, fila de lab con casilla bermellón y enlace de verbo subrayado en bermellón.",
-      "html": "<article class=\"ds-cream\"><h2 class=\"ds-verb\">Practicar</h2><p class=\"ds-lead\">Labs que se corrigen solos, en el navegador y sin registro.</p><p class=\"ds-fl\">IOS</p><pre class=\"ds-q\"><span class=\"ds-qp\">R1(config)# </span>hostname R1</pre><ol class=\"ds-rows\"><li><span class=\"ds-rn\">1</span><a href=\"#\">Acceso inicial y CLI</a><span class=\"ds-min\">10 min</span><span class=\"ds-box done\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg></span></li><li><span class=\"ds-rn\">2</span><a href=\"#\">Interfaces y direcciones IP</a><span class=\"ds-min\">12 min</span><span class=\"ds-box\"></span></li></ol><p><a class=\"ds-verb-link\" href=\"#\">Ver la ruta completa <svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"m224.49 136.49-72 72a12 12 0 0 1-17-17L187 140H40a12 12 0 0 1 0-24h147l-51.49-51.52a12 12 0 0 1 17-17l72 72a12 12 0 0 1-.02 17.01Z\"/></svg></a></p></article>",
-      "css": ".ds-cream{padding:40px 32px;background:#ebe3d3;color:#161416;font-family:var(--font-ui),Geist,system-ui,sans-serif;}.ds-verb{margin:0;font-family:var(--font-display),Jost,var(--font-ui),sans-serif;font-weight:300;font-size:clamp(2.75rem,1.6rem + 4.4vw,5rem);line-height:1;letter-spacing:-.02em;color:#be3820}.ds-lead{max-width:52ch;margin:24px 0 0;font-size:1.0625rem;color:#45413d}.ds-fl{margin:32px 0 4px;font-family:var(--font-display),Jost,var(--font-ui),sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:#625d57}.ds-q{margin:0;padding:10px 12px;border-radius:2px;background:#131214;color:#f4efe6;font-family:var(--font-console),\"Geist Mono\",ui-monospace,monospace;font-size:.78rem;line-height:1.5;white-space:pre-wrap}.ds-qp{color:#a39c92}.ds-rows{margin:32px 0 0;padding:0;list-style:none;border-top:1px solid #cfc5b3}.ds-rows li{display:grid;grid-template-columns:2.25rem minmax(0,1fr) auto auto;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid #cfc5b3}.ds-rn{font-family:var(--font-display),Jost,var(--font-ui),sans-serif;font-weight:300;font-size:1.375rem;line-height:1;color:#625d57;font-variant-numeric:tabular-nums}.ds-rows a{font-weight:500;color:#161416;text-decoration:none}.ds-rows a:hover{text-decoration:underline}.ds-min{font-size:.8125rem;color:#625d57}.ds-box{display:grid;place-items:center;align-self:center;width:18px;height:18px;border:1px solid #625d57;border-radius:2px;background:#ebe3d3}.ds-box.done{border-color:#be3820;background:#be3820;color:#f4efe6}.ds-verb-link{display:inline-flex;align-items:center;gap:8px;font-weight:500;color:#161416;text-decoration:underline;text-decoration-color:#be3820;text-decoration-thickness:2px;text-underline-offset:6px}.ds-verb-link svg{transition:transform .15s}.ds-verb-link:hover svg{transform:translateX(2px)}.ds-cream a:focus-visible{outline:2px solid #161416;outline-offset:2px}"
     }
   ],
   "narrative": {
     "northStar": "El cuaderno de prácticas que se corrige solo",
-    "overview": "**Creative North Star: \"El cuaderno de prácticas que se corrige solo\"**\n\nLa pantalla de lab es una hoja de ejercicios impresa en grafito: tareas numeradas con su casilla, una figura de topología rotulada \"Fig. 1\" con su pie y la consola al lado. No es un IDE. No hay pestañas de archivos, árbol de ficheros ni carril de iconos; las zonas se separan con filetes de 1px, no con tarjetas. La densidad es la de una guía de prácticas: mucho aire entre tareas, texto en una medida de lectura y una sola tipografía de interfaz.\n\nEl color es casi todo tinta sobre grafito. El único color con significado es el de estado, y vive en la casilla de cada tarea (verde cumplida, ámbar \"se cumplía y ya no\"). Numerales, progreso de la barra, contador de la pestaña y título de lab completado son monocromos. El rojo no es un estado de objetivo: un objetivo no falla, está pendiente o en regresión; el rojo queda para la confirmación destructiva de reiniciar.\n\nEs una herramienta de ingeniería, y las rutas y la referencia son páginas del mismo cuaderno: oscuro único, sin degradados, sin cristal, sin sombras. Las rutas listan sus labs con la misma fila de la hoja. La monoespaciada existe solo en superficies de consola (la terminal del lab y las consolas citadas); lo que se cita de la consola dentro de una frase va en la misma sans con un fondo. La portada salió del cuaderno con D-041: tiene mundo propio, la grulla plegada, descrito en cada sección bajo \"Portada: grulla plegada\".\n\nPortada (D-041): Solo la portada (`/[locale]`) vive en este mundo; lab, rutas y referencia siguen en el cuaderno. La portada es un diagrama de plegado numerado: encapsular es doblar y entregar es desplegar. El hero es washi bermellón a sangre con fibra de kozo; en él, un cuadrado de papel con sus guías de pliegue lleva escrita la consola real del router de práctica. Al bajar, esa hoja se pliega capa a capa (datos, TCP, IP, Ethernet) sobre negro sumi, viaja por la red que calcula el motor, R1 le tacha el remite y en el destino se despliega en las dos páginas crema de Aprender y Practicar. Cierra otra vez en bermellón.\n\nLas líneas de pliegue son la única geometría: no hay tarjetas. Todo lo que se ve sale del motor (la consola del hero es un store real; el viaje es el `trace` de PC1 a example.com:443). La fibra son dos placas PNG generadas con semilla fija por `apps/web/scripts/washi-texture.mjs` (`public/landing/washi.png` y `washi-cream.png`); no hay imágenes de terceros. La cabecera y el pie compartidos se visten con la variante `landing` del marco del sitio.",
+    "overview": "La pantalla de lab es una hoja de ejercicios impresa en grafito: tareas numeradas con su casilla, una figura de topología rotulada \"Fig. 1\" con su pie y la consola al lado. No es un IDE. No hay pestañas de archivos, árbol de ficheros ni carril de iconos; las zonas se separan con filetes de 1px, no con tarjetas. La densidad es la de una guía de prácticas: mucho aire entre tareas, texto en una medida de lectura y una sola tipografía de interfaz.\n\nEl color es casi todo tinta sobre grafito. El único color con significado es el de estado, y vive en la casilla de cada tarea (verde cumplida, ámbar \"se cumplía y ya no\"). Numerales, progreso de la barra, contador de la pestaña y título de lab completado son monocromos. El rojo no es un estado de objetivo: un objetivo no falla, está pendiente o en regresión; el rojo queda para la confirmación destructiva de reiniciar.\n\nEs una herramienta de ingeniería, y la portada, las rutas y la referencia son páginas del mismo cuaderno: oscuro único, sin degradados, sin cristal, sin sombras. Las rutas listan sus labs con la misma fila de la hoja. La monoespaciada existe solo en superficies de consola (la terminal del lab y las consolas citadas); lo que se cita de la consola dentro de una frase va en la misma sans con un fondo. La portada es una página más del cuaderno (D-043): un traductor IOS → RouterOS que se ejecuta en el motor y, debajo, los dos capítulos, Aprender y Practicar.",
     "keyCharacteristics": [
-      "Grafito casi negro en tres escalones (consola, fondo, cajas de la figura) y tinta blanco papel en tres tonos.",
       "Filetes de 1px como única estructura; nada de tarjetas ni sombras.",
       "Numerales de tarea grandes y ligeros, en un solo tono en todo estado.",
       "La casilla de estado es el portador del color de estado.",
       "Geist en la interfaz, Geist Mono solo en superficies de consola.",
       "Las superficies de trabajo usan el principal con borde; ninguna lleva un botón relleno.",
       "Esquinas casi rectas (2px) en todo.",
-      "Portada: Tres superficies que redefinen la tinta: bermellón, sumi y crema; los componentes compartidos heredan la tinta correcta.",
-      "Portada: Fibra de kozo en placa de 320px sobre el color, tan tenue que el blanco de pliegue sigue por encima de 4.5:1 en el 95 % del papel.",
-      "Portada: Jost fina en display y versalitas espaciadas en los rótulos; Geist en el cuerpo; mono solo en consolas y citas.",
-      "Portada: Dorado solo en el punto del paso activo.",
-      "Portada: Un solo botón relleno (blanco de pliegue) en el hero; el del cierre va con borde.",
-      "Portada: Esquinas de 2px en controles; el papel va a escuadra y el punto dorado es el único círculo.",
       "Portada: El plegado se mueve con el scroll; con movimiento reducido o pantalla baja, una lista quieta."
     ],
     "rules": [
@@ -991,21 +496,6 @@
         "section": "colors"
       },
       {
-        "name": "La Regla del Punto Dorado",
-        "body": "El oro solo rellena el punto del paso activo de la columna de pasos. Nunca en texto, bordes, botones ni fondos.",
-        "section": "colors"
-      },
-      {
-        "name": "La Regla de la Superficie que Entinta",
-        "body": "Cada banda declara su superficie y los componentes usan los tokens de tinta, que heredan. Lo que va sobre otro escalón dentro de una banda (la cita sumi sobre crema) toma la tinta de ese escalón.",
-        "section": "colors"
-      },
-      {
-        "name": "La Regla de la Fibra Legible",
-        "body": "Sobre la fibra, el texto mantiene 4.5:1 en el percentil 95 del papel. Pasan el blanco de pliegue sobre bermellón (4.60:1) y sobre bermellón hondo (5.15:1), la tinta media del bermellón sobre bermellón hondo (4.91:1), la tenue sobre bermellón hondo (4.65:1, los pasos inactivos del hero) y las tres tintas de la crema (5.1:1 o más). No pasan sobre fibra la tinta media ni la tenue sobre el bermellón de la hoja (4.39 y 4.16:1): en la hoja el texto va en blanco de pliegue.",
-        "section": "colors"
-      },
-      {
         "name": "La Regla de la Mono Encerrada",
         "body": "Geist Mono solo en superficies de consola: la terminal del lab, la consola de la demostración y los bloques de consola citados sobre grafito de consola. Nunca en prosa, rótulos ni en el marco de la interfaz. El código citado dentro de una frase (tareas, pistas, notas) es Geist en peso 500 sobre un chip de filete.",
         "section": "typography"
@@ -1021,11 +511,6 @@
         "section": "typography"
       },
       {
-        "name": "La Regla de la Mono Encerrada, en la portada",
-        "body": "Mono solo dentro de la consola de la hoja y de las citas de consola; rótulos, cifras de la etiqueta del paquete e interfaces van en Geist o Jost con cifras tabulares.",
-        "section": "typography"
-      },
-      {
         "name": "La Regla del Rótulo en Versalitas",
         "body": "Las versalitas rotulan partes del diagrama (un paso, una capa, un equipo, una lista). No van encima de un titular como antetítulo.",
         "section": "typography"
@@ -1036,19 +521,9 @@
         "section": "elevation"
       },
       {
-        "name": "La Regla de la Sombra de Papel",
-        "body": "Solo proyecta sombra lo que es papel o se apoya en él (la hoja, la pieza plegada, la etiqueta, el botón de pliegue). Las bandas, las listas y las citas siguen planas.",
-        "section": "elevation"
-      },
-      {
         "name": "La Regla del Trazo que Dice el Medio",
         "body": "Cable activo: línea continua en gris de control. Asociación wifi activa: discontinua (6 4) en gris de control. Caídos, en filete marcado: cable discontinuo (4 4), wifi punteado (2 4).",
         "section": "shapes"
-      },
-      {
-        "name": "La Regla del Botón Principal",
-        "body": "Las superficies de trabajo (lab, rutas, referencia) usan el principal con borde, nunca un botón relleno. La portada tiene un único botón relleno, el de pliegue, en su propio mundo.",
-        "section": "components"
       }
     ],
     "dos": [
@@ -1064,16 +539,8 @@
       "**Do** rotular la topología como figura numerada con su pie, con interfaces y direcciones en un solo bloque en cada extremo de cable.",
       "**Do** contraescalar el texto de la figura para que mida 12px (13px los ids) en pantalla a cualquier zoom, y mantener 2px de radio en pantalla.",
       "**Do** distinguir el medio por el trazo: continuo para cable, discontinuo (6 4) para wifi; lo caído en filete marcado.",
-      "(Portada) **Do** declarar la superficie de cada banda (on-washi, on-sumi, on-cream) y dejar que los componentes hereden su tinta.",
-      "(Portada) **Do** poner el oro (gold) solo en el punto del paso activo.",
-      "(Portada) **Do** usar un solo botón relleno de blanco de pliegue, en el hero; el del cierre va con borde.",
-      "(Portada) **Do** mantener el texto sobre fibra en 4.5:1 o más en el percentil 95 del papel; sobre bermellón con fibra, solo blanco de pliegue (y tinta media del bermellón sobre bermellón hondo).",
       "(Portada) **Do** usar mono solo en la consola de la hoja y en las citas de consola.",
-      "(Portada) **Do** usar 2px de radio en controles y piezas pequeñas, y el papel a escuadra.",
-      "(Portada) **Do** mover el viaje escribiendo variables CSS desde un único bucle de requestAnimationFrame, con React atento solo al paso activo.",
-      "(Portada) **Do** dejar que el CSS muestre la lista quieta con movimiento reducido o 479px de alto o menos, antes de hidratar.",
-      "(Portada) **Do** dibujar los equipos del viaje con Phosphor en peso light: Desktop, Network, Cloud y HardDrives.",
-      "(Portada) **Do** generar cualquier raster de papel con `apps/web/scripts/washi-texture.mjs` y semilla fija."
+      "(Portada) **Do** dejar que el CSS muestre la lista quieta con movimiento reducido o 479px de alto o menos, antes de hidratar."
     ],
     "donts": [
       "**Don't** usar rojo para un objetivo; el rojo es solo de acciones destructivas y de la salida del equipo en la consola.",
@@ -1085,11 +552,8 @@
       "**Don't** colorear el anillo de foco con un color de estado.",
       "**Don't** bajar de 0.75rem en texto de interfaz.",
       "**Don't** mostrar tráfico ni contadores de interfaz en la figura.",
-      "(Portada) **Don't** usar Jost, los tokens de washi ni sus sombras fuera de la portada.",
       "(Portada) **Don't** usar el oro en texto, bordes, botones o fondos.",
-      "(Portada) **Don't** poner tinta tenue sobre bermellón con fibra.",
       "(Portada) **Don't** usar las versalitas como antetítulo encima de un titular.",
-      "(Portada) **Don't** dar sombra a bandas, listas o citas; solo al papel y a lo que se apoya en él.",
       "(Portada) **Don't** usar imágenes de terceros ni fotografía."
     ]
   }
