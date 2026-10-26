@@ -108,10 +108,13 @@ function RelatedTopics() {
       {messages.lab.reference}{' '}
       {topics.map((topic, index) => (
         <span key={topic.id}>
+          {/* El espacio tras el punto deja cortar la línea entre temas en el teléfono. */}
           {index > 0 && (
-            <span aria-hidden className="mx-1.5">
-              ·
-            </span>
+            <>
+              <span aria-hidden className="ml-1.5">
+                ·
+              </span>{' '}
+            </>
           )}
           <Link
             href={`/${locale}/referencia/${topic.id}`}
