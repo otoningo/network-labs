@@ -233,6 +233,17 @@ describe('usuarios', () => {
 });
 
 describe('arranque de labs', () => {
+  it('display current-configuration se puede volver a cargar como arranque', () => {
+    const t = term();
+    t.script(['system-view', 'sysname R1', 'interface GigabitEthernet0/0/1', 'ip address 192.168.1.1 24']);
+    const saved = t.ok('display current-configuration');
+    const device = lab().devices.find((d) => d.id === 'R1');
+    if (!device) throw new Error('falta R1');
+    const ran = vrpStartup(device, saved);
+    if (!ran.ok) throw new Error(ran.error);
+    expect(ran.value.config.system.identity).toBe('R1');
+  });
+
   it('el script de arranque se lee como la configuración de VRP', () => {
     const device = lab().devices.find((d) => d.id === 'R1');
     if (!device) throw new Error('falta R1');

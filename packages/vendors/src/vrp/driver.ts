@@ -8,6 +8,7 @@ import {
   type Result,
   runScript,
   type StartupRunner,
+  type SyntaxFault,
   simTime,
   type UserGroup,
   type VendorDriver,
@@ -72,7 +73,24 @@ function available(ctx: Ctx): readonly CommandSpec[] {
   );
 }
 
-function parseLine(input: string, ctx: Ctx) {
+/** Intenta la línea como comando de la vista de sistema desde una subvista; null si tampoco vale. */
+function fromSystemView(input: string, ctx: Ctx): Result<VrpIntent, SyntaxFault> | null {
+  const kind = ctx.session.view.kind;
+  if (kind === 'user' || kind === 'system') return null;
+  const system: Ctx = { ...ctx, session: { ...ctx.session, view: { kind: 'system' } } };
+  const cmds = available(system);
+  const matched = matchLine(cmds, input);
+  const cmd = matched.ok ? cmds[matched.cmd] : undefined;
+  if (!matched.ok || !cmd) return null;
+  const built = cmd.build(matched.matched, ctxOf(system));
+  if (!built.ok) return null;
+  return ok({
+    kind: 'sequence',
+    steps: [{ kind: 'session', change: { kind: 'enter', view: { kind: 'system' } } }, built.value],
+  });
+}
+
+function parseLine(input: string, ctx: Ctx): Result<VrpIntent, SyntaxFault> {
   // Respuesta a una pregunta [Y/N]: cualquier cosa que no sea Y cuenta como no.
   if (ctx.session.pending) {
     const yes = /^\s*y(es)?\s*$/i.test(input);
@@ -81,7 +99,13 @@ function parseLine(input: string, ctx: Ctx) {
   if (input.trim() === '') return ok<VrpIntent>({ kind: 'noop' });
   const cmds = available(ctx);
   const matched = matchLine(cmds, input);
-  if (!matched.ok) return err({ code: matched.code, at: matched.at });
+  if (!matched.ok) {
+    // En una subvista, un comando de la vista de sistema sale a ella y se ejecuta,
+    // como en VRP (así se recarga también una configuración guardada entera).
+    const fallback = fromSystemView(input, ctx);
+    if (fallback) return fallback;
+    return err({ code: matched.code, at: matched.at });
+  }
   const cmd = cmds[matched.cmd];
   if (!cmd) return err({ code: 'unrecognized', at: 0 });
   const built = cmd.build(matched.matched, ctxOf(ctx));

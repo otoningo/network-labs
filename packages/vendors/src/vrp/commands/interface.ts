@@ -45,6 +45,9 @@ const commands: CommandSpec[] = [
     ],
     build: (m, ctx) => {
       const name = canonicalIface(m.args['iface'] ?? '') ?? '';
+      // NULL0 existe siempre pero no se configura: aceptarla deja recargar una
+      // configuración guardada, que siempre la lista.
+      if (name === 'NULL0') return noop();
       const iface = ifaceByName(ctx.device, name);
       if (!iface) return fault('wrong-parameter', m.argAt['iface']);
       return intent({
