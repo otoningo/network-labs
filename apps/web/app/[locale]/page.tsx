@@ -1,88 +1,82 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { FoldJourney } from '@/components/landing/FoldJourney';
-import { HeroActions } from '@/components/landing/HeroActions';
-import { HeroSteps } from '@/components/landing/HeroSteps';
-import { LearnPractice } from '@/components/landing/LearnPractice';
-import { SheetConsole } from '@/components/landing/SheetConsole';
+import { HomeActions } from '@/components/home/HomeActions';
+import { HomeIndex } from '@/components/home/HomeIndex';
+import { Translator } from '@/components/home/Translator';
 import { SiteShell } from '@/components/site/SiteShell';
+import { TRANSLATIONS, translationLab } from '@/lib/home/translations';
 import { isLocale, messagesFor } from '@/lib/i18n';
+import { describeEvidence, evidenceOf } from '@/lib/lab/evidence';
 import { learningPaths } from '@/lib/lab/paths';
-import { computeJourney, demoLab } from '@/lib/landing/journey';
+import { createLabStore } from '@/lib/lab/store';
 import { allTopics, sandboxLab } from '@/lib/reference/content';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const t = messagesFor(locale).landing.meta;
+  const t = messagesFor(locale).home.meta;
   return { title: t.title, description: t.description };
 }
 
 /**
- * Portada (D-041): la grulla plegada. Una hoja bermellón con el router de
- * práctica en vivo; al bajar, esa hoja se pliega en el paquete y recorre la
- * red que calcula el motor; al llegar se despliega en Aprender y Practicar.
- * Todo lo que muestra sale del motor al compilar o en el navegador.
+ * Portada (D-043): una página más del cuaderno. Arriba, el traductor IOS →
+ * RouterOS que se ejecuta en el motor; debajo, los dos capítulos, Aprender y
+ * Practicar. Todo lo que muestra sale del contenido y del motor.
  */
 export default async function LocaleHome({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const t = messagesFor(locale).landing;
+  const t = messagesFor(locale).home;
   const path = learningPaths()[0];
   if (!path) throw new Error('content/labs no tiene una ruta con labs');
   const sandbox = sandboxLab('routeros');
-  const journey = computeJourney(sandbox);
+  const messages = messagesFor(locale);
+  const tasks = TRANSLATIONS.map((translation) => {
+    const lab = translationLab(sandbox, translation);
+    // El prompt de partida y lo que la red reportará al final, calculados al
+    // compilar: la consola no salta al hidratar y su alto se reserva desde el principio.
+    const store = createLabStore(lab);
+    const prompt = store.getState().prompt();
+    store.getState().run(translation.routeros);
+    const evidence = evidenceOf(store.getState(), translation.id).map((e) =>
+      describeEvidence(e, messages),
+    );
+    return { translation, lab, prompt, evidence };
+  });
+  const topics = allTopics()
+    .filter((topic) => topic.vendor === 'routeros')
+    .map((topic) => ({
+      id: topic.id,
+      order: topic.order,
+      title: topic.title,
+      commands: topic.commands.length,
+    }));
 
   return (
-    <SiteShell variant="landing">
-      <section aria-labelledby="hero-heading" className="on-washi washi-fiber bg-(--washi-deep)!">
-        <div className="mx-auto grid max-w-7xl gap-x-12 gap-y-14 px-4 pt-14 pb-20 sm:px-8 lg:min-h-[calc(100dvh-var(--bar-height))] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_11rem] lg:items-center lg:pt-10 lg:pb-16">
-          <div className="min-w-0 @container">
+    <SiteShell>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <section
+          aria-labelledby="home-heading"
+          className="grid items-center gap-x-14 gap-y-12 pt-12 pb-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:pt-20 lg:pb-24"
+        >
+          <div className="min-w-0">
             <h1
-              id="hero-heading"
-              className="font-display text-[clamp(2.4rem,1.5rem+3.2vw,4.25rem)] leading-[1.06] font-light tracking-[-0.025em] text-balance lg:text-[min(3.5rem,calc(100cqi/12.4))] lg:whitespace-nowrap"
+              id="home-heading"
+              className="text-[clamp(1.75rem,1.2rem+2vw,2.5rem)] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-ink"
             >
               <span className="block">{t.hero.title}</span>
-              <span className="block font-normal">{t.hero.title2}</span>
+              <span className="block text-ink-muted">{t.hero.title2}</span>
             </h1>
-            <p className="mt-7 max-w-[46ch] text-md text-pretty">{t.hero.lead}</p>
-            <HeroActions
+            <p className="mt-5 max-w-[44ch] text-md text-ink-muted text-pretty">{t.hero.lead}</p>
+            <HomeActions
               labs={path.labs.map((l) => ({ id: l.id, order: l.order, title: l.title }))}
             />
           </div>
-          <div className="flex min-w-0 justify-center">
-            <SheetConsole lab={demoLab(sandbox)} />
-          </div>
-          <nav aria-label={t.nav} className="hidden lg:block">
-            <HeroSteps journey={journey} />
-          </nav>
-        </div>
-      </section>
+          <Translator tasks={tasks} />
+        </section>
 
-      <FoldJourney journey={journey} />
-
-      <LearnPractice labs={path.labs} topicCount={allTopics().length} pathId={path.id} />
-
-      <section aria-labelledby="close-heading" className="on-washi washi-fiber">
-        <div className="mx-auto grid max-w-7xl items-end gap-10 px-4 py-24 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div>
-            <h2
-              id="close-heading"
-              className="font-display text-[clamp(2.25rem,1.4rem+3.4vw,4rem)] leading-[1.05] font-light tracking-[-0.02em] text-balance"
-            >
-              {t.close.title}
-            </h2>
-            <p className="mt-5 max-w-[52ch] text-md text-pretty">{t.close.lead}</p>
-          </div>
-          <Link
-            href={`/${locale}/lab/${path.labs[0]?.id ?? ''}`}
-            className="inline-flex h-12 items-center gap-3 self-end rounded-[2px] border border-(--fold-white) px-5 font-medium no-underline transition-colors hover:bg-(--fold-white) hover:text-(--sumi)"
-          >
-            {t.hero.start}
-          </Link>
-        </div>
-      </section>
+        <HomeIndex topics={topics} labs={path.labs} pathId={path.id} />
+      </div>
     </SiteShell>
   );
 }

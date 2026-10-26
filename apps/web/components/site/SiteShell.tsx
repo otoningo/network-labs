@@ -10,37 +10,27 @@ import { useI18n } from '@/lib/i18n/context';
  * Marco de las páginas fuera del lab (portada, rutas, referencia): barra con el nombre y
  * la navegación, el contenido en `<main id="main">` y el pie con el aviso de
  * no afiliación. La pantalla de lab tiene su propia barra.
- *
- * La portada usa la variante `landing`: el mismo marco sobre el washi bermellón,
- * con sus propios tokens (clase `.landing` en globals.css).
  */
-export function SiteShell({
-  children,
-  variant = 'default',
-}: {
-  readonly children: ReactNode;
-  readonly variant?: 'default' | 'landing';
-}) {
+export function SiteShell({ children }: { readonly children: ReactNode }) {
   const { messages } = useI18n();
-  const landing = variant === 'landing';
   return (
-    <div className={`flex min-h-dvh flex-col ${landing ? 'landing' : 'bg-ground'}`}>
+    <div className="flex min-h-dvh flex-col bg-ground">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-sheet focus:px-3 focus:py-2"
       >
         {messages.site.skipToContent}
       </a>
-      <SiteHeader landing={landing} />
+      <SiteHeader />
       <main id="main" className="flex-1">
         {children}
       </main>
-      <SiteFooter landing={landing} />
+      <SiteFooter />
     </div>
   );
 }
 
-function SiteHeader({ landing }: { readonly landing: boolean }) {
+function SiteHeader() {
   const { locale, messages } = useI18n();
   const pathname = usePathname();
   const links = [
@@ -48,15 +38,16 @@ function SiteHeader({ landing }: { readonly landing: boolean }) {
     { href: `/${locale}/rutas`, label: messages.site.paths },
   ];
   return (
-    <header className={landing ? 'landing-header' : 'border-b border-rule'}>
-      <div
-        className={`mx-auto flex h-(--bar-height) items-center gap-6 px-4 ${landing ? 'max-w-7xl sm:px-8' : 'max-w-6xl sm:px-6'}`}
-      >
-        <Link href={`/${locale}`} className="font-semibold tracking-tight text-ink no-underline">
+    <header className="border-b border-rule">
+      <div className="mx-auto flex h-(--bar-height) max-w-6xl items-center gap-4 px-4 sm:gap-6 sm:px-6">
+        <Link
+          href={`/${locale}`}
+          className="font-semibold tracking-tight whitespace-nowrap text-ink no-underline"
+        >
           {messages.app.name}
         </Link>
         <nav aria-label={messages.site.nav} className="text-sm">
-          <ul className="flex items-center gap-5">
+          <ul className="flex items-center gap-4 sm:gap-5">
             {links.map(({ href, label }) => {
               const current = pathname === href || pathname.startsWith(`${href}/`);
               return (
@@ -81,11 +72,11 @@ function SiteHeader({ landing }: { readonly landing: boolean }) {
   );
 }
 
-function SiteFooter({ landing }: { readonly landing: boolean }) {
+function SiteFooter() {
   const { messages } = useI18n();
   return (
-    <footer className={landing ? 'landing-footer' : 'border-t border-rule'}>
-      <div className={`mx-auto px-4 py-6 ${landing ? 'max-w-7xl sm:px-8' : 'max-w-6xl sm:px-6'}`}>
+    <footer className="border-t border-rule">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <p className="max-w-[72ch] text-xs text-ink-faint">{messages.app.disclaimer}</p>
       </div>
     </footer>
