@@ -45,6 +45,14 @@ export default async function ReferencePage({ params }: PageProps<'/[locale]/ref
         <div className="max-w-3xl">
           <h1 className="text-xl leading-tight font-semibold text-balance text-ink">{t.title}</h1>
           <p className="mt-3 max-w-[62ch] text-ink-muted text-pretty">{t.intro}</p>
+          <p className="mt-3 text-sm">
+            <Link
+              href={`/${locale}/compara`}
+              className="text-ink underline decoration-control underline-offset-[0.2em] hover:decoration-ink"
+            >
+              {t.compareLink}
+            </Link>
+          </p>
 
           <div className="mt-10">
             <ReferenceSearch entries={entries}>

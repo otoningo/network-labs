@@ -33,9 +33,12 @@ export function SiteShell({ children }: { readonly children: ReactNode }) {
 function SiteHeader() {
   const { locale, messages } = useI18n();
   const pathname = usePathname();
+  // En el teléfono no caben tres enlaces junto al nombre y el idioma: Comparar
+  // aparece desde 640px y, más estrecho, se llega a él desde Aprender y la portada.
   const links = [
-    { href: `/${locale}/referencia`, label: messages.site.reference },
-    { href: `/${locale}/rutas`, label: messages.site.paths },
+    { href: `/${locale}/referencia`, label: messages.site.reference, wide: false },
+    { href: `/${locale}/rutas`, label: messages.site.paths, wide: false },
+    { href: `/${locale}/compara`, label: messages.site.compare, wide: true },
   ];
   return (
     <header className="border-b border-rule">
@@ -48,10 +51,10 @@ function SiteHeader() {
         </Link>
         <nav aria-label={messages.site.nav} className="text-sm">
           <ul className="flex items-center gap-4 sm:gap-5">
-            {links.map(({ href, label }) => {
+            {links.map(({ href, label, wide }) => {
               const current = pathname === href || pathname.startsWith(`${href}/`);
               return (
-                <li key={href}>
+                <li key={href} className={wide ? 'hidden sm:list-item' : undefined}>
                   <Link
                     href={href}
                     aria-current={current ? 'page' : undefined}

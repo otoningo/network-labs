@@ -100,7 +100,17 @@ function Learn({ topics }: { readonly topics: readonly HomeTopic[] }) {
       title={t.title}
       lead={t.lead}
       className="lg:border-r lg:border-rule lg:pr-10"
-      more={<MoreLink href={`/${locale}/referencia`}>{t.cta}</MoreLink>}
+      more={
+        <>
+          <MoreLink href={`/${locale}/referencia`}>{t.cta}</MoreLink>
+          <Link
+            href={`/${locale}/compara`}
+            className="text-ink-muted underline decoration-rule-strong underline-offset-[0.2em] hover:text-ink hover:decoration-ink"
+          >
+            {t.compare}
+          </Link>
+        </>
+      }
     >
       <ol className="mt-6 grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-4 border-b border-rule">
         {topics.map((topic) => (

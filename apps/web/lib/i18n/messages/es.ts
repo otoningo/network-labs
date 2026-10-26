@@ -21,6 +21,7 @@ export const es = {
     skipToContent: 'Saltar al contenido',
     nav: 'Navegación principal',
     paths: 'Practicar',
+    compare: 'Comparar',
     reference: 'Aprender',
   },
   lab: {
@@ -197,6 +198,64 @@ export const es = {
       done: 'Progreso de la ruta borrado.',
     },
   },
+  compare: {
+    meta: {
+      title: 'Compara sintaxis · Network Labs',
+      description:
+        'La misma tarea en MikroTik RouterOS, Huawei VRP, VyOS y Cisco IOS, una al lado de la otra. Las líneas de RouterOS y VRP se comprueban en un simulador.',
+    },
+    title: 'Compara sintaxis',
+    intro:
+      'Elige una tarea y mira cómo se escribe en cada sistema. Las líneas de RouterOS y de VRP se ejecutan en el simulador y se comprueban por lo que hace la red; las de VyOS e IOS son citas.',
+    ports:
+      'En los cuatro, el primer puerto va al proveedor y el segundo a la LAN: ether1 y ether2 en RouterOS, GigabitEthernet0/0/0 y 0/0/1 en VRP, eth0 y eth1 en VyOS, Gi0/0 y Gi0/1 en IOS.',
+    tasks: 'Tareas',
+    os: {
+      routeros: 'MikroTik RouterOS v7',
+      vrp: 'Huawei VRP',
+      vyos: 'VyOS 1.4',
+      ios: 'Cisco IOS',
+    },
+    verified: 'Comprobado en el simulador',
+    quoted: 'Cita, sin simulador',
+    task: {
+      hostname: {
+        title: 'Nombre del equipo',
+        note: 'RouterOS lo llama identidad y VRP, sysname, que se escribe en la vista de sistema; VyOS e IOS, hostname.',
+      },
+      address: {
+        title: 'Dirección IP en la LAN',
+        note: 'RouterOS y VyOS escriben la red con su longitud (/24); IOS pide la máscara; VRP acepta las dos. En IOS el puerto sale apagado y hay que encenderlo.',
+      },
+      route: {
+        title: 'Ruta por defecto',
+        note: 'Los cuatro dicen lo mismo: lo que no tenga una ruta mejor va al proveedor. Cambia cómo se escribe «todo»: 0.0.0.0/0, o 0.0.0.0 con máscara 0.',
+      },
+      dhcp: {
+        title: 'Servidor DHCP para la LAN',
+        note: 'RouterOS separa pool, red y servidor; VRP los junta en el pool, pero sin dhcp enable no reparte nada; IOS deja fuera la puerta de enlace con excluded-address.',
+      },
+      nat: {
+        title: 'Salir a Internet con la IP pública',
+        note: 'RouterOS y VyOS lo resuelven con una regla de masquerade; VRP e IOS necesitan además una ACL que diga qué direcciones se traducen.',
+      },
+      dns: {
+        title: 'El router como DNS de la LAN',
+        note: 'RouterOS lo activa con allow-remote-requests y VRP con dns proxy enable; VyOS tiene un servicio de reenvío aparte; IOS, ip dns server.',
+      },
+      user: {
+        title: 'Usuario de gestión',
+        note: 'Cada sistema guarda la contraseña cifrada y mide los permisos a su manera: grupos en RouterOS, niveles de 0 a 15 en VRP e IOS.',
+      },
+      telnet: {
+        title: 'Apagar Telnet',
+        note: 'Telnet viaja en claro. RouterOS y VRP lo traen encendido de fábrica; en IOS se deja solo SSH en las líneas vty.',
+      },
+    },
+    absent: {
+      vyos: { telnet: 'VyOS no trae servidor Telnet: el acceso remoto es por SSH.' },
+    },
+  },
   notFound: {
     title: 'Esta página no existe',
     lead: 'Puede que el enlace esté mal escrito o que la página haya cambiado de sitio.',
@@ -233,6 +292,7 @@ export const es = {
       title: 'Aprender',
       lead: 'Los comandos de RouterOS tema por tema: qué hacen, cómo se escriben, ejemplos que puedes probar y lo que escribirías en IOS.',
       cta: 'Abrir la referencia',
+      compare: 'Compara sintaxis entre sistemas',
     },
     practice: {
       title: 'Practicar',
@@ -253,6 +313,7 @@ export const es = {
     intro:
       'Los comandos de MikroTik RouterOS v7, tema por tema: qué hace cada uno, cómo se escribe, ejemplos que puedes probar en un router de práctica y lo que escribirías en IOS.',
     topics: 'Temas',
+    compareLink: 'Compara la misma tarea en RouterOS, VRP, VyOS e IOS',
     commands: { one: '{n} comando', other: '{n} comandos' },
     practisedIn: 'Se practica en',
     practiseIn: 'Practícalo en',
