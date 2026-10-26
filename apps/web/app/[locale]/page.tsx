@@ -75,7 +75,14 @@ export default async function LocaleHome({ params }: PageProps<'/[locale]'>) {
           <Translator tasks={tasks} />
         </section>
 
-        <HomeIndex topics={topics} labs={path.labs} pathId={path.id} />
+        <HomeIndex
+          topics={topics}
+          labs={path.labs}
+          pathId={path.id}
+          otherPaths={learningPaths()
+            .slice(1)
+            .map((p) => p.id)}
+        />
       </div>
     </SiteShell>
   );

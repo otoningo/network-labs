@@ -23,7 +23,10 @@ export const en: Messages = {
     reference: 'Learn',
   },
   lab: {
-    paths: { 'mikrotik-desde-cero': 'MikroTik from scratch' },
+    paths: {
+      'mikrotik-desde-cero': 'MikroTik from scratch',
+      'vrp-desde-cero': 'Huawei VRP from scratch',
+    },
     labNumber: 'Lab {n}',
     difficulty: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
     minutes: '{n} min',
@@ -170,8 +173,10 @@ export const en: Messages = {
       'Each path is a series of short labs on one system, in order. Progress is saved in this browser, with no account.',
     os: { routeros: 'MikroTik RouterOS v7', vrp: 'Huawei VRP', vyos: 'VyOS', ios: 'Cisco IOS' },
     practise: 'Practiced on {os}',
-    titles: { 'vrp-desde-cero': 'Huawei VRP from scratch', 'vyos-desde-cero': 'VyOS from scratch' },
+    titles: { 'vyos-desde-cero': 'VyOS from scratch' },
     descriptions: {
+      'vrp-desde-cero':
+        'The same on a Huawei router: views, addresses, static routes and the office with DHCP, NAT and DNS. Four labs for anyone who did the MikroTik ones or comes from IOS.',
       'mikrotik-desde-cero':
         'By the end you can set up a small office router from scratch: addresses, routes, VLANs, DHCP, NAT, firewall, wifi and DNS, with a backup of it all.',
     },
@@ -296,7 +301,7 @@ export const en: Messages = {
       lead: 'The “{path}” path: short labs with one real task each. The box is ticked when the network does it.',
       cta: 'See the whole path',
       done: 'finished',
-      upcoming: 'Huawei VRP and VyOS come next.',
+      upcoming: 'VyOS comes next.',
     },
   },
   reference: {

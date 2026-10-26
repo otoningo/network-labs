@@ -1,0 +1,121 @@
+# Ruta "Huawei VRP desde cero", lab 3 (fase 6, D-044).
+id: vrp-03-rutas-estaticas
+vendor: vrp
+path: vrp-desde-cero
+order: 3
+title:
+  es: Rutas estáticas
+  en: Static routes
+summary:
+  es: Dos routers VRP, dos LAN y un proveedor. Escribe las rutas para que todo el mundo sepa volver.
+  en: Two VRP routers, two LANs and a provider. Write the routes so everyone knows the way back.
+difficulty: beginner
+minutes: 15
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 680, y: 60 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: vrp
+      board: sim-r5
+      label: { es: Router de la sede, en: Branch router }
+      position: { x: 180, y: 200 }
+      startup: |
+        sysname R1
+        interface GigabitEthernet0/0/0
+         ip address 10.0.12.1 255.255.255.252
+        interface GigabitEthernet0/0/1
+         ip address 192.168.10.1 255.255.255.0
+    - id: R2
+      os: vrp
+      board: sim-r5
+      label: { es: Router central, en: Main router }
+      position: { x: 500, y: 200 }
+      startup: |
+        sysname R2
+        interface GigabitEthernet0/0/0
+         ip address 10.0.12.2 255.255.255.252
+        interface GigabitEthernet0/0/1
+         ip address 192.168.20.1 255.255.255.0
+        interface GigabitEthernet0/0/2
+         ip address 203.0.113.2 255.255.255.0
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de la sede, en: Branch PC }
+      position: { x: 180, y: 360 }
+      host:
+        ip: 192.168.10.10/24
+        gateway: 192.168.10.1
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC central, en: Main PC }
+      position: { x: 500, y: 360 }
+      host:
+        ip: 192.168.20.10/24
+        gateway: 192.168.20.1
+  links:
+    - [R1:GigabitEthernet0/0/0, R2:GigabitEthernet0/0/0]
+    - [R1:GigabitEthernet0/0/1, PC1:eth0]
+    - [R2:GigabitEthernet0/0/1, PC2:eth0]
+    - [R2:GigabitEthernet0/0/2, ISP:eth0]
+
+objectives:
+  - id: pcs
+    text:
+      es: La PC de la sede llega a la PC central.
+      en: The branch PC reaches the main PC.
+    check:
+      reachable: { from: PC1, to: PC2 }
+    hints:
+      - es: Cada router solo conoce sus redes conectadas. Míralo con `display ip routing-table`.
+        en: Each router only knows its connected networks. Check it with `display ip routing-table`.
+      - es: Que la ida llegue no basta; el otro router también tiene que saber volver.
+        en: Getting there is not enough; the other router must also know the way back.
+      - es: "`ip route-static` lleva la red, su máscara (o longitud) y el siguiente salto: la IP del vecino al otro lado de la /30."
+        en: "`ip route-static` takes the network, its mask (or length) and the next hop: the neighbour's IP across the /30."
+  - id: r2-internet
+    text:
+      es: El router central llega a Internet (8.8.8.8).
+      en: The main router reaches the Internet (8.8.8.8).
+    check:
+      reachable: { from: R2, to: 8.8.8.8 }
+    hints:
+      - es: No vas a escribir una ruta por cada red de Internet.
+        en: You are not going to write one route per Internet network.
+      - es: Una ruta por defecto (0.0.0.0 con máscara 0) cubre todo lo que no tiene una ruta mejor. Su siguiente salto es el router del proveedor.
+        en: A default route (0.0.0.0 with mask 0) covers everything without a better route. Its next hop is the provider's router.
+  - id: r1-default
+    text:
+      es: La sede manda todo lo desconocido al router central, y la PC de la sede llega a su dirección pública (203.0.113.2).
+      en: The branch sends everything unknown to the main router, and the branch PC reaches its public address (203.0.113.2).
+    check:
+      all:
+        - routeActive: { device: R1, dst: 0.0.0.0/0, via: 10.0.12.2 }
+        - reachable: { from: PC1, to: 203.0.113.2 }
+    hints:
+      - es: R1 tiene un solo camino hacia fuera; no necesita conocer cada red de detrás de R2.
+        en: R1 has a single way out; it does not need to know every network behind R2.
+      - es: Una ruta por defecto en R1 hacia la IP de R2 en la /30. Comprueba que aparece como Static en la tabla.
+        en: A default route on R1 towards R2's IP on the /30. Check it shows as Static in the table.
+
+explanation:
+  es: >-
+    Un router solo conoce sus redes conectadas; para el resto hace falta una ruta, y hace
+    falta en los dos sentidos. En VRP se escribe `ip route-static` con la red, su máscara (o
+    su longitud) y el siguiente salto, y `display ip routing-table` la muestra como Static
+    con preferencia 60, el valor por defecto de VRP (IOS usa 1 y RouterOS, distancia 1).
+    La ruta por defecto es 0.0.0.0 con máscara 0: todo lo que no tenga una ruta mejor.
+  en: >-
+    A router only knows its connected networks; anything else needs a route, and it needs
+    one in both directions. In VRP you write `ip route-static` with the network, its mask
+    (or length) and the next hop, and `display ip routing-table` shows it as Static with
+    preference 60, VRP's default (IOS uses 1 and RouterOS, distance 1). The default route
+    is 0.0.0.0 with mask 0: everything without a better route.

@@ -1,0 +1,118 @@
+# Ruta "Huawei VRP desde cero", lab 2 (fase 6, D-044).
+id: vrp-02-interfaces-direcciones
+vendor: vrp
+path: vrp-desde-cero
+order: 2
+title:
+  es: Interfaces y direcciones IP
+  en: Interfaces and IP addresses
+summary:
+  es: Rotula la WAN, enciende el puerto apagado y corrige la dirección que dejó otro técnico.
+  en: Label the WAN, bring up the shut-down port and fix the address another technician left.
+difficulty: beginner
+minutes: 12
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: vrp
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      # Otro técnico dejó la LAN de ventas en la red equivocada y el puerto de administración apagado.
+      startup: |
+        sysname R1-Oficina
+        interface GigabitEthernet0/0/1
+         ip address 192.168.1.1 255.255.255.0
+        interface GigabitEthernet0/0/2
+         shutdown
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de ventas, en: Sales PC }
+      position: { x: 660, y: 120 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de administración, en: Admin PC }
+      position: { x: 660, y: 290 }
+      host:
+        ip: 192.168.89.10/24
+        gateway: 192.168.89.1
+  links:
+    - [ISP:eth0, R1:GigabitEthernet0/0/0]
+    - [R1:GigabitEthernet0/0/1, PC1:eth0]
+    - [R1:GigabitEthernet0/0/2, PC2:eth0]
+
+objectives:
+  - id: wan
+    text:
+      es: Ponle la descripción WAN a GigabitEthernet0/0/0 y dale 203.0.113.2/24 para que el router llegue al proveedor (203.0.113.1).
+      en: Give GigabitEthernet0/0/0 the description WAN and 203.0.113.2/24 so the router reaches the provider (203.0.113.1).
+    check:
+      all:
+        - exists:
+            device: R1
+            collection: interfaces
+            where: { name: GigabitEthernet0/0/0, comment: WAN }
+        - reachable: { from: R1, to: 203.0.113.1 }
+    hints:
+      - es: La descripción y la dirección se escriben dentro de la vista de la interfaz.
+        en: The description and the address are written inside the interface view.
+      - es: "`description WAN` y `ip address 203.0.113.2 24`."
+        en: "`description WAN` and `ip address 203.0.113.2 24`."
+  - id: lan
+    text:
+      es: La PC de ventas llega al router por GigabitEthernet0/0/1 (usa 192.168.88.10/24 y espera la puerta de enlace en .1).
+      en: The sales PC reaches the router over GigabitEthernet0/0/1 (it uses 192.168.88.10/24 and expects the gateway at .1).
+    check:
+      reachable: { from: PC1, to: 192.168.88.1 }
+    hints:
+      - es: Mira con `display ip interface brief` qué dirección tiene hoy ese puerto.
+        en: Check with `display ip interface brief` which address that port has today.
+      - es: En VRP una `ip address` nueva sustituye a la anterior; no hace falta borrarla antes.
+        en: In VRP a new `ip address` replaces the previous one; there is no need to remove it first.
+  - id: admin
+    text:
+      es: La PC de administración llega al router por GigabitEthernet0/0/2 (usa 192.168.89.10/24 y la puerta de enlace en .1).
+      en: The admin PC reaches the router over GigabitEthernet0/0/2 (it uses 192.168.89.10/24 and the gateway at .1).
+    check:
+      reachable: { from: PC2, to: 192.168.89.1 }
+    hints:
+      - es: En `display ip interface brief`, `*down` quiere decir apagado a mano.
+        en: In `display ip interface brief`, `*down` means shut down by hand.
+      - es: Lo que apagó `shutdown` lo enciende `undo shutdown`. Y el puerto también necesita su dirección.
+        en: What `shutdown` turned off, `undo shutdown` turns back on. The port also needs its address.
+  - id: pcs
+    text:
+      es: Las dos PC se ven entre sí a través del router.
+      en: The two PCs reach each other through the router.
+    check:
+      reachable: { from: PC1, to: PC2 }
+    hints:
+      - es: Si cada PC llega a su puerta de enlace, el router ya conoce las dos redes. Comprueba las direcciones de las PC.
+        en: If each PC reaches its gateway, the router already knows both networks. Check the PC addresses.
+
+explanation:
+  es: >-
+    En VRP cada puerto se configura en su vista, y `display ip interface brief` resume el
+    estado de todos: la dirección, el estado físico (`*down` si está apagado a mano) y el
+    del protocolo. Una dirección nueva sustituye a la anterior, y VRP acepta la máscara
+    escrita entera (255.255.255.0) o por su longitud (24). Las dos PC se ven porque el
+    router enruta entre sus redes conectadas sin que haga falta ninguna ruta.
+  en: >-
+    In VRP each port is configured in its own view, and `display ip interface brief`
+    sums them all up: the address, the physical state (`*down` when shut down by hand) and
+    the protocol state. A new address replaces the old one, and VRP accepts the mask
+    written out (255.255.255.0) or as a length (24). The two PCs reach each other because
+    the router routes between its connected networks without needing any route.

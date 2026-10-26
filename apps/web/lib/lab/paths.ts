@@ -30,10 +30,7 @@ export interface UpcomingPath {
   readonly os: LabDefinition['vendor'];
 }
 
-export const UPCOMING_PATHS: readonly UpcomingPath[] = [
-  { id: 'vrp-desde-cero', os: 'vrp' },
-  { id: 'vyos-desde-cero', os: 'vyos' },
-];
+export const UPCOMING_PATHS: readonly UpcomingPath[] = [{ id: 'vyos-desde-cero', os: 'vyos' }];
 
 const summaryOf = (lab: LabDefinition): LabSummary => ({
   id: lab.id,

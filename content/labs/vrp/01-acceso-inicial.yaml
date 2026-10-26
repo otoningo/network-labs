@@ -1,0 +1,99 @@
+# Ruta "Huawei VRP desde cero", lab 1 (fase 6, D-044).
+id: vrp-01-acceso-inicial
+vendor: vrp
+path: vrp-desde-cero
+order: 1
+title:
+  es: Acceso inicial y vistas
+  en: Initial access and views
+summary:
+  es: Primer contacto con un router VRP. Vistas, nombre, usuarios y el Telnet que trae encendido.
+  en: First contact with a VRP router. Views, name, users and the Telnet it ships with.
+difficulty: beginner
+minutes: 10
+
+topology:
+  devices:
+    - id: R1
+      os: vrp
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 200, y: 120 }
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC del técnico, en: Technician PC }
+      position: { x: 560, y: 120 }
+      host:
+        ip: 192.168.88.10/24
+        gateway: 192.168.88.1
+  links:
+    - [R1:GigabitEthernet0/0/1, PC1:eth0]
+
+objectives:
+  - id: identity
+    text:
+      es: Cambia el nombre del router a R1-Oficina.
+      en: Rename the router to R1-Oficina.
+    check:
+      setting: { device: R1, key: system, field: identity, is: R1-Oficina }
+    hints:
+      - es: Empiezas en la vista de usuario (`<Huawei>`). Para configurar hay que pasar a la vista de sistema.
+        en: You start in the user view (`<Huawei>`). To configure you have to move to the system view.
+      - es: "`system-view` te lleva a `[Huawei]`; allí el nombre se cambia con `sysname`."
+        en: "`system-view` takes you to `[Huawei]`; the name is changed there with `sysname`."
+  - id: lan
+    text:
+      es: La PC del técnico llega al router por GigabitEthernet0/0/1 (la PC usa 192.168.88.10/24).
+      en: The technician PC reaches the router over GigabitEthernet0/0/1 (the PC uses 192.168.88.10/24).
+    check:
+      reachable: { from: PC1, to: 192.168.88.1 }
+    hints:
+      - es: La PC espera que su puerta de enlace sea 192.168.88.1.
+        en: The PC expects its gateway to be 192.168.88.1.
+      - es: Cada interfaz tiene su propia vista. Entra con `interface` y el nombre del puerto (vale abreviado, `g0/0/1`).
+        en: Each interface has its own view. Enter it with `interface` and the port name (abbreviated works, `g0/0/1`).
+      - es: Dentro, `ip address` lleva la dirección y la máscara (o su longitud, 24).
+        en: Inside, `ip address` takes the address and the mask (or its length, 24).
+  - id: user
+    text:
+      es: Crea el usuario soporte, con contraseña y nivel 1 (solo consulta).
+      en: Create the user soporte, with a password and level 1 (read only).
+    check:
+      exists:
+        device: R1
+        collection: users
+        where: { name: soporte, group: read, hasPassword: true }
+    hints:
+      - es: Los usuarios locales se gestionan en la vista `aaa`.
+        en: Local users are managed in the `aaa` view.
+      - es: "`local-user soporte password irreversible-cipher ...` crea el usuario; el nivel va en otra línea con `privilege level`."
+        en: "`local-user soporte password irreversible-cipher ...` creates the user; the level goes on another line with `privilege level`."
+  - id: telnet
+    text:
+      es: Telnet viaja en claro. Apágalo para que la PC ya no pueda abrirlo.
+      en: Telnet travels in clear text. Turn it off so the PC can no longer open it.
+    check:
+      all:
+        - reachable: { from: PC1, to: 192.168.88.1 }
+        - blocked: { from: PC1, to: 192.168.88.1, protocol: tcp, port: 23, by: any }
+    hints:
+      - es: El servidor Telnet se enciende y se apaga en la vista de sistema.
+        en: The Telnet server is turned on and off in the system view.
+      - es: En VRP, lo contrario de un comando se escribe con `undo` delante.
+        en: In VRP, the opposite of a command is written with `undo` in front.
+
+explanation:
+  es: >-
+    VRP trabaja por vistas, como IOS por modos: la de usuario (`<Huawei>`) para mirar, la de
+    sistema (`[Huawei]`) para configurar y una vista por cada interfaz, pool o ACL. `quit`
+    sube un nivel y `return` (o Ctrl+Z) vuelve a la de usuario. Para deshacer algo no hay
+    `no`: se escribe el mismo comando con `undo` delante. Y como en todos los labs, se
+    comprueba lo que hace la red (la PC llega, Telnet ya no responde), no lo que escribiste.
+  en: >-
+    VRP works in views, the way IOS works in modes: the user view (`<Huawei>`) to look, the
+    system view (`[Huawei]`) to configure, and a view for each interface, pool or ACL. `quit`
+    goes up one level and `return` (or Ctrl+Z) goes back to the user view. There is no `no`
+    to undo something: you type the same command with `undo` in front. As in every lab,
+    what is checked is what the network does (the PC gets through, Telnet no longer
+    answers), not what you typed.

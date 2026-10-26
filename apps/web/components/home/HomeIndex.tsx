@@ -26,15 +26,18 @@ export function HomeIndex({
   topics,
   labs,
   pathId,
+  otherPaths,
 }: {
   readonly topics: readonly HomeTopic[];
   readonly labs: readonly LabSummary[];
   readonly pathId: string;
+  /** Las otras rutas publicadas (como la de VRP), enlazadas bajo la lista. */
+  readonly otherPaths: readonly string[];
 }) {
   return (
     <div className="grid border-t border-rule lg:grid-cols-2">
       <Learn topics={topics} />
-      <Practice labs={labs} pathId={pathId} />
+      <Practice labs={labs} pathId={pathId} otherPaths={otherPaths} />
     </div>
   );
 }
@@ -134,23 +137,34 @@ function Learn({ topics }: { readonly topics: readonly HomeTopic[] }) {
 function Practice({
   labs,
   pathId,
+  otherPaths,
 }: {
   readonly labs: readonly LabSummary[];
   readonly pathId: string;
+  readonly otherPaths: readonly string[];
 }) {
   const { locale, messages } = useI18n();
   const t = messages.home.practice;
   const { byLab } = useProgressSummary();
-  const pathName = (messages.lab.paths as Record<string, string>)[pathId] ?? pathId;
+  const nameOf = (id: string) => (messages.lab.paths as Record<string, string>)[id] ?? id;
   return (
     <Chapter
       id="practice-heading"
       title={t.title}
-      lead={fill(t.lead, { path: pathName })}
+      lead={fill(t.lead, { path: nameOf(pathId) })}
       className="border-t border-rule lg:border-t-0 lg:pl-10"
       more={
         <>
           <MoreLink href={`/${locale}/rutas/${pathId}`}>{t.cta}</MoreLink>
+          {otherPaths.map((id) => (
+            <Link
+              key={id}
+              href={`/${locale}/rutas/${id}`}
+              className="text-ink-muted underline decoration-rule-strong underline-offset-[0.2em] hover:text-ink hover:decoration-ink"
+            >
+              {nameOf(id)}
+            </Link>
+          ))}
           <span className="text-ink-faint">{t.upcoming}</span>
         </>
       }

@@ -1,0 +1,106 @@
+# Ruta "Huawei VRP desde cero", lab 4 (fase 6, D-044).
+id: vrp-04-oficina
+vendor: vrp
+path: vrp-desde-cero
+order: 4
+title:
+  es: DHCP, NAT y DNS para la oficina
+  en: DHCP, NAT and DNS for the office
+summary:
+  es: El router ya tiene sus direcciones y su ruta. Falta que reparta direcciones, saque a la LAN a Internet y resuelva nombres.
+  en: The router already has its addresses and its route. It still has to hand out addresses, take the LAN to the Internet and resolve names.
+difficulty: intermediate
+minutes: 20
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: vrp
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      startup: |
+        sysname R1-Oficina
+        interface GigabitEthernet0/0/0
+         description WAN
+         ip address 203.0.113.2 255.255.255.0
+        interface GigabitEthernet0/0/1
+         ip address 192.168.88.1 255.255.255.0
+        ip route-static 0.0.0.0 0.0.0.0 203.0.113.1
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de la oficina, en: Office PC }
+      position: { x: 660, y: 200 }
+      host:
+        ip: dhcp
+  links:
+    - [ISP:eth0, R1:GigabitEthernet0/0/0]
+    - [R1:GigabitEthernet0/0/1, PC1:eth0]
+
+objectives:
+  - id: dhcp
+    text:
+      es: La PC de la oficina recibe por DHCP una dirección de 192.168.88.0/24.
+      en: The office PC gets an address in 192.168.88.0/24 by DHCP.
+    check:
+      leaseBound: { server: R1, client: PC1, within: 192.168.88.0/24 }
+    hints:
+      - es: En VRP el servicio DHCP está apagado de fábrica. Empieza por encenderlo en la vista de sistema.
+        en: In VRP the DHCP service is off from the factory. Start by turning it on in the system view.
+      - es: "Un `ip pool` reúne lo que se reparte: `network`, `gateway-list` y `dns-list`."
+        en: "An `ip pool` holds what is handed out: `network`, `gateway-list` and `dns-list`."
+      - es: El pool no reparte solo. En la interfaz de la LAN, `dhcp select global` lo pone a trabajar.
+        en: The pool does not hand anything out on its own. On the LAN interface, `dhcp select global` puts it to work.
+  - id: nat
+    text:
+      es: La PC sale a Internet con la IP pública del router.
+      en: The PC reaches the Internet with the router public IP.
+    check:
+      natSourceIs:
+        from: PC1
+        to: 93.184.216.34
+        protocol: tcp
+        port: 443
+        expect: { addressOf: R1:GigabitEthernet0/0/0 }
+    hints:
+      - es: VRP traduce lo que una ACL diga. Primero una ACL básica (2000-2999) que permita la red de la LAN.
+        en: VRP translates whatever an ACL says. First a basic ACL (2000-2999) that permits the LAN network.
+      - es: "En la regla, la máscara va al revés (comodín): para una /24 es 0.0.0.255."
+        en: "In the rule, the mask is inverted (wildcard): for a /24 it is 0.0.0.255."
+      - es: "`nat outbound` con el número de la ACL, en la interfaz de salida (la WAN)."
+        en: "`nat outbound` with the ACL number, on the outgoing interface (the WAN)."
+  - id: dns
+    text:
+      es: La PC resuelve example.com a través del router.
+      en: The PC resolves example.com through the router.
+    check:
+      resolves: { from: PC1, name: example.com, via: R1 }
+    hints:
+      - es: La PC pregunta los nombres a quien le diga el DHCP en `dns-list`.
+        en: The PC asks for names to whoever DHCP tells it in `dns-list`.
+      - es: El router necesita saber a quién preguntar (`dns server`) y aceptar preguntas de la LAN (`dns proxy enable`).
+        en: The router needs to know whom to ask (`dns server`) and to accept questions from the LAN (`dns proxy enable`).
+
+explanation:
+  es: >-
+    Las tres piezas de una oficina, a la manera de VRP. El DHCP necesita el servicio
+    encendido (`dhcp enable`), un pool con su red, puerta de enlace y DNS, y una interfaz
+    que lo use (`dhcp select global`). El NAT de salida se apoya en una ACL que dice qué
+    direcciones se traducen, como en IOS, y `nat outbound` en la WAN usa la IP de esa
+    interfaz (Easy IP). El router hace de DNS de la LAN con `dns proxy enable`.
+  en: >-
+    The three pieces of an office, the VRP way. DHCP needs the service turned on
+    (`dhcp enable`), a pool with its network, gateway and DNS, and an interface that uses it
+    (`dhcp select global`). Outbound NAT relies on an ACL that says which addresses are
+    translated, as on IOS, and `nat outbound` on the WAN uses that interface's IP (Easy
+    IP). The router acts as the LAN DNS with `dns proxy enable`.
