@@ -197,6 +197,7 @@ const NOUNS: Readonly<Record<ErrorScope, string>> = {
   users: 'user',
   services: 'service',
   system: 'system setting',
+  dhcp: 'dhcp setting',
   dns: 'dns setting',
   discovery: 'discovery setting',
   l2Access: 'mac server setting',

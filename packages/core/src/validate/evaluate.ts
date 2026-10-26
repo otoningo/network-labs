@@ -313,6 +313,7 @@ export function evaluate(predicate: Predicate, ctx: EvalContext): boolean {
       if (!d) return false;
       const values = {
         system: d.config.system,
+        dhcp: d.config.dhcp,
         dns: d.config.dns,
         discovery: d.config.discovery,
         l2Access: d.config.l2Access,

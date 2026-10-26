@@ -5,6 +5,7 @@ import type {
   DhcpClient,
   DhcpNetwork,
   DhcpServer,
+  DhcpServiceSettings,
   DiscoveryConfig,
   DnsSettings,
   DnsStatic,
@@ -63,6 +64,7 @@ export type ItemPatch<K extends CollectionKey> = Partial<
 /** Ajustes de un solo valor (no son listas). */
 export interface SingletonItems {
   system: SystemSettings;
+  dhcp: DhcpServiceSettings;
   dns: DnsSettings;
   discovery: DiscoveryConfig;
   l2Access: L2AccessConfig;

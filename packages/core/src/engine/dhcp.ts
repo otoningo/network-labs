@@ -119,7 +119,8 @@ export function computeDhcp(
   const clients: ClientCtx[] = [];
   for (const device of net.devices) {
     for (const server of device.config.dhcpServer.servers) {
-      if (server.disabled || !usable(device, server.iface)) continue;
+      if (server.disabled || !device.config.dhcp.serverEnabled || !usable(device, server.iface))
+        continue;
       servers.push({ device, server, ref: { device: device.id, iface: server.iface } });
     }
     for (const client of device.config.addressing.dhcpClients) {

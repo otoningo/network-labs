@@ -424,3 +424,45 @@ Cada una cubre algo que no conviene escribir a mano:
   404 propia en los dos idiomas (`app/global-not-found.tsx`, porque el layout
   raíz vive en `[locale]`) y la línea de temas de referencia del lab ya se
   corta en el teléfono.
+
+## D-044 · Fase 6: Huawei VRP y "Compara sintaxis"
+
+- **Alcance del driver de VRP (v1).** Vistas de usuario `<Huawei>`, sistema
+  `[Huawei]`, interfaz, pool IP, ACL básica y AAA. Comandos: `system-view`,
+  `quit`, `return`, `sysname`, `interface`, `ip address`, `shutdown`,
+  `description`, `ip route-static`, `dhcp enable`, `ip pool` (network,
+  gateway-list, dns-list, excluded-ip-address, lease), `dhcp select global`,
+  `acl number 2000-2999` con `rule permit|deny source`, `nat outbound`, `dns
+  resolve`, `dns server`, `dns proxy enable`, `aaa` / `local-user`, `telnet
+  server enable` y `stelnet server enable`, `display` (current-configuration,
+  this, ip interface brief, ip routing-table, ip pool, acl, nat outbound,
+  dns server, version), `ping`, `tracert` y `save`. Abreviaturas por prefijo
+  único (`dis cu`, `int g0/0/1`), `?` y Tab, y los errores con su `^`.
+  Quedan fuera las VLAN de capa 2 (`port link-type`) y las ACL avanzadas con
+  `traffic-filter`: los labs de VRP de esta fase no las necesitan.
+  Alternativa descartada: cubrir los 12 labs de RouterOS desde el principio;
+  se empieza por una ruta corta y se amplía.
+- **Hardware.** Las placas siguen siendo neutrales; la plataforma de VRP nombra
+  los puertos `GigabitEthernet0/0/0..N`, identidad `Huawei`, usuario `admin`
+  con contraseña y Telnet activo de fábrica (así el lab de acceso puede pedir
+  apagarlo).
+- **Servicio DHCP en el núcleo.** VRP no sirve DHCP sin `dhcp enable`, como IOS
+  sin `service dhcp`. Se añade al modelo neutral el ajuste `dhcp.serverEnabled`
+  (por defecto activado; RouterOS no tiene interruptor global). Alternativa
+  descartada: guardarlo en la sesión, que se pierde entre el arranque del lab y
+  la consola del estudiante.
+- **ACL básicas como listas de direcciones.** `acl number 2000` con `rule
+  permit source` se guarda como la lista `acl2000` del modelo y `nat outbound
+  2000` como un srcnat masquerade por la interfaz que coincide con esa lista.
+  Las reglas `deny` se guardan y se muestran, pero el NAT del simulador solo
+  usa las `permit`.
+- **Pools de VRP sobre el modelo neutral.** Un `ip pool` es un pool (rangos =
+  la red menos la puerta de enlace y lo excluido) más una red DHCP con
+  gateway y DNS; `dhcp select global` crea el servidor en la interfaz y se
+  enlaza con el pool cuya red contiene la dirección de esa interfaz.
+- **"Compara sintaxis".** Página `/[locale]/compara`: eliges una tarea y ves
+  RouterOS, VRP, VyOS e IOS lado a lado. Las líneas de RouterOS y VRP se
+  ejecutan en las pruebas y tienen que cumplir la misma tarea en el motor;
+  VyOS e IOS son citas (no hay simulador), y la página lo dice.
+- **Ruta "Huawei VRP desde cero".** Cuatro labs en esta fase: acceso y CLI,
+  interfaces y direcciones, rutas estáticas, y DHCP con NAT para la oficina.

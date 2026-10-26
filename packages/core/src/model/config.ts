@@ -216,6 +216,14 @@ export interface StaticLease extends ItemBase {
   readonly ip: Ipv4;
 }
 
+/**
+ * Servicio DHCP del equipo: sin él, sus servidores DHCP no responden. Es el
+ * `dhcp enable` de VRP o el `service dhcp` de IOS; RouterOS no tiene interruptor global.
+ */
+export interface DhcpServiceSettings {
+  readonly serverEnabled: boolean;
+}
+
 export interface DnsSettings {
   readonly servers: readonly Ipv4[];
   readonly allowRemoteRequests: boolean;
@@ -357,6 +365,7 @@ export interface DeviceConfig {
     readonly networks: readonly DhcpNetwork[];
     readonly staticLeases: readonly StaticLease[];
   };
+  readonly dhcp: DhcpServiceSettings;
   readonly dns: DnsConfig;
   readonly firewall: {
     readonly filter: readonly FilterRule[];
@@ -378,6 +387,7 @@ export function emptyConfig(identity: string): DeviceConfig {
     addressing: { addresses: [], staticArp: [], dhcpClients: [] },
     routing: { static: [] },
     dhcpServer: { pools: [], servers: [], networks: [], staticLeases: [] },
+    dhcp: { serverEnabled: true },
     dns: { servers: [], allowRemoteRequests: false, cacheSizeKiB: 2048, static: [] },
     firewall: { filter: [], nat: [], addressLists: [] },
     discovery: { protocols: [], interfaceList: 'none' },

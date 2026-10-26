@@ -12,6 +12,7 @@ const OS_IDS = ['routeros', 'vrp', 'vyos', 'ios', 'host', 'internet'] as const;
 export const VENDOR_OS = ['routeros', 'vrp', 'vyos', 'ios'] as const;
 const SINGLETON_KEYS = [
   'system',
+  'dhcp',
   'dns',
   'discovery',
   'l2Access',

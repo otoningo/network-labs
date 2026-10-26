@@ -89,6 +89,7 @@ const NOUNS: Readonly<Record<CollectionKey | SingletonKey, string>> = {
   users: 'user',
   services: 'service',
   system: 'system identity',
+  dhcp: 'dhcp settings',
   dns: 'dns settings',
   discovery: 'neighbor discovery settings',
   l2Access: 'mac server settings',

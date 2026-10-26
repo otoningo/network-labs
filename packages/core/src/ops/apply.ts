@@ -285,6 +285,10 @@ function setSingleton(device: Device, op: SetSingletonOp): Result<Applied, CoreE
       }
       return ok({ device: { ...device, config: { ...config, system } } });
     }
+    case 'dhcp': {
+      const dhcp = { ...config.dhcp, ...op.patch };
+      return ok({ device: { ...device, config: { ...config, dhcp } } });
+    }
     case 'dns': {
       const dns = { ...config.dns, ...op.patch };
       const size = dns.cacheSizeKiB;

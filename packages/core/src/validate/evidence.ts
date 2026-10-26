@@ -328,6 +328,7 @@ export function evidence(predicate: Predicate, ctx: EvalContext): Evidence[] {
       const d = device(predicate.device);
       const values = d && {
         system: d.config.system,
+        dhcp: d.config.dhcp,
         dns: d.config.dns,
         discovery: d.config.discovery,
         l2Access: d.config.l2Access,

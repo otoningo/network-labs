@@ -311,6 +311,18 @@ describe('DHCP', () => {
     expect(leaseOf(n, 'PC2')).toBe('192.168.88.253/24');
   });
 
+  it('con el servicio DHCP apagado el servidor no responde (dhcp enable de VRP)', () => {
+    const raw = office().raw();
+    const off: Network = {
+      ...raw,
+      devices: raw.devices.map((d) =>
+        d.id === 'R1' ? { ...d, config: { ...d.config, dhcp: { serverEnabled: false } } } : d,
+      ),
+    };
+    expect(leaseOf(converge(off), 'PC1')).toBe('searching');
+    expect(leaseOf(converge(raw), 'PC1')).toBe('192.168.88.10/24');
+  });
+
   it('mantiene los leases entre convergencias aunque cambie el orden', () => {
     const first = office().build();
     const reordered: Network = { ...first, devices: [...first.devices].reverse() };
