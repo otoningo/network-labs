@@ -6,7 +6,8 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    "./routeros": "./src/routeros/index.ts"
+    "./routeros": "./src/routeros/index.ts",
+    "./vrp": "./src/vrp/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
