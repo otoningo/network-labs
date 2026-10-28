@@ -2,7 +2,7 @@
   "name": "network-labs",
   "version": "0.0.0",
   "private": true,
-  "description": "Labs de CLI de sistemas operativos de red en el navegador.",
+  "description": "Labs gratuitos en el navegador para aprender el CLI de MikroTik RouterOS y Huawei VRP practicando.",
   "type": "module",
   "workspaces": [
     "packages/*",
@@ -12,6 +12,8 @@
     "node": ">=20.9.0"
   },
   "scripts": {
+    "dev": "npm run dev -w @nos/web",
+    "build": "npm run build -w @nos/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "biome check .",
     "format": "biome check --write .",
