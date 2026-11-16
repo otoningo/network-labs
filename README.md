@@ -85,4 +85,6 @@ Network Labs is an open learning project: free browser labs to practise the Mikr
 
 ---
 
-Este proyecto no está afiliado a MikroTik, Huawei, Cisco, VyOS ni a ningún otro fabricante. Los nombres de productos pertenecen a sus dueños. No incluye imágenes, binarios ni documentación de ningún fabricante: el comportamiento está escrito desde cero a partir de la documentación pública.
+Este proyecto no está afiliado a MikroTik, Huawei, Cisco, VyOS ni a ningún otro fabricante. Los nombres de productos pertenecen a sus dueños. No incluye binarios ni documentación de ningún fabricante: el comportamiento está escrito desde cero a partir de la documentación pública.
+
+Los iconos de la topología (`apps/web/public/topology`) son los [iconos de topología de red de Cisco](https://www.cisco.com/c/en/us/about/brand-center/network-topology-icons.html), que Cisco permite usar libremente sin alterarlos. Aquí solo se han convertido de EPS a SVG, sin cambiar formas ni colores.

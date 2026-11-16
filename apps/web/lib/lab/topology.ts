@@ -29,12 +29,23 @@ export function roleOf(os: OsId, ports: readonly HardwarePort[]): Role {
   return 'router';
 }
 
-/** Tamaño de la forma de cada papel, en unidades de mundo. */
+/**
+ * Icono de cada papel: los iconos de topología de Cisco, sin alterar (D-045),
+ * servidos desde public/topology. El tamaño respeta la proporción de cada uno.
+ */
+export const ICON: Readonly<Record<Role, string>> = {
+  router: '/topology/router.svg',
+  host: '/topology/pc.svg',
+  'wireless-host': '/topology/laptop.svg',
+  cloud: '/topology/cloud.svg',
+};
+
+/** Tamaño del icono de cada papel, en unidades de mundo (proporción del original). */
 export const SHAPE: Readonly<Record<Role, Size>> = {
-  router: { width: 132, height: 48 },
-  host: { width: 116, height: 44 },
-  'wireless-host': { width: 116, height: 44 },
-  cloud: { width: 128, height: 60 },
+  router: { width: 66, height: 44.7 },
+  host: { width: 50, height: 44.9 },
+  'wireless-host': { width: 62, height: 42.6 },
+  cloud: { width: 104, height: 60.5 },
 };
 
 /**
@@ -42,8 +53,17 @@ export const SHAPE: Readonly<Record<Role, Size>> = {
  * etiquetas y nombre en vivo a 0.75rem; el id del equipo a 13px en 600.
  */
 export const TEXT = { id: 13, small: 12, line: 16, ascent: 9, descent: 3 } as const;
-/** Alto bajo la forma para la etiqueta del equipo, en píxeles de pantalla. */
+/**
+ * Alto bajo el icono, en píxeles de pantalla: una línea con el id y, a su lado,
+ * el nombre en vivo; y otra con la etiqueta, si la tiene.
+ */
 export const FOOTER = 20;
+export const FOOTER_LABEL = 36;
+/**
+ * Ancho reservado bajo el icono para el id y el nombre en vivo, en píxeles: el
+ * nombre cambia mientras se configura y reservar su sitio evita que algo se mueva.
+ */
+const NAME_MIN = 110;
 /** Separación del rótulo respecto del cable, en píxeles de pantalla. */
 const GAP = 8;
 /** Ancho máximo de la etiqueta de un equipo, en píxeles de pantalla. */
@@ -142,19 +162,29 @@ export function layoutNodes(
   });
 }
 
-/** Rectángulo de la forma con su pie de etiqueta: de su borde nacen los cables. */
+/** Alto del texto bajo el icono, en píxeles de pantalla. */
+const footerOf = (node: NodeBox): number => (node.label ? FOOTER_LABEL : FOOTER);
+
+/** Ancho del texto bajo el icono, en píxeles de pantalla. */
+function footerWidth(node: NodeBox): number {
+  const id = textWidth(node.id, TEXT.id);
+  const label = node.label ? textWidth(node.label) : 0;
+  return Math.max(NAME_MIN, id, label) + GAP;
+}
+
+/** Rectángulo del icono con su pie de texto: de su borde nacen los cables. */
 export function nodeRect(node: NodeBox, s = 1): Rect {
   return {
     x: node.x - node.width / 2,
     y: node.y - node.height / 2,
     width: node.width,
-    height: node.height + (node.label ? FOOTER : 4) * s,
+    height: node.height + footerOf(node) * s,
   };
 }
 
 /**
- * Lo que ocupa el equipo para los rótulos: la forma y, debajo, su etiqueta con
- * su propio ancho (más ancha que la forma a escalas pequeñas, sin tapar sus lados).
+ * Lo que ocupa el equipo para los rótulos: el icono y, debajo, su texto con su
+ * propio ancho (más ancho que el icono a escalas pequeñas, sin tapar sus lados).
  */
 export function nodeObstacles(node: NodeBox, s = 1): Rect[] {
   const shape = {
@@ -163,17 +193,16 @@ export function nodeObstacles(node: NodeBox, s = 1): Rect[] {
     width: node.width,
     height: node.height,
   };
-  if (!node.label) return [shape];
-  const w = (textWidth(node.label) + GAP) * s;
-  const top = node.y + node.height / 2;
-  return [shape, { x: node.x - w / 2, y: top, width: w, height: FOOTER * s }];
+  const w = footerWidth(node) * s;
+  // El pie empieza donde acaba el icono, con la misma cuenta: así no se pisan por redondeo.
+  const top = shape.y + shape.height;
+  return [shape, { x: node.x - w / 2, y: top, width: w, height: footerOf(node) * s }];
 }
 
-/** Lo que el equipo no comparte con otro equipo: la forma y su etiqueta a lo ancho. */
+/** Lo que el equipo no comparte con otro equipo: el icono y su texto a lo ancho. */
 export function nodeExtent(node: NodeBox, s = 1): Rect {
   const r = nodeRect(node, s);
-  const label = node.label ? (textWidth(node.label) + GAP) * s : 0;
-  const width = Math.max(r.width, label);
+  const width = Math.max(r.width, footerWidth(node) * s);
   return { x: node.x - width / 2, y: r.y, width, height: r.height };
 }
 

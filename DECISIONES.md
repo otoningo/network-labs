@@ -466,3 +466,22 @@ Cada una cubre algo que no conviene escribir a mano:
   VyOS e IOS son citas (no hay simulador), y la página lo dice.
 - **Ruta "Huawei VRP desde cero".** Cuatro labs en esta fase: acceso y CLI,
   interfaces y direcciones, rutas estáticas, y DHCP con NAT para la oficina.
+
+## D-045 · Iconos de topología de Cisco
+
+- La figura de los labs dibuja cada equipo con su icono de topología de Cisco
+  (router, PC, portátil, nube), la notación que el estudiante conoce de los
+  diagramas de red y de Packet Tracer. Lo pidió el usuario: las formas propias
+  no se leían como equipos.
+- Es una excepción, aprobada por el usuario, a la regla del brief de no incluir
+  imágenes de fabricantes. Cisco publica estos iconos para usarlos libremente
+  con una condición: no alterarlos
+  (https://www.cisco.com/c/en/us/about/brand-center/network-topology-icons.html).
+  No se usan como marca propia.
+- Cisco los ofrece en EPS y JPG. `apps/web/scripts/cisco-eps-to-svg.mjs`
+  convierte el EPS a SVG sin tocar formas ni colores (solo cambia el formato) y
+  falla si encuentra algo que no sabe traducir; cada SVG lleva en un comentario
+  su origen. Se comprobó a ojo contra los JPG oficiales.
+- Como no se pueden alterar, el estado no va en el icono: el equipo activo se
+  marca con un recuadro alrededor y el nombre va debajo, en una línea, con la
+  etiqueta en la siguiente.

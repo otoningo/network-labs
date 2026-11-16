@@ -12,6 +12,8 @@ import { createLabStore } from './store';
 import {
   arrangeFor,
   edgePoint,
+  FOOTER,
+  FOOTER_LABEL,
   fitText,
   type LinkSketch,
   layoutNodes,
@@ -104,17 +106,19 @@ describe('edgePoint', () => {
   const [node] = layoutNodes([{ id: 'R1', role: 'router', position: { x: 0, y: 0 } }]);
   if (!node) throw new Error('sin nodo');
 
-  it('sale por el lado de la caja hacia un equipo a la derecha', () => {
-    expect(edgePoint(node, { x: 500, y: 0 })).toEqual({ x: 66, y: 0 });
+  it('sale por el lado del icono hacia un equipo a la derecha', () => {
+    expect(edgePoint(node, { x: 500, y: 0 })).toEqual({ x: SHAPE.router.width / 2, y: 0 });
   });
 
-  it('sale por debajo de la forma (y de su etiqueta, si tiene) hacia un equipo de abajo', () => {
-    expect(edgePoint(node, { x: 0, y: 500 }).y).toBe(node.height / 2 + 4);
+  it('sale por debajo del icono y de su texto (y de su etiqueta, si tiene) hacia un equipo de abajo', () => {
+    expect(edgePoint(node, { x: 0, y: 500 }).y).toBeCloseTo(node.height / 2 + FOOTER);
     const [labelled] = layoutNodes([
       { id: 'R1', role: 'router', position: { x: 0, y: 0 }, label: 'Router' },
     ]);
     if (!labelled) throw new Error('sin nodo');
-    expect(edgePoint(labelled, { x: 0, y: 500 }, 2).y).toBe(labelled.height / 2 + 40);
+    expect(edgePoint(labelled, { x: 0, y: 500 }, 2).y).toBeCloseTo(
+      labelled.height / 2 + FOOTER_LABEL * 2,
+    );
   });
 
   it('en diagonal toca el borde, no lo atraviesa', () => {

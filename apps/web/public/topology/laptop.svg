@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 43.428 29.843">
+<!-- Cisco network topology icon (laptop.eps), unaltered. Source: https://www.cisco.com/c/en/us/about/brand-center/network-topology-icons.html -->
+<path d="M42.174 0.473 L43.215 1.821 L40.398 17.256 L39.111 16.459 L42.174 0.473" fill="#02709f"/>
+<path d="M42.174 0.473 L43.215 1.821 L40.398 17.256 L39.111 16.459 L42.174 0.473 Z" fill="none" stroke="#ffffff" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M12.04 16.459 L13.204 17.256 L40.398 17.256 L39.111 16.459 L12.04 16.459" fill="#000000"/>
+<path d="M12.04 16.459 L13.204 17.256 L40.398 17.256 L39.111 16.459 L12.04 16.459 Z" fill="none" stroke="#ffffff" stroke-width="0.2" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M39.357 17.715 L39.357 20.44 L38.652 21.053 C38.652 21.053 36.998 21.543 37.365 22.523 L29.986 29.384 L29.986 26.382 L39.357 17.715" fill="#02709f"/>
+<path d="M39.357 17.715 L39.357 20.44 L38.652 21.053 C38.652 21.053 36.998 21.543 37.365 22.523 L29.986 29.384 L29.986 26.382 L39.357 17.715 Z" fill="none" stroke="#ffffff" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M0.618 26.382 L0.618 29.384 L29.986 29.384 L29.986 26.382 L0.618 26.382" fill="#02709f"/>
+<path d="M0.618 26.382 L0.618 29.384 L29.986 29.384 L29.986 26.382 L0.618 26.382" fill="none" stroke="#ffffff" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M12.346 17.899 L39.357 17.715 L29.986 26.382 L0.618 26.382 L12.346 17.899" fill="#02709f"/>
+<path d="M12.346 17.899 L39.357 17.715 L29.986 26.382 L0.618 26.382 L12.346 17.899 Z" fill="none" stroke="#ffffff" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M39.111 16.459 L42.174 0.473 L15.532 0.473 L12.04 16.459 L39.111 16.459" fill="#02709f"/>
+<path d="M39.111 16.459 L42.174 0.473 L15.532 0.473 L12.04 16.459 L39.111 16.459 Z" fill="none" stroke="#ffffff" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M36.852 14.671 L39.209 2.666 L17.545 2.666 L15.188 14.671 L36.852 14.671" fill="#02709f"/>
+<path d="M36.852 14.671 L39.209 2.666 L17.545 2.666 L15.188 14.671 L36.852 14.671 Z" fill="none" stroke="#ffffff" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"/>
+<path d="M12.981 18.091 L6.168 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M15.168 18.091 L8.356 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M17.356 18.091 L10.543 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M19.544 18.091 L12.731 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M21.73 18.091 L14.918 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M23.918 18.091 L17.106 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M26.105 18.091 L19.294 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M28.293 18.091 L21.48 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M30.48 18.091 L23.668 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M32.668 18.091 L25.855 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M34.855 18.091 L28.043 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M37.043 18.091 L30.23 23.592" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M6.93 23.012 L31.182 23.012" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M8.561 21.751 L32.438 21.751" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M10.252 20.491 L34.066 20.491" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+<path d="M11.758 19.23 L35.76 19.23" fill="none" stroke="#ffffff" stroke-width="0.1" stroke-linecap="butt" stroke-linejoin="round" stroke-miterlimit="4"/>
+</svg>
