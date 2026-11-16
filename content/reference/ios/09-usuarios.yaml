@@ -1,0 +1,152 @@
+# Referencia de comandos de IOS, tema 9: usuarios y acceso remoto. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/ios.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: usuarios
+vendor: ios
+order: 9
+title:
+  es: Usuarios y acceso remoto
+  en: Users and remote access
+summary:
+  es: La contraseña de enable, usuarios locales con privilegio, las líneas vty y SSH en lugar de Telnet.
+  en: The enable password, local users with privilege, the vty lines and SSH instead of Telnet.
+labs: [ios-01-acceso-inicial]
+
+commands:
+  - id: enable-secret
+    syntax: enable secret <contraseña>
+    summary:
+      es: >-
+        La contraseña que pide `enable` para pasar al EXEC privilegiado. Con `secret` se
+        guarda cifrada con un hash; en la configuración nunca aparece en claro.
+      en: >-
+        The password `enable` asks for to move to privileged EXEC. With `secret` it is stored
+        hashed; it never shows in clear text in the configuration.
+    examples:
+      - command: enable
+      - command: configure terminal
+      - command: enable secret Cl4ve-Enable
+      - command: do show running-config | include enable
+        note:
+          es: Sale `enable secret 5` seguido del hash, no la contraseña.
+          en: It shows `enable secret 5` followed by the hash, not the password.
+    pitfalls:
+      - es: Existe también `enable password`, que se guarda en claro. Si están las dos, manda `enable secret`; usa siempre esta.
+        en: There is also `enable password`, stored in clear text. If both exist, `enable secret` wins; always use this one.
+
+  - id: username
+    syntax: username <nombre> privilege <0-15> secret <contraseña>
+    summary:
+      es: >-
+        Crea un usuario local. El privilegio 15 entra directamente en `Router#`; el 1, en
+        `Router>`. Con `secret` la contraseña se guarda cifrada.
+      en: >-
+        Creates a local user. Privilege 15 lands straight in `Router#`; privilege 1, in
+        `Router>`. With `secret` the password is stored encrypted.
+    args:
+      - name: privilege
+        text:
+          es: De 0 a 15. Si no se escribe, vale 1.
+          en: From 0 to 15. If omitted, it is 1.
+    examples:
+      - command: username admin privilege 15 secret Cl4ve-Admin
+      - command: username soporte privilege 16 secret Cl4ve-Soporte
+        fails: true
+        note:
+          es: El privilegio más alto es 15.
+          en: The highest privilege is 15.
+      - command: username soporte secret Cl4ve-Soporte
+        note:
+          es: Sin privilegio, queda en 1.
+          en: Without privilege, it stays at 1.
+    pitfalls:
+      - es: Con `password` en lugar de `secret` la contraseña se guarda en claro o con un cifrado débil que se revierte en segundos.
+        en: With `password` instead of `secret` the password is stored in clear text or with weak encryption that is reversed in seconds.
+
+  - id: line-vty
+    syntax: line vty 0 4  →  transport input ssh  +  login local
+    summary:
+      es: >-
+        Las líneas vty son las sesiones remotas (Telnet o SSH); `0 4` configura las cinco a la
+        vez. Dentro, `transport input` dice qué protocolos se aceptan y `login local` que se
+        entra con los usuarios creados con `username`.
+      en: >-
+        The vty lines are the remote sessions (Telnet or SSH); `0 4` configures all five at
+        once. Inside, `transport input` says which protocols are accepted and `login local`
+        that you log in with the users created with `username`.
+    args:
+      - name: transport input
+        text:
+          es: ssh, telnet, las dos (all) o ninguna (none).
+          en: ssh, telnet, both (all) or none.
+    examples:
+      - command: line vty 0 4
+        note:
+          es: El prompt pasa a `Router(config-line)#`.
+          en: The prompt becomes `Router(config-line)#`.
+      - command: transport input ssh
+        note:
+          es: Telnet viaja en claro; así solo se admite SSH.
+          en: Telnet travels in clear text; this way only SSH is accepted.
+      - command: login local
+      - command: exit
+    pitfalls:
+      - es: "`login local` sin ningún usuario creado deja el router sin acceso remoto: no hay con quién entrar."
+        en: "`login local` with no user created leaves the router with no remote access: there is nobody to log in as."
+
+  - id: crypto-key
+    syntax: crypto key generate rsa modulus <bits>
+    summary:
+      es: >-
+        Genera las claves que SSH necesita para cifrar. IOS les pone el nombre del equipo y el
+        dominio, así que antes hay que cambiar el `hostname` y poner un `ip domain-name`. Al
+        generarlas, SSH se enciende.
+      en: >-
+        Generates the keys SSH needs for encryption. IOS names them after the device name and
+        the domain, so you must first change the `hostname` and set an `ip domain-name`.
+        Generating them turns SSH on.
+    args:
+      - name: modulus
+        text:
+          es: Tamaño de la clave en bits. SSH versión 2 pide al menos 768; lo habitual es 2048.
+          en: Key size in bits. SSH version 2 needs at least 768; 2048 is usual.
+    examples:
+      - command: crypto key generate rsa modulus 2048
+        fails: true
+        note:
+          es: El router aún se llama `Router`.
+          en: The router is still called `Router`.
+      - command: hostname R1
+      - command: crypto key generate rsa modulus 2048
+        fails: true
+        note:
+          es: Falta el dominio.
+          en: The domain is missing.
+      - command: ip domain-name oficina.local
+      - command: crypto key generate rsa modulus 2048
+        note:
+          es: Las claves se llaman R1.oficina.local y SSH queda encendido.
+          en: The keys are named R1.oficina.local and SSH is on.
+    pitfalls:
+      - es: Sin `modulus`, IOS pregunta el tamaño en la línea siguiente; lo que escribas a continuación se toma como respuesta.
+        en: Without `modulus`, IOS asks for the size on the next line; whatever you type next is taken as the answer.
+
+  - id: ip-ssh
+    syntax: ip ssh version 2  |  show ip ssh
+    summary:
+      es: >-
+        `ip ssh version 2` deja solo la versión 2 de SSH; la 1 tiene fallos conocidos.
+        `show ip ssh` dice si SSH está encendido y en qué versión.
+      en: >-
+        `ip ssh version 2` allows only SSH version 2; version 1 has known flaws. `show ip ssh`
+        says whether SSH is on and which version.
+    examples:
+      - command: ip ssh version 2
+      - command: end
+      - command: show ip ssh
+        note:
+          es: "`SSH Enabled - version 2.0`."
+          en: "`SSH Enabled - version 2.0`."
+    pitfalls:
+      - es: "SSH necesita las cuatro piezas: claves RSA, un usuario con `secret`, `login local` y `transport input` que incluya ssh. Si falta una, no se puede entrar."
+        en: "SSH needs all four pieces: RSA keys, a user with `secret`, `login local` and a `transport input` that includes ssh. If one is missing, you cannot get in."

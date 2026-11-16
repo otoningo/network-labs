@@ -1,0 +1,186 @@
+# Referencia de comandos de VRP, tema 7: ACL básicas y NAT. Los ejemplos
+# corren en orden sobre el router de práctica (content/sandbox/vrp.yaml) después
+# del setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: acl-nat
+vendor: vrp
+order: 7
+title:
+  es: ACL básicas y NAT
+  en: Basic ACLs and NAT
+summary:
+  es: Una ACL que elige las redes de la LAN y `nat outbound` en la WAN para que salgan a Internet con la dirección del router.
+  en: An ACL that picks the LAN networks and `nat outbound` on the WAN so they reach the Internet with the router's address.
+fromIos:
+  es: >-
+    En IOS el NAT de una oficina pide marcar interfaces `ip nat inside` y `ip nat outside`
+    y una línea global `ip nat inside source list 1 interface ... overload`. En VRP basta una
+    línea en la interfaz de salida: `nat outbound 2000`, donde 2000 es una ACL básica que
+    dice qué orígenes se traducen. Este modo, en que se usa la dirección de la propia
+    interfaz, Huawei lo llama Easy IP. Las ACL básicas van del 2000 al 2999, como las
+    estándar de IOS del 1 al 99, y usan comodín igual que en IOS. Sus reglas se numeran
+    solas de 5 en 5.
+  en: >-
+    In IOS office NAT needs interfaces marked `ip nat inside` and `ip nat outside` and a
+    global `ip nat inside source list 1 interface ... overload` line. In VRP one line on the
+    outgoing interface is enough: `nat outbound 2000`, where 2000 is a basic ACL saying
+    which sources get translated. Huawei calls this mode, using the interface's own address,
+    Easy IP. Basic ACLs go from 2000 to 2999, like IOS standard ACLs from 1 to 99, and use
+    wildcards just like IOS. Their rules are numbered automatically in steps of 5.
+labs: [vrp-04-oficina]
+setup: |
+  system-view
+  interface GigabitEthernet0/0/0
+  ip address 203.0.113.2 24
+  interface GigabitEthernet0/0/1
+  ip address 192.168.88.1 24
+  quit
+  ip route-static 0.0.0.0 0 203.0.113.1
+  return
+
+commands:
+  - id: acl-number
+    syntax: acl number <2000-2999>
+    summary:
+      es: Crea una ACL básica y entra en su vista (`[Huawei-acl-basic-2000]`). Si ya existe, entra para editarla.
+      en: Creates a basic ACL and enters its view (`[Huawei-acl-basic-2000]`). If it already exists, it enters to edit it.
+    examples:
+      - command: system-view
+      - command: acl number 2000
+    ios: access-list 1 permit 192.168.88.0 0.0.0.255
+    pitfalls:
+      - es: Las ACL básicas solo miran el origen. Para filtrar por destino o puerto hacen falta las avanzadas (3000-3999), que no se ven aquí.
+        en: Basic ACLs only look at the source. Filtering by destination or port needs the advanced ones (3000-3999), not covered here.
+
+  - id: rule
+    syntax: rule [<número>] permit|deny [source <ip> <comodín> | source any]
+    summary:
+      es: >-
+        Añade una regla. Sin número, VRP le da el siguiente múltiplo de 5 (5, 10, 15…). Con
+        número, la coloca en ese punto, lo que permite meter una regla entre dos existentes.
+      en: >-
+        Adds a rule. Without a number, VRP gives it the next multiple of 5 (5, 10, 15…). With a
+        number, it goes at that point, which lets you slot a rule between two existing ones.
+    args:
+      - name: comodín
+        text:
+          es: Al revés que una máscara, 0.0.0.255 para una /24. Un 0 solo es un único equipo.
+          en: The inverse of a mask, 0.0.0.255 for a /24. A bare 0 means a single host.
+    examples:
+      - command: rule permit source 192.168.88.0 0.0.0.255
+        note:
+          es: Queda como rule 5.
+          en: It becomes rule 5.
+      - command: rule permit source 192.168.89.0 0.0.0.255
+        note:
+          es: Queda como rule 10.
+          en: It becomes rule 10.
+      - command: rule 7 permit source 10.1.1.1 0
+        note:
+          es: Un solo equipo, entre la 5 y la 10.
+          en: A single host, between 5 and 10.
+      - command: display this
+      - command: rule permit source 192.168.90.0/24
+        fails: true
+        note:
+          es: La red se escribe como dirección y comodín, no con prefijo.
+          en: The network is written as address and wildcard, not as a prefix.
+    ios: |-
+      ip access-list standard LAN
+       permit 192.168.88.0 0.0.0.255
+       permit 192.168.89.0 0.0.0.255
+       7 permit host 10.1.1.1
+    pitfalls:
+      - es: Las reglas se leen en orden de número y la primera que coincide decide. Deja huecos para insertar después; por eso el paso es 5.
+        en: Rules are read in number order and the first match decides. Leave gaps to insert later; that is why the step is 5.
+
+  - id: undo-rule
+    syntax: undo rule <número>
+    summary:
+      es: Borra una regla por su número; las demás conservan el suyo.
+      en: Deletes a rule by its number; the others keep theirs.
+    examples:
+      - command: undo rule 7
+      - command: undo rule 7
+        fails: true
+        note:
+          es: Esa regla ya no existe.
+          en: That rule no longer exists.
+      - command: quit
+    ios: |-
+      ip access-list standard LAN
+       no 7
+
+  - id: display-acl
+    syntax: display acl <número>|all
+    summary:
+      es: Muestra las reglas de una ACL, o de todas, con su número y su paso.
+      en: Shows the rules of one ACL, or of all of them, with their numbers and step.
+    examples:
+      - command: display acl 2000
+      - command: display acl all
+    ios: show access-lists
+
+  - id: nat-outbound
+    syntax: nat outbound <acl>
+    summary:
+      es: >-
+        En la interfaz de salida a Internet, traduce el origen de los paquetes que la ACL
+        permite a la dirección de esa interfaz. Es el NAT con sobrecarga de una oficina.
+      en: >-
+        On the interface towards the Internet, translates the source of the packets the ACL
+        permits to that interface's address. It is an office's overloaded NAT.
+    examples:
+      - command: interface g0/0/0
+      - command: nat outbound 2001
+        fails: true
+        note:
+          es: La ACL 2001 no existe; créala antes.
+          en: ACL 2001 does not exist; create it first.
+      - command: nat outbound 2000
+      - command: display this
+      - command: quit
+    ios: |-
+      interface GigabitEthernet0/0
+       ip nat outside
+      interface GigabitEthernet0/1
+       ip nat inside
+      ip nat inside source list 1 interface GigabitEthernet0/0 overload
+    pitfalls:
+      - es: Va en la interfaz WAN, no en la de la LAN. En la LAN no traduce nada, porque lo que sale por ella no va a Internet.
+        en: It goes on the WAN interface, not the LAN one. On the LAN it translates nothing, because what leaves through it is not going to the Internet.
+      - es: Sin ruta por defecto hacia el proveedor el NAT no sirve; los paquetes no llegan a salir por la WAN.
+        en: Without a default route to the provider NAT is useless; the packets never leave through the WAN.
+
+  - id: display-nat-outbound
+    syntax: display nat outbound
+    summary:
+      es: Lista las interfaces con `nat outbound`, la ACL de cada una y la dirección con la que se sale.
+      en: Lists the interfaces with `nat outbound`, each one's ACL and the address used to go out.
+    examples:
+      - command: display nat outbound
+        note:
+          es: GigabitEthernet0/0/0, ACL 2000, 203.0.113.2, tipo easyip.
+          en: GigabitEthernet0/0/0, ACL 2000, 203.0.113.2, type easyip.
+    ios: show running-config | include ip nat
+
+  - id: undo-nat-acl
+    syntax: undo nat outbound <acl>  |  undo acl number <número>
+    summary:
+      es: Quita el NAT de la interfaz y borra la ACL con todas sus reglas.
+      en: Removes NAT from the interface and deletes the ACL with all its rules.
+    examples:
+      - command: interface g0/0/0
+      - command: undo nat outbound 2000
+      - command: quit
+      - command: undo acl number 2000
+      - command: undo acl number 2000
+        fails: true
+        note:
+          es: Ya no existe.
+          en: It no longer exists.
+    ios: |-
+      no ip nat inside source list 1 interface GigabitEthernet0/0 overload
+      no access-list 1
+    pitfalls:
+      - es: VRP deja borrar una ACL aunque un `nat outbound` la use. El NAT sigue en la interfaz pero ya no traduce nada; quita primero el NAT.
+        en: VRP lets you delete an ACL even if a `nat outbound` uses it. The NAT stays on the interface but no longer translates anything; remove the NAT first.

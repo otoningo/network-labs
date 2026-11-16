@@ -1,0 +1,188 @@
+# Referencia de comandos de IOS, tema 5: rutas estáticas. Los ejemplos corren
+# en orden sobre el router de práctica (content/sandbox/ios.yaml) después del
+# setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: rutas
+vendor: ios
+order: 5
+title:
+  es: Rutas estáticas
+  en: Static routes
+summary:
+  es: Rutas hacia otras redes, la ruta por defecto, rutas de respaldo con distancia, descartar tráfico con Null0 y leer la tabla de rutas.
+  en: Routes to other networks, the default route, backup routes with distance, discarding traffic with Null0 and reading the routing table.
+labs: [ios-03-rutas-estaticas]
+setup: |
+  enable
+  configure terminal
+  interface GigabitEthernet0/0
+  ip address 203.0.113.2 255.255.255.0
+  no shutdown
+  interface GigabitEthernet0/1
+  ip address 192.168.88.1 255.255.255.0
+  no shutdown
+  end
+
+commands:
+  - id: show-ip-route
+    syntax: show ip route [static|connected]
+    summary:
+      es: >-
+        La tabla de rutas. Cada línea empieza por una letra que dice de dónde salió la ruta: C
+        para una red conectada, L para la dirección del propio router en esa red y S para
+        una ruta estática. Arriba dice si hay `Gateway of last resort`, la ruta por defecto.
+      en: >-
+        The routing table. Each line starts with a letter saying where the route came from: C
+        for a connected network, L for the router's own address on that network and S for a
+        static route. At the top it says whether there is a `Gateway of last resort`, the
+        default route.
+    examples:
+      - command: show ip route
+        note:
+          es: Solo las dos redes conectadas, cada una con su C y su L. `Gateway of last resort is not set`.
+          en: Only the two connected networks, each with its C and its L. `Gateway of last resort is not set`.
+      - command: show ip route connected
+        note:
+          es: Sin la leyenda, solo las conectadas.
+          en: Without the legend, only the connected ones.
+    pitfalls:
+      - es: Una red solo sale como C si su interfaz está encendida y con enlace. Si falta una, mira `show ip interface brief`.
+        en: A network only shows as C if its interface is on and has a link. If one is missing, check `show ip interface brief`.
+
+  - id: ip-route
+    syntax: ip route <red> <máscara> <siguiente salto>
+    summary:
+      es: >-
+        Añade una ruta estática: para llegar a esa red, manda los paquetes al router vecino
+        indicado. El siguiente salto tiene que estar en una red conectada.
+      en: >-
+        Adds a static route: to reach that network, send the packets to the given neighbour
+        router. The next hop has to be on a connected network.
+    args:
+      - name: red
+        text:
+          es: Dirección de la red de destino, con los bits de host a cero.
+          en: Destination network address, with the host bits at zero.
+      - name: máscara
+        text:
+          es: Máscara completa, como en `ip address`. Tampoco aquí vale /16.
+          en: Full mask, as in `ip address`. /16 is not valid here either.
+      - name: siguiente salto
+        text:
+          es: Dirección del router vecino que sabe llegar.
+          en: Address of the neighbour router that knows the way.
+    examples:
+      - command: configure terminal
+      - command: ip route 10.10.0.0 255.255.0.0 192.168.88.254
+      - command: ip route 10.20.0.0/16 192.168.88.254
+        fails: true
+        note:
+          es: La red va con máscara separada, no con prefijo.
+          en: The network takes a separate mask, not a prefix.
+      - command: ip route 10.20.0.1 255.255.0.0 192.168.88.254
+        fails: true
+        note:
+          es: "`Inconsistent address and mask`: 10.20.0.1 no es una dirección de red para esa máscara. Sería 10.20.0.0."
+          en: "`Inconsistent address and mask`: 10.20.0.1 is not a network address for that mask. It would be 10.20.0.0."
+      - command: ip route 10.20.0.0 255.255.0.0 192.168.88.1
+        fails: true
+        note:
+          es: El siguiente salto no puede ser el propio router.
+          en: The next hop cannot be the router itself.
+      - command: do show ip route static
+    pitfalls:
+      - es: Una ruta es de ida. Si el otro router no tiene la ruta de vuelta, el ping sale pero la respuesta no llega.
+        en: A route is one way. If the other router has no route back, the ping goes out but the reply never arrives.
+
+  - id: ruta-por-defecto
+    syntax: ip route 0.0.0.0 0.0.0.0 <siguiente salto>
+    summary:
+      es: >-
+        La ruta por defecto: todo lo que no tenga una ruta más concreta va a este siguiente
+        salto. Es la salida a Internet de una oficina.
+      en: >-
+        The default route: anything without a more specific route goes to this next hop. It
+        is an office's way out to the Internet.
+    examples:
+      - command: ip route 0.0.0.0 0.0.0.0 203.0.113.1
+      - command: do show ip route
+        note:
+          es: Aparece como `S*` y arriba pone `Gateway of last resort is 203.0.113.1`.
+          en: It shows as `S*` and the top says `Gateway of last resort is 203.0.113.1`.
+    pitfalls:
+      - es: Entre varias rutas que valen para un destino gana la más concreta (la de máscara más larga), no la primera que se escribió.
+        en: Among several routes that match a destination the most specific one wins (the longest mask), not the first one typed.
+
+  - id: distancia
+    syntax: ip route <red> <máscara> <siguiente salto> <distancia>
+    summary:
+      es: >-
+        La distancia administrativa decide entre dos rutas a la misma red: gana la menor. Una
+        estática vale 1 si no se escribe. Con un número mayor queda como ruta de respaldo, que
+        solo entra si la principal desaparece.
+      en: >-
+        The administrative distance decides between two routes to the same network: the lower
+        wins. A static route is 1 if not written. With a higher number it becomes a backup
+        route, which only kicks in if the main one disappears.
+    args:
+      - name: distancia
+        text:
+          es: De 1 a 255. 255 es una ruta que nunca se usa.
+          en: From 1 to 255. 255 is a route that is never used.
+    examples:
+      - command: ip route 0.0.0.0 0.0.0.0 192.168.88.254 200
+        note:
+          es: Una salida de respaldo por la LAN, con distancia 200.
+          en: A backup way out through the LAN, with distance 200.
+      - command: do show ip route static
+        note:
+          es: Solo sale la de 203.0.113.1, con `[1/0]`; la de respaldo espera.
+          en: Only the one via 203.0.113.1 shows, with `[1/0]`; the backup one waits.
+    pitfalls:
+      - es: La ruta de respaldo solo entra cuando la principal sale de la tabla, por ejemplo porque se cae su interfaz. Si el problema está más allá del vecino, el router no se entera.
+        en: The backup route only kicks in when the main one leaves the table, for example because its interface goes down. If the problem is beyond the neighbour, the router never notices.
+
+  - id: null0
+    syntax: ip route <red> <máscara> Null0
+    summary:
+      es: >-
+        Manda el tráfico de esa red a Null0, una interfaz que lo descarta. Se usa para cortar
+        el paso a una red resumida que no existe del todo, en lugar de mandarlo por la ruta
+        por defecto.
+      en: >-
+        Sends that network's traffic to Null0, an interface that discards it. It is used to
+        stop traffic to a summarised network that does not fully exist, instead of sending it
+        through the default route.
+    examples:
+      - command: ip route 10.0.0.0 255.0.0.0 Null0
+        note:
+          es: 10.10.0.0/16 sigue yendo a su vecino, por ser más concreta. El resto de 10.0.0.0/8 se descarta.
+          en: 10.10.0.0/16 still goes to its neighbour, being more specific. The rest of 10.0.0.0/8 is discarded.
+      - command: do show ip route static
+    pitfalls:
+      - es: Null0 no lleva siguiente salto detrás. El tráfico simplemente desaparece, sin avisar a quien lo mandó.
+        en: Null0 takes no next hop after it. The traffic just vanishes, without telling whoever sent it.
+
+  - id: no-ip-route
+    syntax: no ip route <red> <máscara> [<siguiente salto>]
+    summary:
+      es: >-
+        Borra una ruta estática. Sin siguiente salto borra todas las rutas a esa red; con él,
+        solo la que va por ahí.
+      en: >-
+        Deletes a static route. Without a next hop it deletes every route to that network;
+        with one, only the route through it.
+    examples:
+      - command: no ip route 0.0.0.0 0.0.0.0 192.168.88.254
+        note:
+          es: Solo se va la de respaldo.
+          en: Only the backup one goes.
+      - command: no ip route 10.10.0.0 255.255.0.0
+      - command: no ip route 10.10.0.0 255.255.0.0
+        fails: true
+        note:
+          es: "`No matching route to delete`: esa ruta ya no existe."
+          en: "`No matching route to delete`: that route no longer exists."
+      - command: end
+    pitfalls:
+      - es: Comprueba el resultado con `show running-config | include ip route`; las rutas estáticas salen ahí todas juntas.
+        en: Check the result with `show running-config | include ip route`; all static routes show together there.

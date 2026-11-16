@@ -1,0 +1,117 @@
+# Ruta "Cisco IOS desde cero", lab 1.
+id: ios-01-acceso-inicial
+vendor: ios
+path: ios-desde-cero
+order: 1
+title:
+  es: Acceso inicial y modos
+  en: Initial access and modes
+summary:
+  es: Primer contacto con un router IOS. Modos, nombre, un usuario administrador, SSH en lugar de Telnet y guardar.
+  en: First contact with an IOS router. Modes, name, an admin user, SSH instead of Telnet, and saving.
+difficulty: beginner
+minutes: 15
+
+topology:
+  devices:
+    - id: R1
+      os: ios
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 200, y: 120 }
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC del técnico, en: Technician PC }
+      position: { x: 560, y: 120 }
+      host:
+        ip: 192.168.1.10/24
+        gateway: 192.168.1.1
+  links:
+    - [R1:GigabitEthernet0/1, PC1:eth0]
+
+objectives:
+  - id: identity
+    text:
+      es: Cambia el nombre del router a R1-Oficina.
+      en: Rename the router to R1-Oficina.
+    check:
+      setting: { device: R1, key: system, field: identity, is: R1-Oficina }
+    hints:
+      - es: Empiezas en el modo EXEC de usuario (`Router>`). Para configurar hay que subir dos escalones.
+        en: You start in user EXEC mode (`Router>`). To configure you have to climb two steps.
+      - es: "`enable` te lleva a `Router#` y `configure terminal` (o `conf t`) a `Router(config)#`; allí el nombre se cambia con `hostname`."
+        en: "`enable` takes you to `Router#` and `configure terminal` (or `conf t`) to `Router(config)#`; the name is changed there with `hostname`."
+  - id: lan
+    text:
+      es: La PC del técnico llega al router por GigabitEthernet0/1 (la PC usa 192.168.1.10/24).
+      en: The technician PC reaches the router over GigabitEthernet0/1 (the PC uses 192.168.1.10/24).
+    check:
+      reachable: { from: PC1, to: 192.168.1.1 }
+    hints:
+      - es: La PC espera que su puerta de enlace sea 192.168.1.1.
+        en: The PC expects its gateway to be 192.168.1.1.
+      - es: Entra en la interfaz con `interface` y su nombre (vale abreviado, `int g0/1`). La dirección va con `ip address` y la máscara entera, 255.255.255.0.
+        en: Enter the interface with `interface` and its name (abbreviated works, `int g0/1`). The address goes with `ip address` and the full mask, 255.255.255.0.
+      - es: Mira `do show ip interface brief`. En IOS los puertos del router salen apagados (`administratively down`) hasta que escribes `no shutdown`.
+        en: Check `do show ip interface brief`. On IOS the router ports ship shut down (`administratively down`) until you type `no shutdown`.
+  - id: user
+    text:
+      es: Crea el usuario admin con privilegio 15 y una contraseña cifrada (secret).
+      en: Create the user admin with privilege 15 and an encrypted password (secret).
+    check:
+      exists:
+        device: R1
+        collection: users
+        where: { name: admin, group: full, hasPassword: true }
+    hints:
+      - es: Los usuarios locales se crean en configuración global con `username`.
+        en: Local users are created in global configuration with `username`.
+      - es: "Todo va en una línea: `username admin privilege 15 secret ...`. Con `secret` la contraseña se guarda cifrada; con `password`, no."
+        en: "It all goes on one line: `username admin privilege 15 secret ...`. With `secret` the password is stored hashed; with `password`, it is not."
+  - id: ssh
+    text:
+      es: Telnet viaja en claro. Deja que la PC entre por SSH con usuario y contraseña, y que Telnet ya no responda.
+      en: Telnet travels in clear text. Let the PC get in over SSH with a username and password, and make Telnet stop answering.
+    check:
+      all:
+        - reachable: { from: PC1, to: 192.168.1.1, protocol: tcp, port: 22 }
+        - blocked: { from: PC1, to: 192.168.1.1, protocol: tcp, port: 23, by: any }
+    hints:
+      - es: Las conexiones remotas llegan por las líneas virtuales. Se configuran con `line vty 0 4`.
+        en: Remote connections arrive on the virtual lines. They are configured with `line vty 0 4`.
+      - es: "En la línea: `login local` (que pida los usuarios que creaste) y `transport input ssh` (solo SSH)."
+        en: "On the line: `login local` (ask for the users you created) and `transport input ssh` (SSH only)."
+      - es: SSH necesita claves RSA, y para generarlas IOS pide un nombre que no sea Router y un dominio (`ip domain-name`). Luego, `crypto key generate rsa modulus 1024`. `do show ip ssh` te dice si ya está encendido.
+        en: SSH needs RSA keys, and to generate them IOS wants a name other than Router and a domain (`ip domain-name`). Then `crypto key generate rsa modulus 1024`. `do show ip ssh` tells you whether it is on.
+  - id: save
+    text:
+      es: Guarda la configuración para que sobreviva a un reinicio. Hazlo al final, con todo lo anterior ya hecho.
+      en: Save the configuration so it survives a reboot. Do it last, with everything above already done.
+    check:
+      configMatches: { device: R1, snapshot: { file: startup-config } }
+    hints:
+      - es: Lo que configuras vive en la running-config, en memoria. El router arranca con la startup-config.
+        en: What you configure lives in the running-config, in memory. The router boots from the startup-config.
+      - es: Desde `R1-Oficina#`, `copy running-config startup-config` (y Enter para aceptar el destino) o el clásico `write memory`. Si cambias algo después, vuelve a guardar.
+        en: From `R1-Oficina#`, `copy running-config startup-config` (and Enter to accept the destination) or the classic `write memory`. If you change anything afterwards, save again.
+
+explanation:
+  es: >-
+    IOS trabaja por modos: EXEC de usuario (`>`) para mirar, EXEC privilegiado (`#`) tras
+    `enable`, configuración global tras `configure terminal` y un submodo por interfaz, línea o
+    pool. `exit` sube un nivel y `end` (o Ctrl+Z) vuelve a `#`; con `do` delante ejecutas un
+    `show` sin salir de la configuración. Para deshacer algo se escribe el mismo comando con
+    `no` delante, y los puertos salen apagados hasta el `no shutdown`. SSH necesita claves RSA
+    (que a su vez piden nombre y dominio) y `login local` en las vty, y nada de esto sobrevive
+    a un reinicio si no lo copias a la startup-config. Como en todos los labs, se comprueba lo
+    que hace la red (la PC entra por SSH, Telnet ya no responde), no lo que escribiste.
+  en: >-
+    IOS works in modes: user EXEC (`>`) to look, privileged EXEC (`#`) after `enable`, global
+    configuration after `configure terminal`, and a submode per interface, line or pool. `exit`
+    goes up one level and `end` (or Ctrl+Z) goes back to `#`; with `do` in front you run a
+    `show` without leaving configuration. To undo something you type the same command with
+    `no` in front, and ports ship shut down until `no shutdown`. SSH needs RSA keys (which in
+    turn want a name and a domain) and `login local` on the vty lines, and none of it survives
+    a reboot unless you copy it to the startup-config. As in every lab, what is checked is what
+    the network does (the PC gets in over SSH, Telnet no longer answers), not what you typed.

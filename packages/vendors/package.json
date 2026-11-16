@@ -6,6 +6,7 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./ios": "./src/ios/index.ts",
     "./routeros": "./src/routeros/index.ts",
     "./vrp": "./src/vrp/index.ts"
   },

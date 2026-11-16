@@ -19,7 +19,7 @@ export async function generateMetadata({
 
 /**
  * "Compara sintaxis" (D-044): la misma tarea en los cuatro sistemas. Las
- * líneas de RouterOS y VRP se ejecutan aquí, al compilar, y lo que se muestra
+ * líneas de RouterOS, VRP e IOS se ejecutan aquí, al compilar, y lo que se muestra
  * es lo que dejó el motor: el prompt real antes de cada línea y si la tarea
  * quedó cumplida.
  */
@@ -31,13 +31,14 @@ export default async function ComparePage({ params }: PageProps<'/[locale]/compa
   const tasks: ShownTask[] = COMPARE_TASKS.map((task) => {
     const routeros = simulate(task, 'routeros');
     const vrp = simulate(task, 'vrp');
+    const ios = simulate(task, 'ios');
     return {
       id: task.id,
       systems: [
         { os: 'routeros', lines: routeros.lines, verified: routeros.verified },
         { os: 'vrp', lines: vrp.lines, verified: vrp.verified },
+        { os: 'ios', lines: ios.lines, verified: ios.verified },
         { os: 'vyos', lines: task.quoted.vyos, verified: false },
-        { os: 'ios', lines: task.quoted.ios, verified: false },
       ],
     };
   });

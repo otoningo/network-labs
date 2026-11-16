@@ -8,9 +8,11 @@ import { ConsoleQuote } from '@/components/ui/ConsoleQuote';
 import { RichText } from '@/components/ui/RichText';
 import { fill, plural } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
+import { type SystemId, topicHref } from '@/lib/systems';
 
 /** Un comando de la referencia, ya en el idioma de la página, para buscar en el cliente. */
 export interface SearchEntry {
+  readonly system: string;
   readonly topicId: string;
   readonly topicOrder: number;
   readonly topicTitle: string;
@@ -40,9 +42,12 @@ interface Indexed extends SearchEntry {
  */
 export function ReferenceSearch({
   entries,
+  system,
   children,
 }: {
   readonly entries: readonly SearchEntry[];
+  /** Sistema de la referencia: cambia lo que se sugiere escribir. */
+  readonly system: SystemId;
   readonly children: ReactNode;
 }) {
   const { locale, messages } = useI18n();
@@ -131,14 +136,14 @@ export function ReferenceSearch({
         )}
       </div>
       <p id={hintId} className="mt-2 text-xs text-ink-faint">
-        {t.hint}
+        {t.hint[system]}
       </p>
 
       <p aria-live="polite" className="sr-only">
         {searching
           ? results.length > 0
             ? plural(locale, t.found, results.length)
-            : fill(t.empty, { q: deferred.trim() })
+            : fill(t.empty[system], { q: deferred.trim() })
           : ''}
       </p>
 
@@ -146,7 +151,7 @@ export function ReferenceSearch({
         <div className="mt-10">
           {results.length === 0 ? (
             <p className="max-w-[62ch] border-t border-rule pt-5 text-ink-muted text-pretty">
-              {fill(t.empty, { q: deferred.trim() })}
+              {fill(t.empty[system], { q: deferred.trim() })}
             </p>
           ) : (
             <>
@@ -161,7 +166,7 @@ export function ReferenceSearch({
                   >
                     {/* Toda la fila lleva al comando dentro de su tema. */}
                     <Link
-                      href={`/${locale}/referencia/${entry.topicId}#${entry.anchor}`}
+                      href={`${topicHref(locale, entry.system, entry.topicId)}#${entry.anchor}`}
                       className="max-w-[62ch] font-medium text-ink no-underline text-pretty after:absolute after:inset-0 hover:underline"
                     >
                       <RichText text={entry.summary} />

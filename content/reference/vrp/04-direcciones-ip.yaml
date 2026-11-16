@@ -1,0 +1,139 @@
+# Referencia de comandos de VRP, tema 4: direcciones IP. Los ejemplos corren
+# en orden sobre el router de práctica (content/sandbox/vrp.yaml); los marcados
+# con `fails: true` deben fallar, porque enseñan un error típico.
+id: direcciones-ip
+vendor: vrp
+order: 4
+title:
+  es: Direcciones IP
+  en: IP addresses
+summary:
+  es: Dar, cambiar y quitar la dirección de una interfaz, y los errores con los que VRP la rechaza.
+  en: Setting, changing and removing an interface's address, and the errors VRP rejects it with.
+fromIos:
+  es: >-
+    Se configura igual que en IOS, dentro de la interfaz y con `ip address`, pero la máscara
+    puede ir en formato largo (255.255.255.0) o como longitud (24), que es lo que más se usa.
+    Una segunda `ip address` en la misma interfaz no se suma: sustituye a la anterior, como en
+    IOS. Para quitarla se usa `undo ip address`.
+  en: >-
+    It is set as in IOS, inside the interface with `ip address`, but the mask can be written
+    in long form (255.255.255.0) or as a length (24), which is what most people use. A second
+    `ip address` on the same interface is not added: it replaces the previous one, as in
+    IOS. To remove it you use `undo ip address`.
+labs: [vrp-01-acceso-inicial, vrp-02-interfaces-direcciones]
+
+commands:
+  - id: ip-address
+    syntax: ip address <ip> <máscara|longitud>
+    summary:
+      es: Asigna la dirección principal de la interfaz. Si ya tenía una, la nueva la sustituye.
+      en: Sets the interface's primary address. If it already had one, the new one replaces it.
+    args:
+      - name: ip
+        text:
+          es: La dirección de la interfaz; no puede ser la de red ni la de difusión.
+          en: The interface address; it cannot be the network or the broadcast address.
+      - name: máscara|longitud
+        text:
+          es: 255.255.255.0 o 24, a elegir.
+          en: 255.255.255.0 or 24, your choice.
+    examples:
+      - command: system-view
+      - command: interface g0/0/1
+      - command: ip address 192.168.88.254 255.255.255.0
+      - command: ip address 192.168.88.1 24
+        note:
+          es: Sustituye a la .254; la interfaz sigue con una sola dirección.
+          en: It replaces .254; the interface still has a single address.
+      - command: display this
+    ios: |-
+      interface GigabitEthernet0/1
+       ip address 192.168.88.1 255.255.255.0
+    pitfalls:
+      - es: Si cambias la dirección del router en una LAN, los equipos que la usan como puerta de enlace se quedan sin salida hasta que los cambies también.
+        en: If you change the router's address on a LAN, the devices using it as their gateway lose their way out until you change them too.
+
+  - id: ip-address-errores
+    syntax: ip address <ip> <máscara|longitud>
+    summary:
+      es: Errores típicos al dar una dirección, con la respuesta del equipo.
+      en: Typical mistakes when setting an address, with the device's answer.
+    examples:
+      - command: ip address 192.168.88.0 24
+        fails: true
+        note:
+          es: Es la dirección de red de 192.168.88.0/24, no la de un equipo.
+          en: It is the network address of 192.168.88.0/24, not a host address.
+      - command: ip address 192.168.88.1
+        fails: true
+        note:
+          es: Sin máscara el comando está incompleto.
+          en: Without a mask the command is incomplete.
+      - command: ip address 192.168.88.300 24
+        fails: true
+        note:
+          es: 300 no es un octeto válido.
+          en: 300 is not a valid octet.
+      - command: interface g0/0/2
+      - command: ip address 192.168.88.5 24
+        fails: true
+        note:
+          es: Esa red ya está en GigabitEthernet0/0/1. Dos interfaces no pueden compartir subred.
+          en: That network is already on GigabitEthernet0/0/1. Two interfaces cannot share a subnet.
+      - command: ip address 192.168.89.1 24
+        note:
+          es: Con otra red, sin problema.
+          en: With another network, no problem.
+    pitfalls:
+      - es: El choque de subredes también salta cuando una red contiene a otra, por ejemplo 192.168.0.0/16 frente a 192.168.88.0/24.
+        en: The subnet clash also triggers when one network contains the other, for example 192.168.0.0/16 against 192.168.88.0/24.
+
+  - id: undo-ip-address
+    syntax: undo ip address [<ip> <máscara|longitud>]
+    summary:
+      es: >-
+        Quita la dirección de la interfaz. Con la dirección y la máscara quita esa en concreto;
+        sin ellas, la que haya.
+      en: >-
+        Removes the address from the interface. With the address and mask it removes that one;
+        without them, whatever is there.
+    examples:
+      - command: undo ip address 192.168.89.7 24
+        fails: true
+        note:
+          es: La interfaz no tiene esa dirección.
+          en: The interface does not have that address.
+      - command: undo ip address 192.168.89.1 24
+      - command: display this
+        note:
+          es: El bloque de la interfaz ya no tiene `ip address`.
+          en: The interface block no longer has `ip address`.
+    ios: |-
+      interface GigabitEthernet0/2
+       no ip address
+    pitfalls:
+      - es: Al quitar la dirección se pierden también las rutas directas de esa red, y las estáticas que salían por ella quedan inactivas.
+        en: Removing the address also drops that network's direct routes, and static routes that went out through it become inactive.
+
+  - id: comprobar
+    syntax: display ip interface brief  |  ping <ip>
+    summary:
+      es: >-
+        Tras dar una dirección, `display ip interface brief` confirma que está puesta y con el
+        protocolo up, y un ping a un equipo de esa red confirma que se llega.
+      en: >-
+        After setting an address, `display ip interface brief` confirms it is in place with the
+        protocol up, and a ping to a device on that network confirms it is reachable.
+    examples:
+      - command: display ip interface brief
+        note:
+          es: GigabitEthernet0/0/1 tiene 192.168.88.1/24 y Protocol up.
+          en: GigabitEthernet0/0/1 has 192.168.88.1/24 and Protocol up.
+      - command: ping 192.168.88.10
+        note:
+          es: La PC fija responde.
+          en: The static PC answers.
+    ios: |-
+      show ip interface brief
+      ping 192.168.88.10

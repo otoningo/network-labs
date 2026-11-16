@@ -1,0 +1,103 @@
+# Referencia de comandos de VRP, tema 10: guardar la configuración. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/vrp.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: guardar
+vendor: vrp
+order: 10
+title:
+  es: Guardar la configuración
+  en: Saving the configuration
+summary:
+  es: Pasar la configuración en marcha a la de arranque con `save` y comparar las dos.
+  en: Copying the running configuration to the startup one with `save` and comparing both.
+fromIos:
+  es: >-
+    Funciona como en IOS: lo que escribes cambia la configuración en marcha, y si el equipo
+    se reinicia sin guardar, se pierde. `write memory` o `copy running-config
+    startup-config` es `save`, que pregunta antes de escribir y espera una Y. El
+    `show startup-config` de IOS es `display saved-configuration`.
+  en: >-
+    It works as in IOS: what you type changes the running configuration, and if the device
+    restarts without saving, it is lost. `write memory` or `copy running-config
+    startup-config` is `save`, which asks before writing and waits for a Y. IOS
+    `show startup-config` is `display saved-configuration`.
+labs: []
+
+commands:
+  - id: display-saved-configuration
+    syntax: display saved-configuration
+    summary:
+      es: Muestra la configuración guardada, la que cargará el equipo al arrancar. Vacía si nunca se guardó.
+      en: Shows the saved configuration, the one the device loads at boot. Empty if it was never saved.
+    examples:
+      - command: display saved-configuration
+        note:
+          es: Un equipo recién sacado de la caja no tiene nada guardado.
+          en: A device fresh out of the box has nothing saved.
+    ios: show startup-config
+
+  - id: save
+    syntax: save  (y responder Y)
+    summary:
+      es: >-
+        Guarda la configuración en marcha para el próximo arranque. Pregunta si continuar:
+        con Y guarda; con cualquier otra respuesta no hace nada.
+      en: >-
+        Saves the running configuration for the next boot. It asks whether to continue: Y
+        saves; any other answer does nothing.
+    examples:
+      - command: system-view
+      - command: sysname R1-Oficina
+      - command: return
+        note:
+          es: "`save` se escribe desde la vista de usuario."
+          en: "`save` is typed from the user view."
+      - command: save
+        note:
+          es: Pregunta `Are you sure to continue?[Y/N]`.
+          en: It asks `Are you sure to continue?[Y/N]`.
+      - command: n
+        note:
+          es: Con N no se guarda nada.
+          en: With N nothing is saved.
+      - command: save
+      - command: y
+        note:
+          es: Responde que la configuración se guardó.
+          en: It replies that the configuration was saved.
+      - command: display saved-configuration
+        note:
+          es: Ahora sale con `sysname R1-Oficina`.
+          en: Now it shows with `sysname R1-Oficina`.
+    ios: |-
+      write memory
+      copy running-config startup-config
+    pitfalls:
+      - es: Mientras espera la Y, lo siguiente que escribas se toma como respuesta. Un comando escrito ahí no se ejecuta y además cancela el guardado.
+        en: While it waits for the Y, whatever you type next is taken as the answer. A command typed there is not run and also cancels the save.
+      - es: Guarda al terminar un cambio que funciona, no a mitad. Si algo sale mal, reiniciar sin guardar te devuelve a lo último guardado.
+        en: Save once a change works, not halfway. If something goes wrong, restarting without saving takes you back to the last saved state.
+
+  - id: comparar
+    syntax: display current-configuration  |  display saved-configuration
+    summary:
+      es: >-
+        Comparar las dos dice si hay cambios sin guardar. Cualquier cambio posterior aparece
+        en la configuración en marcha y no en la guardada hasta el siguiente `save`.
+      en: >-
+        Comparing both tells you whether there are unsaved changes. Any later change shows in
+        the running configuration and not in the saved one until the next `save`.
+    examples:
+      - command: system-view
+      - command: undo telnet server enable
+      - command: display current-configuration
+        note:
+          es: Ya no tiene `telnet server enable`.
+          en: It no longer has `telnet server enable`.
+      - command: display saved-configuration
+        note:
+          es: La guardada todavía lo tiene.
+          en: The saved one still has it.
+    ios: |-
+      show running-config
+      show startup-config

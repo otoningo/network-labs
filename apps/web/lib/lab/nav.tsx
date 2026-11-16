@@ -13,6 +13,8 @@ export interface LabLink {
 /** Tema de la referencia que trata lo que se practica en el lab. */
 export interface TopicLink {
   readonly id: string;
+  /** Sistema del tema: la referencia de cada uno vive en su propia dirección. */
+  readonly system: string;
   readonly title: LocalizedText;
 }
 

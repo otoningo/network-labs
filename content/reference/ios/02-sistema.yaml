@@ -1,0 +1,115 @@
+# Referencia de comandos de IOS, tema 2: el equipo y su configuración. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/ios.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: sistema
+vendor: ios
+order: 2
+title:
+  es: El equipo y su configuración
+  en: The device and its configuration
+summary:
+  es: Qué equipo y qué versión tienes delante, cómo se llama y cómo leer su configuración en marcha y la guardada.
+  en: Which device and version you are facing, what it is called and how to read its running and saved configuration.
+labs: [ios-01-acceso-inicial]
+
+commands:
+  - id: show-version
+    syntax: show version
+    summary:
+      es: >-
+        Resume el equipo: versión de IOS, tiempo encendido, imagen con la que arrancó, número
+        de puertos y registro de configuración. Es lo primero que se mira en un router
+        desconocido.
+      en: >-
+        Summarises the device: IOS version, uptime, image it booted from, number of ports and
+        configuration register. It is the first thing to check on an unknown router.
+    examples:
+      - command: show version
+        note:
+          es: Funciona incluso en `Router>`.
+          en: It works even at `Router>`.
+    pitfalls:
+      - es: El registro de configuración debería valer 0x2102. Otro valor puede hacer que el router arranque sin leer la configuración guardada.
+        en: The configuration register should be 0x2102. Another value can make the router boot without reading the saved configuration.
+
+  - id: show-running-config
+    syntax: show running-config
+    summary:
+      es: >-
+        Muestra la configuración en marcha, la que el router está usando ahora mismo. Cada
+        comando que escribes en configuración la cambia al momento. Se lee por bloques, con
+        las líneas de cada interfaz sangradas bajo su `interface`.
+      en: >-
+        Shows the running configuration, the one the router is using right now. Every command
+        you type in configuration changes it at once. It reads in blocks, with each
+        interface's lines indented under its `interface`.
+    examples:
+      - command: show running-config
+        fails: true
+        note:
+          es: En `Router>` no se puede ver la configuración; hace falta `enable`.
+          en: At `Router>` you cannot see the configuration; you need `enable`.
+      - command: enable
+      - command: show running-config
+        note:
+          es: Las interfaces salen con `shutdown`, apagadas de fábrica.
+          en: The interfaces show `shutdown`, off from the factory.
+      - command: sh run
+        note:
+          es: La abreviatura de siempre.
+          en: The usual abbreviation.
+    pitfalls:
+      - es: La salida solo lista lo que difiere de fábrica, más algunas líneas fijas. Que un comando no salga no significa que esté apagado; puede que esté en su valor por defecto.
+        en: The output only lists what differs from factory, plus a few fixed lines. A command not showing does not mean it is off; it may be at its default value.
+
+  - id: hostname
+    syntax: hostname <nombre>  |  no hostname
+    summary:
+      es: >-
+        Cambia el nombre del equipo, que aparece en el prompt al instante. `no hostname`
+        devuelve el de fábrica, `Router`.
+      en: >-
+        Changes the device name, which shows in the prompt at once. `no hostname` brings back
+        the factory one, `Router`.
+    args:
+      - name: nombre
+        text:
+          es: Una sola palabra con letras, números y guiones. Empieza por letra y no termina en guion.
+          en: A single word of letters, digits and hyphens. It starts with a letter and does not end with a hyphen.
+    examples:
+      - command: configure terminal
+      - command: hostname Oficina Central
+        fails: true
+        note:
+          es: El nombre no admite espacios; el `^` señala la palabra que sobra.
+          en: The name does not allow spaces; the `^` points at the extra word.
+      - command: hostname R1-Oficina
+        note:
+          es: El prompt pasa a `R1-Oficina(config)#`.
+          en: The prompt becomes `R1-Oficina(config)#`.
+      - command: no hostname
+        note:
+          es: Vuelve a ser `Router(config)#`.
+          en: Back to `Router(config)#`.
+    pitfalls:
+      - es: Algunas cosas exigen un nombre distinto de `Router`, como generar las claves de SSH.
+        en: Some things require a name other than `Router`, such as generating the SSH keys.
+
+  - id: show-startup-config
+    syntax: show startup-config
+    summary:
+      es: >-
+        Muestra la configuración guardada, la que cargará el router en el próximo arranque. En
+        un equipo que nunca se guardó no hay nada.
+      en: >-
+        Shows the saved configuration, the one the router will load on the next boot. On a
+        device that was never saved there is nothing.
+    examples:
+      - command: do show startup-config
+        note:
+          es: "`startup-config is not present`: este router nunca se ha guardado."
+          en: "`startup-config is not present`: this router has never been saved."
+      - command: end
+    pitfalls:
+      - es: Si lo que ves en `show running-config` no está en `show startup-config`, hay cambios sin guardar.
+        en: If what you see in `show running-config` is not in `show startup-config`, there are unsaved changes.

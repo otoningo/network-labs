@@ -1,0 +1,110 @@
+# Referencia de comandos de IOS, tema 11: herramientas de diagnóstico. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/ios.yaml)
+# después del setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: herramientas
+vendor: ios
+order: 11
+title:
+  es: Herramientas de diagnóstico
+  en: Troubleshooting tools
+summary:
+  es: Ping con sus opciones más útiles y traceroute para ver por dónde va el tráfico.
+  en: Ping with its most useful options and traceroute to see where traffic goes.
+labs: [ios-02-interfaces-direcciones, ios-03-rutas-estaticas]
+setup: |
+  enable
+  configure terminal
+  interface GigabitEthernet0/0
+  ip address 203.0.113.2 255.255.255.0
+  no shutdown
+  interface GigabitEthernet0/1
+  ip address 192.168.88.1 255.255.255.0
+  no shutdown
+  exit
+  ip route 0.0.0.0 0.0.0.0 203.0.113.1
+  end
+
+commands:
+  - id: ping
+    syntax: ping <destino> [repeat <n>] [size <bytes>] [source <ip|interfaz>]
+    summary:
+      es: >-
+        Manda cinco ecos ICMP y pinta un `!` por cada respuesta y un `.` por cada uno que se
+        pierde. Al final da el porcentaje de éxito y los tiempos. Las opciones van detrás del
+        destino, en cualquier orden.
+      en: >-
+        Sends five ICMP echoes and prints a `!` for each reply and a `.` for each one lost. At
+        the end it gives the success rate and the times. Options go after the destination, in
+        any order.
+    args:
+      - name: repeat
+        text:
+          es: Cuántos paquetes mandar; por defecto, cinco.
+          en: How many packets to send; five by default.
+      - name: size
+        text:
+          es: Tamaño de cada paquete en bytes, de 36 a 18024; por defecto, 100.
+          en: Size of each packet in bytes, from 36 to 18024; 100 by default.
+      - name: source
+        text:
+          es: Dirección (o interfaz) de origen. Sirve para probar como si el ping saliera de la LAN.
+          en: Source address (or interface). Useful to test as if the ping came from the LAN.
+    examples:
+      - command: ping 203.0.113.1
+        note:
+          es: "`!!!!!` y `Success rate is 100 percent (5/5)`."
+          en: "`!!!!!` and `Success rate is 100 percent (5/5)`."
+      - command: ping 192.168.88.10
+        note:
+          es: La PC fija, en la LAN.
+          en: The static PC, on the LAN.
+      - command: ping 203.0.113.1 repeat 2
+      - command: ping 203.0.113.1 size 1000
+      - command: ping 203.0.113.1 size 20
+        fails: true
+        note:
+          es: El tamaño mínimo es 36 bytes.
+          en: The minimum size is 36 bytes.
+      - command: ping 93.184.216.34 source 192.168.88.1 repeat 3
+        note:
+          es: >-
+            Desde la dirección de la LAN, hacia un servidor de Internet. Salen tres puntos:
+            sin NAT el proveedor no sabe volver a 192.168.88.1, igual que le pasaría a una PC
+            de la LAN.
+          en: >-
+            From the LAN address, to a server on the Internet. Three dots come out: without
+            NAT the provider does not know the way back to 192.168.88.1, just as would happen
+            to a LAN PC.
+      - command: ping 203.0.113.1 source 10.9.9.9
+        fails: true
+        note:
+          es: El origen tiene que ser una dirección del propio router.
+          en: The source has to be one of the router's own addresses.
+    pitfalls:
+      - es: Un `ping` que termina con `Success rate is 0 percent` no es un error del comando; el comando funcionó y la respuesta es que no hay camino.
+        en: A `ping` ending in `Success rate is 0 percent` is not a command error; the command worked and the answer is that there is no path.
+      - es: Que el router llegue a Internet no prueba que la LAN también llegue. Repite con `source` y la dirección de la LAN; si falla, falta NAT o la ruta de vuelta.
+        en: The router reaching the Internet does not prove the LAN does. Repeat with `source` and the LAN address; if it fails, NAT or the return route is missing.
+      - es: "`ping` a secas, sin destino, abre el ping extendido: IOS pregunta las opciones una a una."
+        en: "`ping` on its own, with no destination, opens the extended ping: IOS asks for the options one by one."
+
+  - id: traceroute
+    syntax: traceroute <destino>
+    summary:
+      es: >-
+        Lista los routers por los que pasa el tráfico hasta el destino, uno por línea, con
+        tres tiempos cada uno. Un `* * *` marca dónde se pierde.
+      en: >-
+        Lists the routers traffic goes through to the destination, one per line, with three
+        times each. A `* * *` marks where it gets lost.
+    examples:
+      - command: traceroute 203.0.113.1
+      - command: traceroute 93.184.216.34
+        note:
+          es: Primero el proveedor y luego el destino.
+          en: First the provider and then the destination.
+    pitfalls:
+      - es: Cada salto responde con la dirección de la interfaz por la que entró el paquete, no con la de salida.
+        en: Each hop replies with the address of the interface the packet came in through, not the outgoing one.
+      - es: Si se queda en `* * *` sin terminar, en un router real se corta con Ctrl+Shift+6.
+        en: If it sticks at `* * *` without finishing, on a real router you stop it with Ctrl+Shift+6.

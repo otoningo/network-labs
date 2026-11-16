@@ -1,0 +1,146 @@
+# Referencia de comandos de VRP, tema 3: interfaces. Los ejemplos corren en
+# orden sobre el router de práctica (content/sandbox/vrp.yaml); los marcados
+# con `fails: true` deben fallar, porque enseñan un error típico.
+id: interfaces
+vendor: vrp
+order: 3
+title:
+  es: Interfaces
+  en: Interfaces
+summary:
+  es: Entrar en un puerto, describirlo, apagarlo y encenderlo, y ver el estado de todos de un vistazo.
+  en: Entering a port, describing it, turning it off and on, and seeing the state of all of them at a glance.
+fromIos:
+  es: >-
+    Igual que en IOS, cada puerto tiene su vista y se entra con `interface`. Cambia la
+    numeración: en VRP es ranura/tarjeta/puerto (`GigabitEthernet0/0/1`) y el primer puerto
+    es el 0. Los puertos del router salen encendidos de fábrica; para apagar uno se usa
+    `shutdown` y para encenderlo `undo shutdown`, no `no shutdown`. El equivalente de
+    `show ip interface brief` existe con el mismo nombre cambiando `show` por `display`.
+  en: >-
+    As in IOS, each port has its own view, entered with `interface`. The numbering
+    changes: in VRP it is slot/card/port (`GigabitEthernet0/0/1`) and the first port is 0.
+    The router ports come up enabled from factory; to turn one off you use `shutdown` and to
+    turn it on `undo shutdown`, not `no shutdown`. The equivalent of
+    `show ip interface brief` exists with the same name, swapping `show` for `display`.
+labs: [vrp-02-interfaces-direcciones]
+
+commands:
+  - id: interface
+    syntax: interface <tipo><número>
+    summary:
+      es: >-
+        Entra en la vista de una interfaz. El nombre se puede escribir completo, abreviado
+        (`g0/0/1`) o con un espacio antes del número.
+      en: >-
+        Enters an interface's view. The name can be written in full, abbreviated (`g0/0/1`) or
+        with a space before the number.
+    args:
+      - name: tipo
+        text:
+          es: GigabitEthernet en este router. Basta con `g` o `ge`.
+          en: GigabitEthernet on this router. `g` or `ge` is enough.
+      - name: número
+        text:
+          es: Ranura/tarjeta/puerto. Aquí los puertos van de 0/0/0 a 0/0/4.
+          en: Slot/card/port. Here the ports go from 0/0/0 to 0/0/4.
+    examples:
+      - command: system-view
+      - command: interface GigabitEthernet0/0/1
+      - command: quit
+      - command: interface GigabitEthernet 0/0/2
+        note:
+          es: Con espacio también vale.
+          en: With a space it works too.
+      - command: quit
+      - command: interface g0/0/9
+        fails: true
+        note:
+          es: Ese puerto no existe en este equipo; el `^` señala el nombre.
+          en: That port does not exist on this device; the `^` points at the name.
+    ios: interface GigabitEthernet0/1
+    pitfalls:
+      - es: El primer puerto es el 0/0/0. Quien viene de equipos que empiezan en 1 suele configurar el puerto de al lado.
+        en: The first port is 0/0/0. People used to devices that start at 1 often configure the port next to the right one.
+
+  - id: description
+    syntax: description <texto>
+    summary:
+      es: Pone una descripción a la interfaz. Puede llevar espacios y llega hasta el final de la línea.
+      en: Sets a description on the interface. It may contain spaces and runs to the end of the line.
+    examples:
+      - command: interface g0/0/0
+      - command: description Enlace al proveedor
+      - command: display this
+        note:
+          es: La descripción sale como primera línea del bloque.
+          en: The description shows as the first line of the block.
+      - command: undo description
+    ios: |-
+      interface GigabitEthernet0/0
+       description Enlace al proveedor
+    pitfalls:
+      - es: No hacen falta comillas; si las pones, forman parte del texto.
+        en: No quotes needed; if you add them, they become part of the text.
+
+  - id: shutdown
+    syntax: shutdown  |  undo shutdown
+    summary:
+      es: >-
+        `shutdown` apaga la interfaz a mano y `undo shutdown` la vuelve a encender. Apagada,
+        aparece como `*down` en los `display ... brief`.
+      en: >-
+        `shutdown` turns the interface off by hand and `undo shutdown` turns it back on. While
+        off, it shows as `*down` in the `display ... brief` commands.
+    examples:
+      - command: shutdown
+      - command: display this
+        note:
+          es: Ahora el bloque incluye `shutdown`.
+          en: The block now includes `shutdown`.
+      - command: undo shutdown
+    ios: |-
+      shutdown
+      no shutdown
+    pitfalls:
+      - es: Con `shutdown` la dirección IP se conserva, pero sus rutas directas desaparecen de la tabla mientras siga apagada.
+        en: With `shutdown` the IP address is kept, but its direct routes leave the table while it stays off.
+
+  - id: display-interface-brief
+    syntax: display interface brief
+    summary:
+      es: >-
+        Una línea por interfaz con su estado físico (PHY), el de protocolo y el uso. Sirve para
+        ver qué puertos tienen cable y cuáles están apagados.
+      en: >-
+        One line per interface with its physical (PHY) and protocol state and its usage. It
+        shows which ports have a cable and which are turned off.
+    examples:
+      - command: display interface brief
+        note:
+          es: Los puertos 0/0/3 y 0/0/4 no tienen nada conectado y salen down.
+          en: Ports 0/0/3 and 0/0/4 have nothing connected and show down.
+    ios: show interfaces | include line protocol
+    pitfalls:
+      - es: "`down` es que no hay enlace (cable o equipo apagado al otro lado); `*down` es que alguien la apagó con `shutdown`."
+        en: "`down` means no link (cable or the other end is off); `*down` means someone turned it off with `shutdown`."
+
+  - id: display-ip-interface-brief
+    syntax: display ip interface brief
+    summary:
+      es: >-
+        Una línea por interfaz con su dirección IP y los estados físico y de protocolo. Es el
+        primer comando para revisar el direccionamiento.
+      en: >-
+        One line per interface with its IP address and its physical and protocol states. It
+        is the first command to check the addressing.
+    examples:
+      - command: display ip interface brief
+      - command: dis ip int br
+        note:
+          es: La forma abreviada de siempre.
+          en: The usual short form.
+    ios: show ip interface brief
+    pitfalls:
+      - es: Un puerto con cable pero sin dirección sale con Physical up y Protocol down. No es una avería; le falta la IP.
+        en: A port with a cable but no address shows Physical up and Protocol down. It is not a fault; it just has no IP.

@@ -485,3 +485,27 @@ Cada una cubre algo que no conviene escribir a mano:
 - Como no se pueden alterar, el estado no va en el icono: el equipo activo se
   marca con un recuadro alrededor y el nombre va debajo, en una línea, con la
   etiqueta en la siguiente.
+
+## D-046 · Cisco IOS como sistema practicado y selector de sistema
+
+- Cisco IOS deja de ser solo una cita del comparador: tiene su propio driver
+  (`packages/vendors/src/ios`), una ruta de labs ("Cisco IOS desde cero") y su
+  referencia de comandos, como RouterOS y VRP. Lo pidió el usuario. El público
+  sigue siendo quien viene de IOS, pero ahora también puede aprenderlo o
+  repasarlo desde cero aquí.
+- Los sistemas que se practican y su orden viven en un solo sitio
+  (`apps/web/lib/systems.ts`): RouterOS, VRP, IOS. Las rutas de Practicar se
+  ordenan por esa lista, no por el nombre de la ruta.
+- **Aprender elige primero el sistema.** `/referencia` muestra los sistemas y
+  lo que cubre cada referencia; cada uno tiene su índice en
+  `/referencia/<sistema>` (con pestañas para saltar a otro) y sus temas en
+  `/referencia/<sistema>/<tema>`. Los ids de tema solo son únicos dentro de un
+  sistema (RouterOS y VRP tienen los dos "direcciones-ip"). Las direcciones
+  antiguas `/referencia/<tema>` redirigen al tema de RouterOS.
+- **La portada recuerda el sistema.** Los capítulos Aprender y Practicar de la
+  portada llevan pestañas de sistema; la elección se guarda en este navegador
+  y la portada abre en ese sistema la siguiente vez. El traductor de arriba
+  sigue siendo IOS → RouterOS, porque es la promesa de la portada.
+- La referencia de VRP llega en esta misma fase. Así Huawei deja de estar
+  escondido: antes solo aparecía como ruta en Practicar y un enlace pequeño en
+  la portada.

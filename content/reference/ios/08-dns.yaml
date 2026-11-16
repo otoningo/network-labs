@@ -1,0 +1,131 @@
+# Referencia de comandos de IOS, tema 8: DNS. Los ejemplos corren en orden
+# sobre el router de práctica (content/sandbox/ios.yaml) después del setup; los
+# marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: dns
+vendor: ios
+order: 8
+title:
+  es: DNS
+  en: DNS
+summary:
+  es: A qué servidores pregunta el router, cómo hacer de DNS para la LAN, nombres fijos y qué pasa al apagar la búsqueda de nombres.
+  en: Which servers the router asks, how to act as DNS for the LAN, fixed names and what happens when name lookup is turned off.
+labs: [ios-04-oficina]
+setup: |
+  enable
+  configure terminal
+  interface GigabitEthernet0/0
+  ip address 203.0.113.2 255.255.255.0
+  no shutdown
+  interface GigabitEthernet0/1
+  ip address 192.168.88.1 255.255.255.0
+  no shutdown
+  exit
+  ip route 0.0.0.0 0.0.0.0 203.0.113.1
+  end
+
+commands:
+  - id: ip-name-server
+    syntax: ip name-server <ip> [<ip>...]
+    summary:
+      es: >-
+        Los servidores DNS a los que pregunta el propio router cuando escribes un nombre (en
+        un `ping`, por ejemplo). Se pueden poner hasta seis; cada línea nueva se suma a las
+        anteriores.
+      en: >-
+        The DNS servers the router itself asks when you type a name (in a `ping`, for
+        example). Up to six can be set; each new line adds to the previous ones.
+    examples:
+      - command: ping example.com
+        fails: true
+        note:
+          es: El router no sabe a quién preguntar y no puede traducir el nombre.
+          en: The router does not know whom to ask and cannot translate the name.
+      - command: configure terminal
+      - command: ip name-server 8.8.8.8
+      - command: do ping example.com
+        note:
+          es: Primero `Translating "example.com"`, luego el ping a la dirección que devolvió el DNS.
+          en: First `Translating "example.com"`, then the ping to the address the DNS returned.
+    pitfalls:
+      - es: Para quitar un servidor se escribe `no ip name-server` con su dirección. Sin dirección se van todos.
+        en: To remove a server, type `no ip name-server` with its address. Without an address they all go.
+
+  - id: ip-dns-server
+    syntax: ip dns server
+    summary:
+      es: >-
+        Convierte al router en el DNS de la LAN: responde a las preguntas de las PC con sus
+        nombres fijos y reenvía el resto a sus `ip name-server`.
+      en: >-
+        Turns the router into the LAN's DNS: it answers the PCs' queries with its fixed names
+        and forwards the rest to its `ip name-server` entries.
+    examples:
+      - command: ip dns server
+        note:
+          es: La PC fija ya usa 192.168.88.1 como DNS y desde ahora recibe respuesta.
+          en: The static PC already uses 192.168.88.1 as DNS and from now on gets answers.
+    pitfalls:
+      - es: Si el router hace de DNS, las PC tienen que apuntar a él. En un pool de DHCP eso es `dns-server` con la dirección del router.
+        en: If the router acts as DNS, the PCs have to point at it. In a DHCP pool that is `dns-server` with the router's address.
+
+  - id: ip-host
+    syntax: ip host <nombre> <ip>
+    summary:
+      es: >-
+        Un nombre fijo, guardado en el propio router. Sirve para no tener que recordar
+        direcciones y lo usan tanto el router como, con `ip dns server`, las PC de la LAN.
+      en: >-
+        A fixed name, stored on the router itself. It saves remembering addresses and is used
+        both by the router and, with `ip dns server`, by the LAN PCs.
+    examples:
+      - command: ip host servidor 192.168.88.10
+      - command: do ping servidor
+        note:
+          es: Responde la PC fija, sin preguntar a ningún servidor DNS.
+          en: The static PC answers, without asking any DNS server.
+    pitfalls:
+      - es: Un nombre fijo pasa por delante del DNS. Si apunta a una dirección vieja, el router seguirá usándola.
+        en: A fixed name goes ahead of DNS. If it points at an old address, the router will keep using it.
+
+  - id: ip-domain-name
+    syntax: ip domain-name <dominio>
+    summary:
+      es: El dominio del router. Lo piden, junto con el nombre, las claves de SSH.
+      en: The router's domain. It is required, together with the name, by the SSH keys.
+    examples:
+      - command: ip domain-name oficina.local
+      - command: do show hosts
+        note:
+          es: El dominio, los servidores DNS y la tabla de nombres, con `servidor` entre ellos.
+          en: The domain, the DNS servers and the name table, with `servidor` among them.
+
+  - id: ip-domain-lookup
+    syntax: ip domain-lookup  |  no ip domain-lookup
+    summary:
+      es: >-
+        La búsqueda de nombres por DNS, encendida de fábrica. Muchos la apagan para que una
+        errata en EXEC no bloquee la consola mientras el router intenta traducirla.
+      en: >-
+        DNS name lookup, on from the factory. Many people turn it off so a typo at EXEC does
+        not freeze the console while the router tries to translate it.
+    examples:
+      - command: no ip domain-lookup
+      - command: end
+      - command: shwo
+        fails: true
+        note:
+          es: Sigue sin ser un comando, pero ahora el error sale al momento, sin buscar un servidor.
+          en: Still not a command, but now the error comes at once, without looking for a server.
+      - command: ping example.com
+        fails: true
+        note:
+          es: El precio a pagar es que el router ya no traduce nombres por DNS.
+          en: The price is that the router no longer translates names over DNS.
+      - command: ping servidor
+        note:
+          es: Los nombres fijos de `ip host` siguen funcionando.
+          en: The fixed names from `ip host` still work.
+    pitfalls:
+      - es: En un router de laboratorio es cómodo apagarla. En uno que deba resolver nombres (para NTP, para hacer de DNS de la LAN...) piénsalo dos veces.
+        en: On a lab router it is handy to turn it off. On one that must resolve names (for NTP, to act as the LAN's DNS...) think twice.

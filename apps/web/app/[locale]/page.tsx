@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { HomeActions } from '@/components/home/HomeActions';
-import { HomeIndex } from '@/components/home/HomeIndex';
+import { HomeIndex, type HomeSystem } from '@/components/home/HomeIndex';
 import { Translator } from '@/components/home/Translator';
 import { SiteShell } from '@/components/site/SiteShell';
 import { TRANSLATIONS, translationLab } from '@/lib/home/translations';
@@ -9,7 +9,8 @@ import { isLocale, messagesFor } from '@/lib/i18n';
 import { describeEvidence, evidenceOf } from '@/lib/lab/evidence';
 import { learningPaths } from '@/lib/lab/paths';
 import { createLabStore } from '@/lib/lab/store';
-import { allTopics, sandboxLab } from '@/lib/reference/content';
+import { sandboxLab, topicsOf } from '@/lib/reference/content';
+import { SYSTEMS } from '@/lib/systems';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const { locale } = await params;
@@ -21,14 +22,15 @@ export async function generateMetadata({ params }: PageProps<'/[locale]'>): Prom
 /**
  * Portada (D-043): una página más del cuaderno. Arriba, el traductor IOS →
  * RouterOS que se ejecuta en el motor; debajo, los dos capítulos, Aprender y
- * Practicar. Todo lo que muestra sale del contenido y del motor.
+ * Practicar, del sistema que se elija (D-046). Todo lo que muestra sale del contenido y del motor.
  */
 export default async function LocaleHome({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const t = messagesFor(locale).home;
-  const path = learningPaths()[0];
-  if (!path) throw new Error('content/labs no tiene una ruta con labs');
+  // El traductor y el botón de arriba son de RouterOS: la portada habla a quien viene de IOS.
+  const path = learningPaths().find((p) => p.os === 'routeros');
+  if (!path) throw new Error('content/labs no tiene la ruta de RouterOS');
   const sandbox = sandboxLab('routeros');
   const messages = messagesFor(locale);
   const tasks = TRANSLATIONS.map((translation) => {
@@ -43,14 +45,20 @@ export default async function LocaleHome({ params }: PageProps<'/[locale]'>) {
     );
     return { translation, lab, prompt, evidence };
   });
-  const topics = allTopics()
-    .filter((topic) => topic.vendor === 'routeros')
-    .map((topic) => ({
-      id: topic.id,
-      order: topic.order,
-      title: topic.title,
-      commands: topic.commands.length,
-    }));
+  const paths = learningPaths();
+  const systems: HomeSystem[] = SYSTEMS.map((system) => {
+    const systemPath = paths.find((p) => p.os === system);
+    return {
+      id: system,
+      topics: topicsOf(system).map((topic) => ({
+        id: topic.id,
+        order: topic.order,
+        title: topic.title,
+        commands: topic.commands.length,
+      })),
+      path: systemPath ? { id: systemPath.id, labs: systemPath.labs } : null,
+    };
+  });
 
   return (
     <SiteShell>
@@ -75,14 +83,7 @@ export default async function LocaleHome({ params }: PageProps<'/[locale]'>) {
           <Translator tasks={tasks} />
         </section>
 
-        <HomeIndex
-          topics={topics}
-          labs={path.labs}
-          pathId={path.id}
-          otherPaths={learningPaths()
-            .slice(1)
-            .map((p) => p.id)}
-        />
+        <HomeIndex systems={systems} />
       </div>
     </SiteShell>
   );

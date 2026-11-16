@@ -1,0 +1,140 @@
+# Referencia de comandos de IOS, tema 7: ACL estándar y NAT. Los ejemplos
+# corren en orden sobre el router de práctica (content/sandbox/ios.yaml) después
+# del setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: acl-nat
+vendor: ios
+order: 7
+title:
+  es: ACL estándar y NAT
+  en: Standard ACLs and NAT
+summary:
+  es: Una ACL que elige las redes de la LAN, las interfaces inside y outside y la línea de NAT con overload para que la oficina salga a Internet con la dirección del router.
+  en: An ACL that picks the LAN networks, the inside and outside interfaces and the NAT line with overload so the office reaches the Internet with the router's address.
+labs: [ios-04-oficina]
+setup: |
+  enable
+  configure terminal
+  interface GigabitEthernet0/0
+  ip address 203.0.113.2 255.255.255.0
+  no shutdown
+  interface GigabitEthernet0/1
+  ip address 192.168.88.1 255.255.255.0
+  no shutdown
+  exit
+  ip route 0.0.0.0 0.0.0.0 203.0.113.1
+  end
+
+commands:
+  - id: access-list
+    syntax: access-list <1-99> permit|deny <red> <comodín> | host <ip> | any
+    summary:
+      es: >-
+        Añade una línea a una ACL estándar, que solo mira la dirección de origen. Todas las
+        líneas con el mismo número forman una lista y se leen de arriba abajo; la primera que
+        coincide decide. Aquí la ACL no filtra tráfico: solo dice a qué orígenes se aplica el
+        NAT.
+      en: >-
+        Adds a line to a standard ACL, which only looks at the source address. All lines with
+        the same number make up one list and are read top to bottom; the first match decides.
+        Here the ACL filters no traffic: it only says which sources NAT applies to.
+    args:
+      - name: comodín
+        text:
+          es: Al revés que una máscara, 0.0.0.255 para una /24. Los ceros son los bits que deben coincidir.
+          en: The inverse of a mask, 0.0.0.255 for a /24. The zeros are the bits that must match.
+      - name: host
+        text:
+          es: Un solo equipo; equivale a escribir el comodín 0.0.0.0.
+          en: A single host; the same as writing the wildcard 0.0.0.0.
+    examples:
+      - command: configure terminal
+      - command: access-list 1 permit 192.168.88.0 0.0.0.255
+      - command: access-list 1 permit host 192.168.89.10
+      - command: access-list 1 permit 192.168.90.0/24
+        fails: true
+        note:
+          es: La red se escribe como dirección y comodín, no con prefijo.
+          en: The network is written as address and wildcard, not with a prefix.
+      - command: access-list 100 permit 192.168.90.0 0.0.0.255
+        fails: true
+        note:
+          es: Del 100 al 199 son ACL extendidas, que piden protocolo, origen y destino. Las estándar van del 1 al 99.
+          en: 100 to 199 are extended ACLs, which need protocol, source and destination. Standard ones go from 1 to 99.
+      - command: do show access-lists
+        note:
+          es: IOS numera las líneas de 10 en 10.
+          en: IOS numbers the lines in steps of 10.
+    pitfalls:
+      - es: Toda ACL termina con un `deny any` invisible. Lo que no se permite de forma explícita queda fuera.
+        en: Every ACL ends with an invisible `deny any`. Whatever is not explicitly permitted is left out.
+      - es: Las líneas nuevas se añaden al final. Una línea `permit` detrás de un `deny` que ya la cubre no sirve de nada.
+        en: New lines are added at the end. A `permit` line after a `deny` that already covers it is useless.
+
+  - id: nat-inside-outside
+    syntax: ip nat inside  |  ip nat outside
+    summary:
+      es: >-
+        Marca cada interfaz como lado interior (la LAN) o exterior (hacia Internet). El NAT
+        solo traduce el tráfico que entra por una inside y sale por una outside.
+      en: >-
+        Marks each interface as the inside (the LAN) or the outside (towards the Internet).
+        NAT only translates traffic that comes in through an inside and leaves through an
+        outside.
+    examples:
+      - command: interface g0/1
+      - command: ip nat inside
+      - command: interface g0/0
+      - command: ip nat outside
+      - command: exit
+    pitfalls:
+      - es: Olvidar una de las dos marcas es el fallo más típico del NAT en IOS. Todo parece configurado pero no se traduce nada.
+        en: Forgetting one of the two marks is the most typical IOS NAT fault. Everything looks configured but nothing gets translated.
+
+  - id: nat-source
+    syntax: ip nat inside source list <acl> interface <interfaz> overload
+    summary:
+      es: >-
+        La regla de NAT de una oficina: los orígenes que permite la ACL salen con la dirección
+        de la interfaz indicada. `overload` deja que muchos equipos compartan esa única
+        dirección, distinguiéndolos por el puerto (lo que se conoce como PAT).
+      en: >-
+        An office's NAT rule: the sources the ACL permits go out with the given interface's
+        address. `overload` lets many devices share that single address, telling them apart
+        by port (what is known as PAT).
+    examples:
+      - command: ip nat inside source list 1 interface GigabitEthernet0/0 overload
+      - command: do show running-config | include ip nat
+        note:
+          es: La regla global y las dos marcas de interfaz.
+          en: The global rule and the two interface marks.
+      - command: do show ip nat translations
+        note:
+          es: Vacía hasta que una PC de la LAN mande algo a Internet.
+          en: Empty until a LAN PC sends something to the Internet.
+    pitfalls:
+      - es: Sin `overload`, la interfaz solo sirve para un equipo a la vez y el resto se queda sin salir.
+        en: Without `overload`, the interface only serves one device at a time and the rest cannot get out.
+      - es: Sin ruta por defecto hacia el proveedor el NAT no sirve; los paquetes nunca llegan a salir por la outside.
+        en: Without a default route to the provider NAT is useless; the packets never leave through the outside.
+
+  - id: no-nat-acl
+    syntax: no ip nat inside source list ...  |  no access-list <número>
+    summary:
+      es: >-
+        Quita la regla de NAT escribiéndola entera con `no` delante. `no access-list` con el
+        número borra la ACL completa, con todas sus líneas.
+      en: >-
+        Removes the NAT rule by typing it in full with `no` in front. `no access-list` with
+        the number deletes the whole ACL, with all its lines.
+    examples:
+      - command: no ip nat inside source list 1 interface GigabitEthernet0/0 overload
+      - command: no ip nat inside source list 1 interface GigabitEthernet0/0 overload
+        fails: true
+        note:
+          es: "`Dynamic mapping not found`: ya no existe."
+          en: "`Dynamic mapping not found`: it no longer exists."
+      - command: no access-list 1
+      - command: end
+    pitfalls:
+      - es: En una ACL numerada no se puede borrar una sola línea con `no access-list 1 permit ...`; se borra la lista entera. Escríbela de nuevo desde el principio.
+        en: In a numbered ACL you cannot delete a single line with `no access-list 1 permit ...`; the whole list goes. Type it again from the start.

@@ -1,0 +1,177 @@
+# Referencia de comandos de VRP, tema 9: usuarios y acceso remoto. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/vrp.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: usuarios
+vendor: vrp
+order: 9
+title:
+  es: Usuarios y acceso remoto
+  en: Users and remote access
+summary:
+  es: Usuarios locales en la vista AAA, con contraseña, nivel y servicios, y encender o apagar Telnet y SSH.
+  en: Local users in the AAA view, with password, level and services, and turning Telnet and SSH on or off.
+fromIos:
+  es: >-
+    En IOS un usuario es una línea global: `username soporte privilege 1 secret ...`. En VRP
+    los usuarios viven dentro de la vista `aaa` y cada propiedad va en su propia línea
+    `local-user`: la contraseña, el nivel y los servicios por los que puede entrar. Los
+    niveles van de 0 a 15 como en IOS, pero se agrupan distinto: 0 y 1 solo consultan, 2
+    configura y de 3 a 15 administran. Telnet viene encendido de fábrica en este equipo; se
+    apaga con `undo telnet server enable` y SSH, que Huawei llama STelnet, se enciende con
+    `stelnet server enable`.
+  en: >-
+    In IOS a user is one global line: `username soporte privilege 1 secret ...`. In VRP users
+    live inside the `aaa` view and each property goes on its own `local-user` line: the
+    password, the level and the services it can log in through. Levels go from 0 to 15 as in
+    IOS, but they group differently: 0 and 1 only look, 2 configures and 3 to 15 manage.
+    Telnet comes on from factory on this device; it is turned off with
+    `undo telnet server enable`, and SSH, which Huawei calls STelnet, is turned on with
+    `stelnet server enable`.
+labs: [vrp-01-acceso-inicial]
+
+commands:
+  - id: aaa
+    syntax: aaa
+    summary:
+      es: Entra en la vista AAA (`[Huawei-aaa]`), donde se gestionan los usuarios locales.
+      en: Enters the AAA view (`[Huawei-aaa]`), where local users are managed.
+    examples:
+      - command: system-view
+      - command: local-user soporte password irreversible-cipher Soporte-2026
+        fails: true
+        note:
+          es: "`local-user` solo existe dentro de `aaa`."
+          en: "`local-user` only exists inside `aaa`."
+      - command: aaa
+    ios: aaa new-model
+
+  - id: local-user-password
+    syntax: local-user <usuario> password irreversible-cipher <contraseña>
+    summary:
+      es: >-
+        Crea el usuario si no existe (avisa con `Info: Add a new user.`) y le pone contraseña.
+        `irreversible-cipher` la guarda con un cifrado que no se puede revertir.
+      en: >-
+        Creates the user if it does not exist (it says `Info: Add a new user.`) and sets its
+        password. `irreversible-cipher` stores it with a cipher that cannot be reversed.
+    args:
+      - name: irreversible-cipher
+        text:
+          es: La opción recomendada. También existe `cipher`, que guarda la clave cifrada de forma reversible.
+          en: The recommended option. There is also `cipher`, which stores the key with a reversible cipher.
+    examples:
+      - command: local-user soporte password irreversible-cipher Soporte-2026
+    ios: username soporte secret Soporte-2026
+    pitfalls:
+      - es: Un usuario nuevo nace con nivel 0 y sin servicios. Con solo la contraseña existe, pero no puede hacer casi nada.
+        en: A new user is born with level 0 and no services. With just the password it exists, but can hardly do anything.
+
+  - id: local-user-privilege
+    syntax: local-user <usuario> privilege level <0-15>
+    summary:
+      es: El nivel del usuario, que decide qué comandos ve. 0-1 consulta, 2 configuración, 3-15 gestión.
+      en: The user's level, which decides which commands it sees. 0-1 monitoring, 2 configuration, 3-15 management.
+    examples:
+      - command: local-user soporte privilege level 1
+      - command: local-user soporte privilege level 16
+        fails: true
+        note:
+          es: El nivel máximo es 15.
+          en: The highest level is 15.
+    ios: username soporte privilege 1 secret Soporte-2026
+    pitfalls:
+      - es: Con nivel 0 o 1 el usuario ni siquiera ve `system-view`. Si alguien dice que el comando no existe, revisa su nivel.
+        en: With level 0 or 1 the user does not even see `system-view`. If someone says the command does not exist, check their level.
+
+  - id: local-user-service-type
+    syntax: local-user <usuario> service-type <tipo> [<tipo>…]
+    summary:
+      es: Por dónde puede entrar el usuario. Cada vez se escribe la lista completa; la nueva sustituye a la anterior.
+      en: How the user may log in. You write the full list each time; the new one replaces the old.
+    args:
+      - name: tipo
+        text:
+          es: telnet, ssh, http o terminal (la consola), en cualquier orden.
+          en: telnet, ssh, http or terminal (the console), in any order.
+    examples:
+      - command: local-user soporte service-type ssh telnet
+      - command: display this
+        note:
+          es: Las tres líneas del usuario, con la contraseña ya cifrada.
+          en: The user's three lines, with the password already ciphered.
+    ios: |-
+      line vty 0 4
+       login local
+       transport input ssh telnet
+    pitfalls:
+      - es: En IOS el transporte se elige por línea VTY, para todos; en VRP cada usuario tiene sus servicios.
+        en: In IOS the transport is chosen per VTY line, for everyone; in VRP each user has its own services.
+
+  - id: display-local-user
+    syntax: display local-user
+    summary:
+      es: Tabla de usuarios con su estado (A activo), sus servicios en letras (T Telnet, S SSH, H HTTP, X consola) y su nivel.
+      en: Table of users with their state (A active), their services as letters (T Telnet, S SSH, H HTTP, X console) and their level.
+    examples:
+      - command: display local-user
+    ios: show running-config | include username
+
+  - id: undo-local-user
+    syntax: undo local-user <usuario>
+    summary:
+      es: Borra un usuario. No deja borrar el que tiene una sesión abierta.
+      en: Deletes a user. It will not delete one with an open session.
+    examples:
+      - command: local-user temporal privilege level 3
+      - command: undo local-user temporal
+      - command: undo local-user admin
+        fails: true
+        note:
+          es: Es el usuario con el que estás conectado.
+          en: It is the user you are logged in as.
+      - command: undo local-user nadie
+        fails: true
+        note:
+          es: Ese usuario no existe.
+          en: That user does not exist.
+      - command: quit
+    ios: no username temporal
+
+  - id: telnet-server
+    syntax: telnet server enable  |  undo telnet server enable
+    summary:
+      es: >-
+        Enciende o apaga el servidor Telnet del equipo, en la vista de sistema. Telnet viaja en
+        claro, contraseñas incluidas, así que lo normal es apagarlo y dejar solo SSH.
+      en: >-
+        Turns the device's Telnet server on or off, in the system view. Telnet travels in
+        clear text, passwords included, so the usual thing is to turn it off and keep only SSH.
+    examples:
+      - command: display telnet server status
+        note:
+          es: De fábrica, Enable.
+          en: From factory, Enable.
+      - command: undo telnet server enable
+      - command: display telnet server status
+    ios: |-
+      line vty 0 4
+       transport input ssh
+    pitfalls:
+      - es: Si estás conectado por Telnet, al apagarlo cortas tu propia sesión. Entra antes por SSH o por consola.
+        en: If you are connected over Telnet, turning it off cuts your own session. Get in over SSH or the console first.
+
+  - id: stelnet-server
+    syntax: stelnet server enable  |  undo stelnet server enable
+    summary:
+      es: Enciende o apaga el servidor SSH, que en VRP se llama STelnet. Sale apagado de fábrica.
+      en: Turns the SSH server, called STelnet in VRP, on or off. It is off from factory.
+    examples:
+      - command: stelnet server enable
+      - command: display current-configuration
+        note:
+          es: Al final, `stelnet server enable` y ya no `telnet server enable`.
+          en: At the end, `stelnet server enable` and no longer `telnet server enable`.
+    ios: ip ssh version 2
+    pitfalls:
+      - es: En un equipo real, encender el servicio no basta; también hacen falta las claves del servidor y un usuario con el servicio ssh.
+        en: On a real device, turning the service on is not enough; it also needs the server keys and a user with the ssh service.

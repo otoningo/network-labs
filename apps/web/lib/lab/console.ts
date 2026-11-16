@@ -16,6 +16,7 @@ import {
   runCommand,
   type VendorDriver,
 } from '@nos/core';
+import { IOS_PLATFORM, ios, iosStartup } from '@nos/vendors/ios';
 import { ROUTEROS_PLATFORM, routeros, routerosStartup } from '@nos/vendors/routeros';
 import { VRP_PLATFORM, vrp, vrpStartup } from '@nos/vendors/vrp';
 
@@ -71,12 +72,20 @@ export function openConsole<S, V, C, A>(
   };
 }
 
-/** Plataformas y arranque de cada fabricante con driver: RouterOS y VRP. */
+/** Plataformas y arranque de cada fabricante con driver: RouterOS, VRP e IOS. */
 export const LAB_ENVIRONMENT: LabEnvironment = {
-  platforms: { routeros: ROUTEROS_PLATFORM, vrp: VRP_PLATFORM },
+  platforms: { routeros: ROUTEROS_PLATFORM, vrp: VRP_PLATFORM, ios: IOS_PLATFORM },
   // Cada equipo arranca con el driver de su sistema.
-  runStartup: (device, script) =>
-    device.os === 'vrp' ? vrpStartup(device, script) : routerosStartup(device, script),
+  runStartup: (device, script) => {
+    switch (device.os) {
+      case 'vrp':
+        return vrpStartup(device, script);
+      case 'ios':
+        return iosStartup(device, script);
+      default:
+        return routerosStartup(device, script);
+    }
+  },
 };
 
 /** Abre la consola de un equipo si su sistema tiene driver; hosts e Internet no tienen CLI. */
@@ -87,6 +96,8 @@ export function consoleFor(net: Network, id: DeviceId): DeviceConsole | null {
       return openConsole(routeros, net, id);
     case 'vrp':
       return openConsole(vrp, net, id);
+    case 'ios':
+      return openConsole(ios, net, id);
     default:
       return null;
   }

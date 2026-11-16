@@ -1,0 +1,116 @@
+# Referencia de comandos de IOS, tema 4: direcciones IP. Los ejemplos corren
+# en orden sobre el router de práctica (content/sandbox/ios.yaml); los marcados
+# con `fails: true` deben fallar, porque enseñan un error típico.
+id: direcciones-ip
+vendor: ios
+order: 4
+title:
+  es: Direcciones IP
+  en: IP addresses
+summary:
+  es: Dar una dirección a una interfaz con su máscara, cambiarla, quitarla y comprobar que responde.
+  en: Giving an interface an address with its mask, changing it, removing it and checking that it answers.
+labs: [ios-02-interfaces-direcciones]
+
+commands:
+  - id: ip-address
+    syntax: ip address <dirección> <máscara>
+    summary:
+      es: >-
+        Asigna la dirección IP principal de la interfaz. La máscara se escribe completa, en
+        cuatro números (255.255.255.0), nunca como /24. Si la interfaz ya tenía una dirección,
+        la nueva la sustituye.
+      en: >-
+        Assigns the interface's primary IP address. The mask is written in full, as four
+        numbers (255.255.255.0), never as /24. If the interface already had an address, the
+        new one replaces it.
+    args:
+      - name: dirección
+        text:
+          es: La dirección del router en esa red. Suele ser la primera o la última utilizable.
+          en: The router's address on that network. Usually the first or last usable one.
+      - name: máscara
+        text:
+          es: "Máscara en formato decimal con puntos: 255.255.255.0 para una /24, 255.255.255.252 para una /30."
+          en: "Mask in dotted decimal: 255.255.255.0 for a /24, 255.255.255.252 for a /30."
+    examples:
+      - command: enable
+      - command: configure terminal
+      - command: interface g0/1
+      - command: ip address 192.168.88.1 /24
+        fails: true
+        note:
+          es: IOS no entiende la longitud de prefijo aquí; el `^` señala el /24.
+          en: IOS does not understand the prefix length here; the `^` points at the /24.
+      - command: ip address 192.168.88.1/24
+        fails: true
+        note:
+          es: Pegada a la dirección tampoco.
+          en: Glued to the address, neither.
+      - command: ip address 192.168.88.0 255.255.255.0
+        fails: true
+        note:
+          es: "`Bad mask`: 192.168.88.0 es la dirección de la red, no se puede dar a una interfaz."
+          en: "`Bad mask`: 192.168.88.0 is the network address, it cannot be given to an interface."
+      - command: ip address 192.168.88.1 255.255.255.0
+      - command: interface g0/2
+      - command: ip address 192.168.88.2 255.255.255.0
+        fails: true
+        note:
+          es: Esa red ya está en GigabitEthernet0/1. Dos interfaces del mismo router no pueden estar en la misma red.
+          en: That network is already on GigabitEthernet0/1. Two interfaces on the same router cannot be on the same network.
+      - command: ip address 192.168.89.1 255.255.255.0
+    pitfalls:
+      - es: "`ip address` sustituye; no suma. Para tener dos redes en el mismo puerto hace falta `secondary`, que no se ve aquí."
+        en: "`ip address` replaces; it does not add. Having two networks on the same port needs `secondary`, not covered here."
+
+  - id: interfaz-apagada
+    syntax: ip address ...  +  no shutdown
+    summary:
+      es: >-
+        Poner la dirección no enciende el puerto. IOS acepta la dirección en una interfaz
+        apagada sin quejarse, pero mientras siga en `administratively down` no responde a
+        nada.
+      en: >-
+        Setting the address does not turn the port on. IOS accepts the address on a
+        turned-off interface without complaint, but while it stays `administratively down`
+        it answers nothing.
+    examples:
+      - command: do show ip interface brief
+        note:
+          es: GigabitEthernet0/1 tiene su dirección pero sigue `administratively down`.
+          en: GigabitEthernet0/1 has its address but is still `administratively down`.
+      - command: do ping 192.168.88.10
+        note:
+          es: >-
+            El comando funciona, pero se pierden los cinco paquetes (`Success rate is 0
+            percent`): la red no existe para el router mientras el puerto esté apagado.
+          en: >-
+            The command works, but all five packets are lost (`Success rate is 0 percent`):
+            the network does not exist for the router while the port is off.
+      - command: interface g0/1
+      - command: no shutdown
+      - command: do ping 192.168.88.10
+        note:
+          es: Ahora sí responde la PC fija.
+          en: Now the static PC answers.
+    pitfalls:
+      - es: En un router real el primer paquete del primer ping suele perderse (sale un punto) mientras se resuelve la MAC del destino. No es una avería.
+        en: On a real router the first packet of the first ping is often lost (a dot shows) while the destination MAC is resolved. It is not a fault.
+
+  - id: no-ip-address
+    syntax: no ip address
+    summary:
+      es: Quita la dirección IP de la interfaz que estás configurando. El puerto sigue encendido o apagado como estaba.
+      en: Removes the IP address from the interface you are configuring. The port stays on or off as it was.
+    examples:
+      - command: interface g0/2
+      - command: no ip address
+      - command: do show running-config | section GigabitEthernet0/2
+        note:
+          es: El bloque muestra `no ip address`.
+          en: The block shows `no ip address`.
+      - command: end
+    pitfalls:
+      - es: Para cambiar una dirección no hace falta quitarla antes; basta con escribir la nueva.
+        en: To change an address you do not need to remove it first; just type the new one.

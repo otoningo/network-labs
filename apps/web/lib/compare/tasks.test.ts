@@ -1,12 +1,12 @@
 /**
  * "Compara sintaxis" no puede enseñar algo que el motor no hace: cada línea de
- * RouterOS y de VRP se acepta y deja la tarea cumplida, y antes no lo estaba.
+ * RouterOS, de VRP y de IOS se acepta y deja la tarea cumplida, y antes no lo estaba.
  */
 import { describe, expect, it } from 'vitest';
 import { simulate } from './simulate';
 import { COMPARE_TASKS, type SimulatedOs } from './tasks';
 
-const SIMULATED: readonly SimulatedOs[] = ['routeros', 'vrp'];
+const SIMULATED: readonly SimulatedOs[] = ['routeros', 'vrp', 'ios'];
 
 describe('Compara sintaxis', () => {
   for (const task of COMPARE_TASKS) {
@@ -35,7 +35,7 @@ describe('Compara sintaxis', () => {
     for (const task of COMPARE_TASKS) {
       expect(task.simulated.routeros.length).toBeGreaterThan(0);
       expect(task.simulated.vrp.length).toBeGreaterThan(0);
-      expect(task.quoted.ios.length).toBeGreaterThan(0);
+      expect(task.simulated.ios.length).toBeGreaterThan(0);
     }
   });
 });

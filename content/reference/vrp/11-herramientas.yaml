@@ -1,0 +1,109 @@
+# Referencia de comandos de VRP, tema 11: herramientas de diagnóstico. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/vrp.yaml)
+# después del setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: herramientas
+vendor: vrp
+order: 11
+title:
+  es: Herramientas de diagnóstico
+  en: Troubleshooting tools
+summary:
+  es: Ping con sus opciones más útiles y tracert para ver por dónde va el tráfico.
+  en: Ping with its most useful options and tracert to see where traffic goes.
+fromIos:
+  es: >-
+    `ping` funciona como en IOS pero las opciones cambian de forma y de sitio: van con guion
+    y antes del destino (`ping -c 2 203.0.113.1`), no detrás. Por defecto manda cinco
+    paquetes y escribe una línea por respuesta en lugar de signos de exclamación.
+    `traceroute` se llama `tracert`. Los dos funcionan en cualquier vista.
+  en: >-
+    `ping` works as in IOS but the options change shape and place: they take a dash and go
+    before the destination (`ping -c 2 203.0.113.1`), not after it. By default it sends five
+    packets and prints one line per reply instead of exclamation marks. `traceroute` is
+    called `tracert`. Both work in any view.
+labs: [vrp-02-interfaces-direcciones, vrp-03-rutas-estaticas]
+setup: |
+  system-view
+  interface GigabitEthernet0/0/0
+  ip address 203.0.113.2 24
+  interface GigabitEthernet0/0/1
+  ip address 192.168.88.1 24
+  quit
+  ip route-static 0.0.0.0 0 203.0.113.1
+  return
+
+commands:
+  - id: ping
+    syntax: ping [-a <origen>] [-c <cantidad>] [-s <tamaño>] <destino>
+    summary:
+      es: >-
+        Manda ecos ICMP y cuenta las respuestas. Al final resume enviados, recibidos, pérdida y
+        tiempos.
+      en: >-
+        Sends ICMP echoes and counts the replies. At the end it summarises sent, received,
+        loss and times.
+    args:
+      - name: -a
+        text:
+          es: Dirección de origen. Sirve para probar como si el ping saliera de la LAN.
+          en: Source address. Useful to test as if the ping came from the LAN.
+      - name: -c
+        text:
+          es: Cuántos paquetes mandar; por defecto, cinco.
+          en: How many packets to send; five by default.
+      - name: -s
+        text:
+          es: Tamaño de cada paquete en bytes; por defecto, 56.
+          en: Size of each packet in bytes; 56 by default.
+    examples:
+      - command: ping 203.0.113.1
+        note:
+          es: El proveedor responde cinco veces.
+          en: The provider replies five times.
+      - command: ping 192.168.88.10
+        note:
+          es: La PC fija, en la LAN.
+          en: The static PC, on the LAN.
+      - command: ping -c 2 203.0.113.1
+      - command: ping -a 192.168.88.1 -c 3 93.184.216.34
+        note:
+          es: >-
+            Desde la dirección de la LAN, hacia un servidor de Internet. Aquí se pierden los
+            tres: sin NAT el proveedor no sabe volver a 192.168.88.1, igual que le pasaría a
+            una PC de la LAN.
+          en: >-
+            From the LAN address, to a server on the Internet. All three are lost here:
+            without NAT the provider does not know the way back to 192.168.88.1, just as would
+            happen to a LAN PC.
+      - command: ping -s 1000 203.0.113.1
+      - command: ping 203.0.113.1 -c 2
+        fails: true
+        note:
+          es: Las opciones van antes del destino; detrás, sobran.
+          en: Options go before the destination; after it, they are extra.
+    ios: |-
+      ping 203.0.113.1
+      ping 203.0.113.1 repeat 2
+      ping 93.184.216.34 source 192.168.88.1 repeat 3
+      ping 203.0.113.1 size 1000
+    pitfalls:
+      - es: Si hay varias opciones, van en el orden -a, -c, -s.
+        en: With several options, they go in the order -a, -c, -s.
+      - es: Que el router llegue a Internet no prueba que la LAN también llegue. Repite con `-a` y la dirección de la LAN; si falla, falta NAT o la ruta de vuelta.
+        en: The router reaching the Internet does not prove the LAN does. Repeat with `-a` and the LAN address; if it fails, NAT or the return route is missing.
+
+  - id: tracert
+    syntax: tracert <destino>
+    summary:
+      es: Lista los routers por los que pasa el tráfico hasta el destino, uno por línea. Un `* * *` marca dónde se pierde.
+      en: Lists the routers traffic goes through to the destination, one per line. A `* * *` marks where it gets lost.
+    examples:
+      - command: tracert 203.0.113.1
+      - command: tracert 93.184.216.34
+        note:
+          es: Primero el proveedor y luego el destino.
+          en: First the provider and then the destination.
+    ios: traceroute 93.184.216.34
+    pitfalls:
+      - es: Cada salto responde con la dirección de la interfaz por la que entró el paquete, no con la de salida.
+        en: Each hop replies with the address of the interface the packet came in through, not the outgoing one.

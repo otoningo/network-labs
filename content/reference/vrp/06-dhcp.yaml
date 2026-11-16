@@ -1,0 +1,210 @@
+# Referencia de comandos de VRP, tema 6: servidor DHCP. Los ejemplos corren en
+# orden sobre el router de práctica (content/sandbox/vrp.yaml) después del
+# setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: dhcp
+vendor: vrp
+order: 6
+title:
+  es: Servidor DHCP
+  en: DHCP server
+summary:
+  es: Encender el servicio, definir un pool global con red, gateway, DNS y exclusiones, y activarlo en la interfaz de la LAN.
+  en: Turning the service on, defining a global pool with network, gateway, DNS and exclusions, and activating it on the LAN interface.
+fromIos:
+  es: >-
+    El `ip pool` de VRP se parece mucho al `ip dhcp pool` de IOS: `network` con
+    `mask`, `gateway-list` en lugar de `default-router` y `dns-list` en lugar de
+    `dns-server`. Hay tres diferencias que pillan a todos. Primero, el servicio DHCP sale
+    apagado de fábrica y se enciende con `dhcp enable`. Segundo, las exclusiones van dentro
+    del pool (`excluded-ip-address`), no en la vista de sistema. Tercero, un pool no reparte
+    nada por sí solo: hay que entrar en la interfaz de la LAN y escribir
+    `dhcp select global`, que le dice que atienda las peticiones con el pool cuya red
+    coincide con su dirección.
+  en: >-
+    The VRP `ip pool` looks a lot like the IOS `ip dhcp pool`: `network` with `mask`,
+    `gateway-list` instead of `default-router` and `dns-list` instead of `dns-server`. Three
+    differences catch everyone. First, the DHCP service is off from factory and is turned on
+    with `dhcp enable`. Second, exclusions go inside the pool (`excluded-ip-address`), not in
+    the system view. Third, a pool hands out nothing on its own: you must enter the LAN
+    interface and type `dhcp select global`, which tells it to answer requests with the pool
+    whose network matches its address.
+labs: [vrp-04-oficina]
+setup: |
+  system-view
+  interface GigabitEthernet0/0/1
+  ip address 192.168.88.1 24
+  interface GigabitEthernet0/0/2
+  ip address 192.168.89.1 24
+  return
+
+commands:
+  - id: dhcp-enable
+    syntax: dhcp enable  |  undo dhcp enable
+    summary:
+      es: Enciende el servicio DHCP del equipo. Sin él no se puede activar ningún servidor en las interfaces.
+      en: Turns the device's DHCP service on. Without it no server can be activated on the interfaces.
+    examples:
+      - command: system-view
+      - command: interface g0/0/2
+      - command: dhcp select global
+        fails: true
+        note:
+          es: El equipo pide encender antes el DHCP en la vista de sistema.
+          en: The device asks you to turn DHCP on in the system view first.
+      - command: quit
+      - command: dhcp enable
+    ios: service dhcp
+    pitfalls:
+      - es: Es el olvido más común. Si todo parece bien configurado y nadie recibe dirección, busca `dhcp enable` en `display current-configuration`.
+        en: It is the most common omission. If everything looks right and nobody gets an address, look for `dhcp enable` in `display current-configuration`.
+
+  - id: ip-pool
+    syntax: ip pool <nombre>
+    summary:
+      es: >-
+        Crea un pool global y entra en su vista (`[Huawei-ip-pool-sala]`). Si ya existe, solo
+        entra para editarlo.
+      en: >-
+        Creates a global pool and enters its view (`[Huawei-ip-pool-sala]`). If it already
+        exists, it just enters to edit it.
+    examples:
+      - command: ip pool sala
+    ios: ip dhcp pool SALA
+
+  - id: network
+    syntax: network <red> mask <máscara|longitud>
+    summary:
+      es: La red de la que el pool reparte direcciones. Debe ser la misma red que la interfaz que lo va a usar.
+      en: The network the pool hands addresses out of. It must be the same network as the interface that will use it.
+    examples:
+      - command: network 192.168.89.0 mask 255.255.255.0
+      - command: network 192.168.89.0 24
+        fails: true
+        note:
+          es: Falta la palabra `mask`, que en IOS no existe.
+          en: The word `mask` is missing; IOS has no such word.
+    ios: network 192.168.89.0 255.255.255.0
+    pitfalls:
+      - es: Dos pools no pueden cubrir la misma red ni redes que se solapen.
+        en: Two pools cannot cover the same network or overlapping networks.
+
+  - id: gateway-list
+    syntax: gateway-list <ip>
+    summary:
+      es: La puerta de enlace que reciben los clientes, normalmente la IP del router en esa LAN.
+      en: The gateway the clients receive, usually the router's IP on that LAN.
+    examples:
+      - command: gateway-list 192.168.89.1
+    ios: default-router 192.168.89.1
+    pitfalls:
+      - es: La dirección del gateway queda fuera del reparto sin tener que excluirla a mano.
+        en: The gateway address is left out of the pool without excluding it by hand.
+
+  - id: dns-list
+    syntax: dns-list <ip> [<ip>…]
+    summary:
+      es: Los servidores DNS que reciben los clientes, hasta ocho, separados por espacios.
+      en: The DNS servers the clients receive, up to eight, separated by spaces.
+    examples:
+      - command: dns-list 192.168.89.1 8.8.8.8
+    ios: dns-server 192.168.89.1 8.8.8.8
+    pitfalls:
+      - es: Si das el router como DNS, este tiene que responder; mira `dns proxy enable` en el tema DNS.
+        en: If you give the router as DNS, it has to answer; see `dns proxy enable` in the DNS topic.
+
+  - id: excluded-ip-address
+    syntax: excluded-ip-address <desde> [<hasta>]
+    summary:
+      es: Saca del reparto una dirección o un rango, por ejemplo los de impresoras y servidores con IP fija.
+      en: Takes an address or a range out of the pool, for example those of printers and servers with fixed IPs.
+    examples:
+      - command: excluded-ip-address 192.168.89.2 192.168.89.20
+      - command: excluded-ip-address 192.168.90.5
+        fails: true
+        note:
+          es: La dirección no está en la red del pool.
+          en: The address is not in the pool's network.
+    ios: ip dhcp excluded-address 192.168.89.2 192.168.89.20
+    pitfalls:
+      - es: Primero `network` y después las exclusiones; sin red, el pool no sabe de qué excluir.
+        en: First `network` and then the exclusions; without a network, the pool has nothing to exclude from.
+
+  - id: lease
+    syntax: lease day <días> [hour <horas> [minute <minutos>]]
+    summary:
+      es: Cuánto dura cada préstamo. Por defecto, un día.
+      en: How long each lease lasts. One day by default.
+    examples:
+      - command: lease day 0 hour 8
+      - command: lease day 0
+        fails: true
+        note:
+          es: Un préstamo de cero no tiene sentido.
+          en: A zero lease makes no sense.
+      - command: display this
+        note:
+          es: El bloque completo del pool.
+          en: The whole pool block.
+    ios: lease 0 8
+    pitfalls:
+      - es: Las horas solo se escriben detrás de `day`; para ocho horas se pone `lease day 0 hour 8`.
+        en: Hours can only be written after `day`; for eight hours you type `lease day 0 hour 8`.
+
+  - id: dhcp-select-global
+    syntax: dhcp select global
+    summary:
+      es: >-
+        En la vista de una interfaz, la pone a atender peticiones DHCP con el pool global cuya
+        red contiene la dirección de la interfaz.
+      en: >-
+        In an interface's view, makes it answer DHCP requests with the global pool whose
+        network contains the interface's address.
+    examples:
+      - command: quit
+      - command: interface g0/0/2
+      - command: dhcp select global
+        note:
+          es: La PC de GigabitEthernet0/0/2 ya recibe dirección.
+          en: The PC on GigabitEthernet0/0/2 now gets an address.
+      - command: quit
+    ios: |-
+      ! En IOS no hace falta: el pool se asocia solo
+      ! por la red de la interfaz.
+    pitfalls:
+      - es: Si la interfaz no tiene dirección, o ningún pool cubre su red, el comando se acepta pero no se reparte nada.
+        en: If the interface has no address, or no pool covers its network, the command is accepted but nothing is handed out.
+
+  - id: display-ip-pool
+    syntax: display ip pool [name <nombre>]
+    summary:
+      es: >-
+        Sin nombre, un resumen de todos los pools y las cuentas totales. Con `name`, el detalle
+        de uno: lease, DNS, gateway y cuántas direcciones hay usadas, libres y excluidas.
+      en: >-
+        Without a name, a summary of every pool and the overall counts. With `name`, the detail
+        of one: lease, DNS, gateway and how many addresses are used, free and excluded.
+    examples:
+      - command: display ip pool
+      - command: display ip pool name sala
+        note:
+          es: Used vale 1, la PC por DHCP. Disable vale 20, las 19 excluidas más el gateway.
+          en: Used is 1, the DHCP PC. Disable is 20, the 19 excluded ones plus the gateway.
+    ios: |-
+      show ip dhcp pool
+      show ip dhcp binding
+
+  - id: undo-ip-pool
+    syntax: undo ip pool <nombre>
+    summary:
+      es: Borra un pool, siempre que no tenga direcciones repartidas.
+      en: Deletes a pool, as long as it has no addresses handed out.
+    examples:
+      - command: ip pool pruebas
+      - command: quit
+      - command: undo ip pool pruebas
+      - command: undo ip pool sala
+        fails: true
+        note:
+          es: La PC por DHCP tiene una dirección de este pool.
+          en: The DHCP PC has an address from this pool.
+    ios: no ip dhcp pool PRUEBAS

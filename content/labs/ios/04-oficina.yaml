@@ -1,0 +1,118 @@
+# Ruta "Cisco IOS desde cero", lab 4.
+id: ios-04-oficina
+vendor: ios
+path: ios-desde-cero
+order: 4
+title:
+  es: DHCP, NAT y DNS para la oficina
+  en: DHCP, NAT and DNS for the office
+summary:
+  es: El router ya tiene sus direcciones y su ruta. Falta que reparta direcciones, saque a la LAN a Internet y resuelva nombres.
+  en: The router already has its addresses and its route. It still has to hand out addresses, take the LAN to the Internet and resolve names.
+difficulty: intermediate
+minutes: 20
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+        dns:
+          example.com: 93.184.216.34
+    - id: R1
+      os: ios
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      startup: |
+        hostname R1-Oficina
+        !
+        interface GigabitEthernet0/0
+         description WAN
+         ip address 203.0.113.2 255.255.255.0
+        !
+        interface GigabitEthernet0/1
+         description LAN
+         ip address 192.168.1.1 255.255.255.0
+        !
+        ip route 0.0.0.0 0.0.0.0 203.0.113.1
+        !
+        end
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de la oficina, en: Office PC }
+      position: { x: 660, y: 200 }
+      host:
+        ip: dhcp
+  links:
+    - [ISP:eth0, R1:GigabitEthernet0/0]
+    - [R1:GigabitEthernet0/1, PC1:eth0]
+
+objectives:
+  - id: dhcp
+    text:
+      es: La PC recibe por DHCP una dirección de la mitad alta de la LAN (192.168.1.128 en adelante). De .1 a .127 es para equipos con IP fija.
+      en: The PC gets an address by DHCP from the upper half of the LAN (192.168.1.128 onwards). .1 to .127 is for devices with a fixed IP.
+    check:
+      leaseBound: { server: R1, client: PC1, within: 192.168.1.128/25 }
+    hints:
+      - es: "En IOS el servicio DHCP ya está encendido; falta un pool: `ip dhcp pool` y, dentro, `network` con la red y su máscara."
+        en: "On IOS the DHCP service is already on; what is missing is a pool: `ip dhcp pool` and, inside it, `network` with the network and its mask."
+      - es: El pool reparte en cuanto su red coincide con la de una interfaz; no hay que activarlo en la interfaz.
+        en: The pool starts handing out as soon as its network matches an interface's; there is nothing to turn on at the interface.
+      - es: "Lo que no se debe repartir se excluye en configuración global, no dentro del pool: `ip dhcp excluded-address` con la primera y la última."
+        en: "What must not be handed out is excluded in global configuration, not inside the pool: `ip dhcp excluded-address` with the first and the last."
+  - id: nat
+    text:
+      es: La PC sale a Internet con la IP pública del router.
+      en: The PC reaches the Internet with the router public IP.
+    check:
+      natSourceIs:
+        from: PC1
+        to: 93.184.216.34
+        protocol: tcp
+        port: 443
+        expect: { addressOf: R1:GigabitEthernet0/0 }
+    hints:
+      - es: Para salir, la PC necesita que el DHCP le diga su puerta de enlace (`default-router` en el pool).
+        en: To get out, the PC needs DHCP to tell it its gateway (`default-router` in the pool).
+      - es: "IOS traduce lo que diga una ACL estándar: `access-list 1 permit` con la red de la LAN y su comodín (para una /24, 0.0.0.255)."
+        en: "IOS translates whatever a standard ACL says: `access-list 1 permit` with the LAN network and its wildcard (for a /24, 0.0.0.255)."
+      - es: Cada interfaz tiene que saber de qué lado está (`ip nat inside` en la LAN, `ip nat outside` en la WAN) y luego, en global, `ip nat inside source list 1 interface ... overload`.
+        en: Each interface has to know which side it is on (`ip nat inside` on the LAN, `ip nat outside` on the WAN) and then, in global configuration, `ip nat inside source list 1 interface ... overload`.
+  - id: dns
+    text:
+      es: La PC resuelve example.com a través del router.
+      en: The PC resolves example.com through the router.
+    check:
+      resolves: { from: PC1, name: example.com, via: R1 }
+    hints:
+      - es: La PC pregunta los nombres a quien le diga el DHCP en `dns-server`. Que sea el propio router.
+        en: The PC asks for names to whoever DHCP tells it in `dns-server`. Make it the router itself.
+      - es: El router necesita saber a quién preguntar (`ip name-server`) y aceptar preguntas de la LAN (`ip dns server`).
+        en: The router needs to know whom to ask (`ip name-server`) and to accept questions from the LAN (`ip dns server`).
+
+explanation:
+  es: >-
+    Las tres piezas de una oficina, a la manera de IOS. El DHCP no se activa por interfaz: un
+    pool reparte en la interfaz cuya red coincide con su `network`, y lo que no se debe repartir
+    se excluye en global con `ip dhcp excluded-address` (el router nunca se da a sí mismo).
+    El NAT de salida (PAT) necesita tres cosas: una ACL estándar que diga qué direcciones se
+    traducen, el lado de cada interfaz (`ip nat inside` / `ip nat outside`) y la regla
+    `ip nat inside source list ... interface ... overload`, que usa la IP de la WAN. Si falta
+    cualquiera de las tres, no se traduce nada. El router hace de DNS de la LAN con
+    `ip dns server`.
+  en: >-
+    The three pieces of an office, the IOS way. DHCP is not turned on per interface: a pool
+    hands out on the interface whose network matches its `network`, and what must not be
+    handed out is excluded globally with `ip dhcp excluded-address` (the router never hands out
+    its own address). Outbound NAT (PAT) needs three things: a standard ACL that says which
+    addresses are translated, the side of each interface (`ip nat inside` / `ip nat outside`)
+    and the rule `ip nat inside source list ... interface ... overload`, which uses the WAN IP.
+    If any of the three is missing, nothing is translated. The router acts as the LAN DNS with
+    `ip dns server`.

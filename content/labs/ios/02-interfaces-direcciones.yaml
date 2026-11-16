@@ -1,0 +1,129 @@
+# Ruta "Cisco IOS desde cero", lab 2.
+id: ios-02-interfaces-direcciones
+vendor: ios
+path: ios-desde-cero
+order: 2
+title:
+  es: Interfaces y direcciones IP
+  en: Interfaces and IP addresses
+summary:
+  es: Rotula y enciende la WAN, corrige la dirección que dejó otro técnico y levanta el puerto que apagó.
+  en: Label and bring up the WAN, fix the address another technician left and bring up the port they shut down.
+difficulty: beginner
+minutes: 12
+
+topology:
+  devices:
+    - id: ISP
+      os: internet
+      board: sim-cloud
+      label: { es: Proveedor de Internet, en: Internet provider }
+      position: { x: 100, y: 200 }
+      internet:
+        address: 203.0.113.1/24
+    - id: R1
+      os: ios
+      board: sim-r5
+      label: { es: Router de la oficina, en: Office router }
+      position: { x: 380, y: 200 }
+      # Otro técnico dejó la LAN de ventas en la red equivocada y el puerto de administración apagado.
+      # Gi0/0 no aparece: sigue como sale de fábrica, apagado.
+      startup: |
+        hostname R1-Oficina
+        !
+        interface GigabitEthernet0/1
+         ip address 192.168.10.1 255.255.255.0
+        !
+        interface GigabitEthernet0/2
+         no ip address
+         shutdown
+        !
+        end
+    - id: PC1
+      os: host
+      board: sim-host
+      label: { es: PC de ventas, en: Sales PC }
+      position: { x: 660, y: 120 }
+      host:
+        ip: 192.168.1.10/24
+        gateway: 192.168.1.1
+    - id: PC2
+      os: host
+      board: sim-host
+      label: { es: PC de administración, en: Admin PC }
+      position: { x: 660, y: 290 }
+      host:
+        ip: 192.168.2.10/24
+        gateway: 192.168.2.1
+  links:
+    - [ISP:eth0, R1:GigabitEthernet0/0]
+    - [R1:GigabitEthernet0/1, PC1:eth0]
+    - [R1:GigabitEthernet0/2, PC2:eth0]
+
+objectives:
+  - id: wan
+    text:
+      es: Ponle la descripción WAN a GigabitEthernet0/0 y dale 203.0.113.2/24 para que el router llegue al proveedor (203.0.113.1).
+      en: Give GigabitEthernet0/0 the description WAN and 203.0.113.2/24 so the router reaches the provider (203.0.113.1).
+    check:
+      all:
+        - exists:
+            device: R1
+            collection: interfaces
+            where: { name: GigabitEthernet0/0, comment: WAN }
+        - reachable: { from: R1, to: 203.0.113.1 }
+    hints:
+      - es: La descripción y la dirección se escriben dentro del modo de la interfaz (`R1-Oficina(config-if)#`).
+        en: The description and the address are written inside the interface mode (`R1-Oficina(config-if)#`).
+      - es: "`description WAN` y `ip address 203.0.113.2 255.255.255.0`. IOS no acepta /24: la máscara va entera."
+        en: "`description WAN` and `ip address 203.0.113.2 255.255.255.0`. IOS does not take /24: the mask is written out."
+      - es: Si `ping 203.0.113.1` sigue dando `.....`, mira el estado del puerto con `do show ip interface brief`. Nadie le ha hecho `no shutdown`.
+        en: If `ping 203.0.113.1` still shows `.....`, check the port state with `do show ip interface brief`. Nobody has done `no shutdown` on it.
+  - id: lan
+    text:
+      es: La PC de ventas llega al router por GigabitEthernet0/1 (usa 192.168.1.10/24 y espera la puerta de enlace en .1).
+      en: The sales PC reaches the router over GigabitEthernet0/1 (it uses 192.168.1.10/24 and expects the gateway at .1).
+    check:
+      reachable: { from: PC1, to: 192.168.1.1 }
+    hints:
+      - es: Mira con `show ip interface brief` qué dirección tiene hoy ese puerto.
+        en: Check with `show ip interface brief` which address that port has today.
+      - es: En IOS una `ip address` nueva sustituye a la anterior; no hace falta borrarla antes con `no ip address`.
+        en: In IOS a new `ip address` replaces the previous one; there is no need to remove it first with `no ip address`.
+  - id: admin
+    text:
+      es: La PC de administración llega al router por GigabitEthernet0/2 (usa 192.168.2.10/24 y la puerta de enlace en .1).
+      en: The admin PC reaches the router over GigabitEthernet0/2 (it uses 192.168.2.10/24 and the gateway at .1).
+    check:
+      reachable: { from: PC2, to: 192.168.2.1 }
+    hints:
+      - es: En `show ip interface brief`, `administratively down` quiere decir apagado a mano (o de fábrica).
+        en: In `show ip interface brief`, `administratively down` means shut down by hand (or from the factory).
+      - es: Lo que apagó `shutdown` lo enciende `no shutdown`. Y el puerto también necesita su dirección.
+        en: What `shutdown` turned off, `no shutdown` turns back on. The port also needs its address.
+  - id: pcs
+    text:
+      es: Las dos PC se ven entre sí a través del router.
+      en: The two PCs reach each other through the router.
+    check:
+      reachable: { from: PC1, to: PC2 }
+    hints:
+      - es: Si cada PC llega a su puerta de enlace, el router ya conoce las dos redes (míralo en `show ip route`, son las C).
+        en: If each PC reaches its gateway, the router already knows both networks (see them in `show ip route`, they are the C entries).
+
+explanation:
+  es: >-
+    En IOS cada puerto se configura en su modo, y `show ip interface brief` resume el estado de
+    todos: la dirección, el estado (`administratively down` si está apagado a mano) y el del
+    protocolo. Los puertos de un router salen apagados de fábrica, así que el `no shutdown` es
+    parte de configurar cualquier interfaz; al encenderla, IOS lo avisa con `%LINK` y
+    `%LINEPROTO`. Una dirección nueva sustituye a la anterior y la máscara se escribe entera
+    (255.255.255.0). Las dos PC se ven porque el router enruta entre sus redes conectadas sin
+    que haga falta ninguna ruta.
+  en: >-
+    In IOS each port is configured in its own mode, and `show ip interface brief` sums them all
+    up: the address, the status (`administratively down` when shut down by hand) and the
+    protocol. Router ports ship shut down, so `no shutdown` is part of configuring any
+    interface; when it comes up IOS says so with `%LINK` and `%LINEPROTO`. A new address
+    replaces the old one and the mask is written out (255.255.255.0). The two PCs reach each
+    other because the router routes between its connected networks without needing any route.

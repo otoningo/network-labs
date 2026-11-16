@@ -1,0 +1,178 @@
+# Referencia de comandos de IOS, tema 6: servidor DHCP. Los ejemplos corren en
+# orden sobre el router de práctica (content/sandbox/ios.yaml) después del
+# setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: dhcp
+vendor: ios
+order: 6
+title:
+  es: Servidor DHCP
+  en: DHCP server
+summary:
+  es: Un pool con red, gateway, DNS y duración, las direcciones que no se reparten y cómo ver quién recibió qué.
+  en: A pool with network, gateway, DNS and lease time, the addresses that are not handed out and how to see who got what.
+labs: [ios-04-oficina]
+setup: |
+  enable
+  configure terminal
+  interface GigabitEthernet0/1
+  ip address 192.168.88.1 255.255.255.0
+  no shutdown
+  interface GigabitEthernet0/2
+  ip address 192.168.89.1 255.255.255.0
+  no shutdown
+  end
+
+commands:
+  - id: service-dhcp
+    syntax: service dhcp  |  no service dhcp
+    summary:
+      es: >-
+        El interruptor general del servidor DHCP. Viene encendido de fábrica, por eso no sale
+        en `show running-config`; solo se escribe para volver a encenderlo si alguien lo
+        apagó.
+      en: >-
+        The DHCP server's master switch. It is on from the factory, which is why it does not
+        show in `show running-config`; you only type it to turn it back on if someone turned
+        it off.
+    examples:
+      - command: configure terminal
+      - command: service dhcp
+        note:
+          es: Ya estaba encendido; no cambia nada.
+          en: It was already on; nothing changes.
+    pitfalls:
+      - es: Si un pool bien configurado no reparte nada, busca `no service dhcp` en la configuración.
+        en: If a well configured pool hands out nothing, look for `no service dhcp` in the configuration.
+
+  - id: excluded-address
+    syntax: ip dhcp excluded-address <primera> [<última>]
+    summary:
+      es: >-
+        Aparta direcciones para que el servidor no las reparta nunca: el router, las
+        impresoras, los servidores con IP fija. Va en la configuración global, no dentro del
+        pool, y vale para todos los pools.
+      en: >-
+        Sets addresses aside so the server never hands them out: the router, printers,
+        servers with a fixed IP. It goes in global configuration, not inside the pool, and
+        applies to every pool.
+    args:
+      - name: primera
+        text:
+          es: Primera dirección del rango, o la única si no hay segunda.
+          en: First address of the range, or the only one if there is no second.
+      - name: última
+        text:
+          es: Última dirección del rango, incluida.
+          en: Last address of the range, included.
+    examples:
+      - command: ip dhcp excluded-address 192.168.89.1 192.168.89.99
+        note:
+          es: De .1 a .99 quedan para equipos con IP fija.
+          en: .1 to .99 are kept for devices with a fixed IP.
+      - command: ip dhcp excluded-address 192.168.89.254
+        note:
+          es: Una sola dirección.
+          en: A single address.
+    pitfalls:
+      - es: Excluye antes de crear el pool. Si el pool ya está repartiendo, puede haber entregado una de esas direcciones.
+        en: Exclude before creating the pool. If the pool is already handing out, it may have given away one of those addresses.
+
+  - id: ip-dhcp-pool
+    syntax: ip dhcp pool <nombre>
+    summary:
+      es: >-
+        Crea un pool y entra en su modo (`Router(dhcp-config)#`); si ya existe, entra para
+        editarlo. El router reparte el pool por la interfaz cuya dirección cae en la red del
+        pool; no hay que activarlo en la interfaz.
+      en: >-
+        Creates a pool and enters its mode (`Router(dhcp-config)#`); if it already exists, it
+        enters to edit it. The router serves the pool on the interface whose address falls in
+        the pool's network; there is nothing to turn on at the interface.
+    examples:
+      - command: ip dhcp pool LAN2
+        note:
+          es: El prompt pasa a `Router(dhcp-config)#`.
+          en: The prompt becomes `Router(dhcp-config)#`.
+    pitfalls:
+      - es: El nombre distingue mayúsculas y minúsculas. `ip dhcp pool lan2` crearía otro pool distinto.
+        en: The name is case sensitive. `ip dhcp pool lan2` would create a different pool.
+
+  - id: network
+    syntax: network <red> <máscara>
+    summary:
+      es: >-
+        La red que reparte el pool. Se entregan todas sus direcciones menos las excluidas y
+        las que ya usa el router.
+      en: >-
+        The network the pool hands out. All its addresses are given out except the excluded
+        ones and those the router already uses.
+    examples:
+      - command: network 192.168.89.0 24
+        fails: true
+        note:
+          es: La máscara va completa (255.255.255.0) o como /24 separada, pero nunca como un número suelto.
+          en: The mask goes in full (255.255.255.0) or as a separate /24, but never as a bare number.
+      - command: network 192.168.89.0 255.255.255.0
+    pitfalls:
+      - es: Si la red no coincide con la de ninguna interfaz del router, el pool existe pero no reparte nada.
+        en: If the network does not match any of the router's interfaces, the pool exists but hands out nothing.
+
+  - id: opciones
+    syntax: default-router <ip>  |  dns-server <ip> [<ip>...]  |  lease <días> [<horas> [<minutos>]]
+    summary:
+      es: >-
+        Lo que recibe cada cliente además de su dirección: la puerta de enlace, hasta ocho
+        servidores DNS y la duración del préstamo, que de fábrica es un día.
+      en: >-
+        What each client gets besides its address: the gateway, up to eight DNS servers and
+        the lease time, which is one day from the factory.
+    examples:
+      - command: default-router 192.168.89.1
+        note:
+          es: La dirección del router en esa LAN.
+          en: The router's address on that LAN.
+      - command: dns-server 8.8.8.8 1.1.1.1
+      - command: lease 2
+        note:
+          es: Dos días.
+          en: Two days.
+      - command: lease 0 8
+        note:
+          es: Ocho horas; el primer número son los días.
+          en: Eight hours; the first number is the days.
+      - command: exit
+    pitfalls:
+      - es: Sin `default-router` las PC reciben dirección pero no salen de su red. Es el olvido más común en un pool.
+        en: Without `default-router` the PCs get an address but cannot leave their network. It is the most common slip in a pool.
+      - es: Un `ip dhcp excluded-address` escrito dentro del pool no da error. IOS sale del pool, lo ejecuta en la configuración global y te deja en `Router(config)#`; lo siguiente que escribas para el pool fallará.
+        en: An `ip dhcp excluded-address` typed inside the pool gives no error. IOS leaves the pool, runs it in global configuration and leaves you at `Router(config)#`; whatever you type next for the pool will fail.
+
+  - id: show-ip-dhcp
+    syntax: show ip dhcp pool  |  show ip dhcp binding
+    summary:
+      es: >-
+        `show ip dhcp pool` resume cada pool: su red, cuántas direcciones tiene y cuántas ha
+        prestado. `show ip dhcp binding` lista los préstamos, con la dirección, el cliente y
+        cuándo caduca.
+      en: >-
+        `show ip dhcp pool` summarises each pool: its network, how many addresses it has and
+        how many it has leased. `show ip dhcp binding` lists the leases, with the address,
+        the client and when it expires.
+    examples:
+      - command: do show ip dhcp pool
+      - command: do show ip dhcp binding
+        note:
+          es: La PC por DHCP ya tiene 192.168.89.100, la primera que no está excluida.
+          en: The DHCP PC already has 192.168.89.100, the first one not excluded.
+    pitfalls:
+      - es: Si un cliente no aparece en los préstamos, revisa que su puerto del router esté encendido y que la red del pool coincida con la de la interfaz.
+        en: If a client does not show among the leases, check that its router port is on and that the pool's network matches the interface's.
+
+  - id: no-ip-dhcp-pool
+    syntax: no ip dhcp pool <nombre>
+    summary:
+      es: Borra el pool con toda su configuración. Los clientes conservan su dirección hasta que caduque el préstamo.
+      en: Deletes the pool with all its configuration. Clients keep their address until the lease expires.
+    examples:
+      - command: no ip dhcp pool LAN2
+      - command: end

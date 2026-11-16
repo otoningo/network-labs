@@ -9,6 +9,7 @@ import { fill } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/context';
 import { useLab } from '@/lib/lab/context';
 import { useLabNav } from '@/lib/lab/nav';
+import { topicHref } from '@/lib/systems';
 import { TaskItem } from './worksheet/TaskItem';
 import { useSessionChanges } from './worksheet/useSessionChanges';
 
@@ -117,7 +118,7 @@ function RelatedTopics() {
             </>
           )}
           <Link
-            href={`/${locale}/referencia/${topic.id}`}
+            href={topicHref(locale, topic.system, topic.id)}
             className="whitespace-nowrap text-ink-muted underline decoration-rule-strong underline-offset-4 hover:text-ink hover:decoration-ink"
           >
             {topic.title[locale]}

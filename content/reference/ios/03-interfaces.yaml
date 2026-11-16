@@ -1,0 +1,150 @@
+# Referencia de comandos de IOS, tema 3: interfaces. Los ejemplos corren en
+# orden sobre el router de práctica (content/sandbox/ios.yaml); los marcados
+# con `fails: true` deben fallar, porque enseñan un error típico.
+id: interfaces
+vendor: ios
+order: 3
+title:
+  es: Interfaces
+  en: Interfaces
+summary:
+  es: Entrar en un puerto, describirlo, encenderlo y apagarlo, y ver el estado de todos de un vistazo.
+  en: Entering a port, describing it, turning it on and off, and seeing the state of all of them at a glance.
+labs: [ios-02-interfaces-direcciones]
+
+commands:
+  - id: interface
+    syntax: interface <tipo><número>
+    summary:
+      es: >-
+        Entra en el modo de una interfaz (`Router(config-if)#`), donde se configura ese puerto.
+        El nombre se puede escribir completo, abreviado (`g0/1`) o con un espacio antes del
+        número.
+      en: >-
+        Enters an interface's mode (`Router(config-if)#`), where that port is configured. The
+        name can be written in full, abbreviated (`g0/1`) or with a space before the number.
+    args:
+      - name: tipo
+        text:
+          es: GigabitEthernet en este router. Basta con `g` o `gi`.
+          en: GigabitEthernet on this router. `g` or `gi` is enough.
+      - name: número
+        text:
+          es: Ranura/puerto. Aquí los puertos van del 0/0 al 0/4.
+          en: Slot/port. Here the ports go from 0/0 to 0/4.
+    examples:
+      - command: enable
+      - command: configure terminal
+      - command: interface GigabitEthernet0/1
+      - command: exit
+      - command: interface GigabitEthernet 0/2
+        note:
+          es: Con espacio también vale.
+          en: With a space it works too.
+      - command: exit
+      - command: interface g0/9
+        fails: true
+        note:
+          es: Ese puerto no existe en este equipo; el `^` señala el nombre.
+          en: That port does not exist on this device; the `^` points at the name.
+    pitfalls:
+      - es: La numeración empieza en 0. El primer puerto es GigabitEthernet0/0, no 0/1.
+        en: Numbering starts at 0. The first port is GigabitEthernet0/0, not 0/1.
+      - es: "`show ip interface brief` lista los nombres exactos de los puertos que tiene el equipo."
+        en: "`show ip interface brief` lists the exact names of the ports the device has."
+
+  - id: description
+    syntax: description <texto>  |  no description
+    summary:
+      es: >-
+        Pone una nota a la interfaz para saber qué hay conectado. Puede llevar espacios y
+        llega hasta el final de la línea. No cambia el funcionamiento del puerto.
+      en: >-
+        Puts a note on the interface so you know what is connected. It may contain spaces and
+        runs to the end of the line. It does not change how the port works.
+    examples:
+      - command: interface g0/0
+      - command: description Enlace al proveedor
+      - command: do show running-config | section GigabitEthernet0/0
+        note:
+          es: La descripción sale como primera línea del bloque de la interfaz.
+          en: The description shows as the first line of the interface's block.
+      - command: no description
+    pitfalls:
+      - es: No hacen falta comillas; si las pones, forman parte del texto.
+        en: No quotes needed; if you add them, they become part of the text.
+
+  - id: shutdown
+    syntax: shutdown  |  no shutdown
+    summary:
+      es: >-
+        En un router Cisco todos los puertos salen de fábrica apagados (`administratively
+        down`). `no shutdown` enciende el puerto y `shutdown` lo vuelve a apagar a mano. Al
+        encenderlo con cable, IOS avisa en la consola de que el enlace ha subido.
+      en: >-
+        On a Cisco router every port ships turned off (`administratively down`).
+        `no shutdown` turns the port on and `shutdown` turns it off again by hand. When you
+        turn it on with a cable plugged in, IOS reports on the console that the link came up.
+    examples:
+      - command: no shutdown
+        note:
+          es: GigabitEthernet0/0 tiene cable hacia el proveedor; salen los avisos `%LINK` y `%LINEPROTO` de que sube.
+          en: GigabitEthernet0/0 has a cable to the provider; the `%LINK` and `%LINEPROTO` notices say it came up.
+      - command: shutdown
+        note:
+          es: Vuelve a `administratively down`.
+          en: Back to `administratively down`.
+      - command: no shutdown
+      - command: interface g0/3
+      - command: no shutdown
+        note:
+          es: Sin cable no sale ningún aviso; el puerto queda en `down`, esperando enlace.
+          en: Without a cable no notice shows; the port stays `down`, waiting for a link.
+    pitfalls:
+      - es: El olvido más clásico de IOS es configurarlo todo y no escribir `no shutdown`. Si un puerto no responde, mira primero si sale `administratively down`.
+        en: The most classic IOS slip is configuring everything and not typing `no shutdown`. If a port does not respond, check first whether it shows `administratively down`.
+      - es: Con `shutdown` la dirección IP se conserva, pero la red de esa interfaz desaparece de la tabla de rutas mientras siga apagada.
+        en: With `shutdown` the IP address is kept, but that interface's network leaves the routing table while it stays off.
+
+  - id: show-ip-interface-brief
+    syntax: show ip interface brief
+    summary:
+      es: >-
+        Una línea por interfaz con su dirección IP, su estado (Status) y el del protocolo
+        (Protocol). Es el primer comando para revisar un router.
+      en: >-
+        One line per interface with its IP address, its state (Status) and the protocol's
+        (Protocol). It is the first command to check a router.
+    examples:
+      - command: end
+      - command: show ip interface brief
+        note:
+          es: GigabitEthernet0/0 up/up, 0/3 down/down y el resto administratively down.
+          en: GigabitEthernet0/0 up/up, 0/3 down/down and the rest administratively down.
+      - command: sh ip int br
+        note:
+          es: La forma abreviada de siempre.
+          en: The usual short form.
+    pitfalls:
+      - es: "`administratively down` es que alguien (o la fábrica) la apagó con `shutdown`. `down` a secas es que no hay enlace: falta el cable o el otro extremo está apagado."
+        en: "`administratively down` means someone (or the factory) turned it off with `shutdown`. Plain `down` means there is no link: the cable is missing or the other end is off."
+
+  - id: show-interfaces
+    syntax: show interfaces [<interfaz>]
+    summary:
+      es: >-
+        El detalle de una interfaz, o de todas: estado, dirección MAC, descripción, dirección
+        IP, MTU, dúplex y contadores de paquetes y bytes.
+      en: >-
+        The detail of one interface, or all of them: state, MAC address, description, IP
+        address, MTU, duplex and packet and byte counters.
+    examples:
+      - command: show interfaces GigabitEthernet0/0
+      - command: show interfaces g0/7
+        fails: true
+        note:
+          es: No existe ese puerto.
+          en: That port does not exist.
+    pitfalls:
+      - es: Es `interfaces`, en plural. Abreviado, `sh int g0/0`.
+        en: It is `interfaces`, plural. Abbreviated, `sh int g0/0`.

@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/.next", "!**/coverage", "!**/next-env.d.ts"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/coverage",
+      "!**/next-env.d.ts",
+      "!.impeccable/questions",
+      "!apps/web/public/topology"
+    ]
   },
   "formatter": {
     "enabled": true,

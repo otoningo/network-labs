@@ -30,15 +30,20 @@ export function allTopics(): readonly ReferenceTopic[] {
   return topics;
 }
 
-export const topicById = (id: string): ReferenceTopic | undefined =>
-  allTopics().find((t) => t.id === id);
+/** Temas de un sistema, en orden. */
+export const topicsOf = (system: string): readonly ReferenceTopic[] =>
+  allTopics().filter((t) => t.vendor === system);
+
+/** Un tema de un sistema: los ids solo son únicos dentro de cada sistema. */
+export const topicOf = (system: string, id: string): ReferenceTopic | undefined =>
+  topicsOf(system).find((t) => t.id === id);
 
 /** Temas que enlazan un lab: la pantalla del lab los ofrece como lectura. */
 export const topicsForLab = (labId: string): readonly ReferenceTopic[] =>
   allTopics().filter((t) => t.labs.includes(labId));
 
 /** Router de práctica de un sistema, sin tareas, para probar los ejemplos. */
-export function sandboxLab(vendor: ReferenceTopic['vendor']): LabDefinition {
+export function sandboxLab(vendor: string): LabDefinition {
   const file = join(CONTENT, 'sandbox', `${vendor}.yaml`);
   const parsed = parseLabYaml(readFileSync(file, 'utf8'));
   if (!parsed.ok) throw new Error(`content/sandbox/${vendor}.yaml\n${parsed.error}`);

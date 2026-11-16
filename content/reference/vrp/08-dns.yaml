@@ -1,0 +1,114 @@
+# Referencia de comandos de VRP, tema 8: DNS. Los ejemplos corren en orden
+# sobre el router de práctica (content/sandbox/vrp.yaml) después del setup; los
+# marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: dns
+vendor: vrp
+order: 8
+title:
+  es: DNS
+  en: DNS
+summary:
+  es: Que el router resuelva nombres con los servidores del proveedor y que responda las consultas de la LAN.
+  en: Making the router resolve names with the provider's servers and answer the LAN's queries.
+fromIos:
+  es: >-
+    En IOS bastan `ip domain-lookup` (que viene activo) e `ip name-server`. En VRP el
+    resolvedor del equipo se enciende con `dns resolve` y los servidores se añaden uno por
+    línea con `dns server`. Para que las PC usen el router como DNS, el equivalente de
+    `ip dns server` es `dns proxy enable`: el router recibe sus consultas y las reenvía a sus
+    servidores.
+  en: >-
+    In IOS `ip domain-lookup` (on by default) and `ip name-server` are enough. In VRP the
+    device's resolver is turned on with `dns resolve` and servers are added one per line
+    with `dns server`. For the PCs to use the router as their DNS, the equivalent of
+    `ip dns server` is `dns proxy enable`: the router takes their queries and forwards them
+    to its servers.
+labs: [vrp-04-oficina]
+setup: |
+  system-view
+  interface GigabitEthernet0/0/0
+  ip address 203.0.113.2 24
+  interface GigabitEthernet0/0/1
+  ip address 192.168.88.1 24
+  quit
+  ip route-static 0.0.0.0 0 203.0.113.1
+  return
+
+commands:
+  - id: dns-resolve
+    syntax: dns resolve  |  undo dns resolve
+    summary:
+      es: Enciende el resolvedor del propio router, para poder usar nombres en ping o tracert.
+      en: Turns on the router's own resolver, so names can be used in ping or tracert.
+    examples:
+      - command: ping example.com
+        fails: true
+        note:
+          es: Sin DNS el router no sabe qué dirección tiene ese nombre.
+          en: Without DNS the router does not know which address that name has.
+      - command: system-view
+      - command: dns resolve
+    ios: ip domain-lookup
+    pitfalls:
+      - es: "`undo dns resolve` apaga el resolvedor y con él se van los servidores configurados."
+        en: "`undo dns resolve` turns the resolver off and the configured servers go with it."
+
+  - id: dns-server
+    syntax: dns server <ip>
+    summary:
+      es: Añade un servidor DNS al que preguntar. Cada uno va en su propia línea, hasta seis.
+      en: Adds a DNS server to ask. Each one goes on its own line, up to six.
+    examples:
+      - command: dns server 8.8.8.8
+      - command: dns server 1.1.1.1
+      - command: ping example.com
+        note:
+          es: Ahora el nombre se resuelve y el ping sale hacia 93.184.216.34.
+          en: Now the name resolves and the ping goes to 93.184.216.34.
+    ios: ip name-server 8.8.8.8 1.1.1.1
+    pitfalls:
+      - es: El router tiene que llegar al servidor DNS. Sin ruta por defecto, los nombres no se resuelven aunque todo lo demás esté bien.
+        en: The router has to reach the DNS server. Without a default route, names do not resolve even if everything else is right.
+
+  - id: display-dns-server
+    syntax: display dns server
+    summary:
+      es: Lista los servidores DNS, con S los configurados a mano y D los aprendidos por DHCP.
+      en: Lists the DNS servers, with S for those set by hand and D for those learnt by DHCP.
+    examples:
+      - command: display dns server
+    ios: show hosts
+
+  - id: undo-dns-server
+    syntax: undo dns server <ip>
+    summary:
+      es: Quita un servidor de la lista.
+      en: Removes a server from the list.
+    examples:
+      - command: undo dns server 9.9.9.9
+        fails: true
+        note:
+          es: Ese servidor no está en la lista.
+          en: That server is not in the list.
+      - command: undo dns server 1.1.1.1
+    ios: no ip name-server 1.1.1.1
+
+  - id: dns-proxy
+    syntax: dns proxy enable  |  undo dns proxy enable
+    summary:
+      es: >-
+        Hace que el router responda las consultas DNS de los equipos de la LAN, reenviándolas
+        a sus propios servidores. Así las PC pueden tener el router como DNS.
+      en: >-
+        Makes the router answer DNS queries from the LAN devices, forwarding them to its own
+        servers. That way the PCs can use the router as their DNS.
+    examples:
+      - command: dns proxy enable
+      - command: display current-configuration
+        note:
+          es: El bloque de DNS reúne `dns resolve`, los servidores y `dns proxy enable`.
+          en: The DNS block gathers `dns resolve`, the servers and `dns proxy enable`.
+    ios: ip dns server
+    pitfalls:
+      - es: La PC fija de la práctica usa 192.168.88.1 como DNS. Sin el proxy no resuelve nada, aunque el router sí resuelva.
+        en: The practice static PC uses 192.168.88.1 as its DNS. Without the proxy it resolves nothing, even though the router does.

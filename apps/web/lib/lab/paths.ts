@@ -4,6 +4,7 @@
  * los resúmenes (sin topología ni predicados).
  */
 import type { LabDefinition, LocalizedText } from '@nos/core';
+import { systemRank } from '../systems';
 import { allLabs } from './content';
 
 /** Lo que una lista de labs necesita saber de cada uno. */
@@ -42,7 +43,7 @@ const summaryOf = (lab: LabDefinition): LabSummary => ({
   objectives: lab.objectives.length,
 });
 
-/** Rutas con labs publicados, en el orden de su primer lab. */
+/** Rutas con labs publicados, en el orden de los sistemas (RouterOS, VRP, IOS). */
 export function learningPaths(): readonly LearningPath[] {
   const byPath = new Map<string, LabDefinition[]>();
   for (const lab of allLabs()) {
@@ -51,11 +52,13 @@ export function learningPaths(): readonly LearningPath[] {
     list.push(lab);
     byPath.set(lab.path, list);
   }
-  return [...byPath].map(([id, labs]) => {
-    const sorted = [...labs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const first = sorted[0];
-    return { id, os: first?.vendor ?? 'routeros', labs: sorted.map(summaryOf) };
-  });
+  return [...byPath]
+    .map(([id, labs]): LearningPath => {
+      const sorted = [...labs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const first = sorted[0];
+      return { id, os: first?.vendor ?? 'routeros', labs: sorted.map(summaryOf) };
+    })
+    .sort((a, b) => systemRank(a.os) - systemRank(b.os));
 }
 
 export const pathById = (id: string): LearningPath | undefined =>

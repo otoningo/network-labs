@@ -1,0 +1,238 @@
+# Referencia de comandos de VRP, tema 1: vistas y línea de comandos. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/vrp.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: cli
+vendor: vrp
+order: 1
+title:
+  es: Vistas y línea de comandos
+  en: Views and the command line
+summary:
+  es: Vista de usuario, de sistema y de interfaz, cómo moverse entre ellas, abreviar, leer los errores con ^ y deshacer con undo.
+  en: User, system and interface views, how to move between them, abbreviate, read the ^ errors and undo with undo.
+fromIos:
+  es: >-
+    VRP se parece a IOS más de lo que aparenta, solo cambian los nombres. La vista de
+    usuario (`<Huawei>`, con ángulos) hace el papel del modo privilegiado: desde ella se
+    mira, se hace ping y se guarda. `system-view` equivale a `configure terminal` y lleva a
+    `[Huawei]`, con corchetes. Cada interfaz, pool, ACL o la sección AAA tiene su propia
+    vista, como los submodos de IOS. `quit` sube un nivel (el `exit` de IOS) y `return`
+    vuelve a la vista de usuario (el `end`). Los `show` se llaman `display` y funcionan en
+    cualquier vista, sin `do`. Lo contrario de un comando no se escribe con `no` sino con
+    `undo`.
+  en: >-
+    VRP is closer to IOS than it looks; mostly the names change. The user view
+    (`<Huawei>`, in angle brackets) plays the role of privileged mode: from it you look,
+    ping and save. `system-view` is the equivalent of `configure terminal` and takes you to
+    `[Huawei]`, in square brackets. Every interface, pool, ACL and the AAA section has its
+    own view, like IOS submodes. `quit` goes up one level (IOS `exit`) and `return` goes
+    back to the user view (`end`). The `show` commands are called `display` and work in any
+    view, with no `do`. The opposite of a command is not written with `no` but with `undo`.
+labs: [vrp-01-acceso-inicial]
+
+commands:
+  - id: system-view
+    syntax: system-view
+    summary:
+      es: >-
+        Pasa de la vista de usuario a la de sistema, donde se configura el equipo. El prompt
+        cambia de `<Huawei>` a `[Huawei]`.
+      en: >-
+        Moves from the user view to the system view, where the device is configured. The
+        prompt changes from `<Huawei>` to `[Huawei]`.
+    examples:
+      - command: sysname R1
+        fails: true
+        note:
+          es: En la vista de usuario no se configura nada; el `^` señala el comando que no existe aquí.
+          en: Nothing is configured in the user view; the `^` points at the command that does not exist here.
+      - command: system-view
+        note:
+          es: El prompt pasa a `[Huawei]`.
+          en: The prompt becomes `[Huawei]`.
+    ios: configure terminal
+    pitfalls:
+      - es: Si un comando de configuración da `Unrecognized command`, mira primero el prompt. Con ángulos estás en la vista de usuario.
+        en: If a configuration command gives `Unrecognized command`, look at the prompt first. Angle brackets mean you are in the user view.
+
+  - id: vistas
+    syntax: interface <interfaz>  |  quit  |  return
+    summary:
+      es: >-
+        Desde la vista de sistema se entra en vistas más concretas, como la de una interfaz.
+        `quit` sube un nivel y `return` (o Ctrl+Z) vuelve directamente a la vista de usuario.
+      en: >-
+        From the system view you enter narrower views, such as an interface's. `quit` goes up
+        one level and `return` (or Ctrl+Z) goes straight back to the user view.
+    args:
+      - name: quit
+        text:
+          es: De una subvista a la de sistema; de la de sistema a la de usuario.
+          en: From a subview to the system view; from the system view to the user view.
+      - name: return
+        text:
+          es: Desde cualquier vista de configuración, de vuelta a `<Huawei>`.
+          en: From any configuration view, back to `<Huawei>`.
+    examples:
+      - command: interface GigabitEthernet0/0/1
+        note:
+          es: El prompt pasa a `[Huawei-GigabitEthernet0/0/1]`.
+          en: The prompt becomes `[Huawei-GigabitEthernet0/0/1]`.
+      - command: quit
+        note:
+          es: De vuelta en `[Huawei]`.
+          en: Back in `[Huawei]`.
+      - command: interface GigabitEthernet0/0/1
+      - command: return
+        note:
+          es: De un salto a `<Huawei>`.
+          en: Straight to `<Huawei>`.
+    ios: |-
+      interface GigabitEthernet0/1
+       exit
+      end
+    pitfalls:
+      - es: "`quit` en la vista de usuario no sube a ningún sitio: cierra la sesión. Por consola no pasa nada grave; por Telnet o SSH te desconecta."
+        en: "`quit` in the user view has nowhere to go up to: it closes the session. On the console that is harmless; over Telnet or SSH it disconnects you."
+
+  - id: abreviaturas
+    syntax: <prefijo de cada palabra>  (? muestra opciones, Tab completa)
+    summary:
+      es: >-
+        Cada palabra se puede acortar mientras no sea ambigua: `sys` es `system-view` e
+        `int g0/0/2` es `interface GigabitEthernet0/0/2`. `?` lista lo que puede ir en ese
+        punto y Tab completa la palabra a medias.
+      en: >-
+        Every word can be shortened as long as it is not ambiguous: `sys` is `system-view` and
+        `int g0/0/2` is `interface GigabitEthernet0/0/2`. `?` lists what can go at that point
+        and Tab completes the half-typed word.
+    examples:
+      - command: sys
+        note:
+          es: En la vista de usuario solo `system-view` empieza por `sys`.
+          en: In the user view only `system-view` starts with `sys`.
+      - command: int g0/0/2
+        note:
+          es: "`g` vale por GigabitEthernet. También se acepta con espacio: `interface GigabitEthernet 0/0/2`."
+          en: "`g` stands for GigabitEthernet. A space is also accepted: `interface GigabitEthernet 0/0/2`."
+      - command: d
+        fails: true
+        note:
+          es: Ambiguo, en una interfaz hay description, dhcp y display. Escribe más letras o pulsa Tab.
+          en: Ambiguous, an interface has description, dhcp and display. Type more letters or press Tab.
+      - command: dis
+        fails: true
+        note:
+          es: "`display` necesita saber qué mostrar; el `^` queda al final de la línea."
+          en: "`display` needs to know what to show; the `^` lands at the end of the line."
+    ios: |-
+      conf t
+      int g0/1
+      show ?
+    pitfalls:
+      - es: "`?` pegado a la palabra (`dis?`) muestra las palabras que empiezan así; separado (`display ?`), lo que puede venir después."
+        en: "`?` right after a word (`dis?`) shows the words that start that way; after a space (`display ?`), what can come next."
+
+  - id: errores
+    syntax: "Error: <motivo> found at '^' position."
+    summary:
+      es: >-
+        Cuando VRP no entiende una línea, la repite con un `^` debajo del punto exacto donde
+        se perdió y dice el motivo: comando desconocido, parámetro erróneo, comando
+        incompleto o parámetros de más.
+      en: >-
+        When VRP does not understand a line, it repeats it with a `^` under the exact spot
+        where it got lost and says why: unknown command, wrong parameter, incomplete command
+        or too many parameters.
+    examples:
+      - command: ip adress 192.168.1.1 24
+        fails: true
+        note:
+          es: "`Unrecognized command`: falta una d en address."
+          en: "`Unrecognized command`: address is missing a d."
+      - command: ip address 192.168.1.300 24
+        fails: true
+        note:
+          es: "`Wrong parameter`: la palabra se esperaba, pero el valor no vale. 300 no es un octeto."
+          en: "`Wrong parameter`: the word was expected, but the value is not valid. 300 is not an octet."
+      - command: ip address 192.168.1.1
+        fails: true
+        note:
+          es: "`Incomplete command`: falta la máscara."
+          en: "`Incomplete command`: the mask is missing."
+      - command: ip address 192.168.1.1 24 secundaria
+        fails: true
+        note:
+          es: "`Too many parameters`: sobra la última palabra."
+          en: "`Too many parameters`: the last word is extra."
+    ios: '% Invalid input detected at ''^'' marker.'
+    pitfalls:
+      - es: El `^` apunta a la primera palabra que sobra o falla; todo lo anterior estaba bien escrito.
+        en: The `^` points at the first word that fails or is extra; everything before it was fine.
+
+  - id: undo
+    syntax: undo <comando>
+    summary:
+      es: >-
+        Deshace un comando o lo devuelve a su valor de fábrica. Se escribe el mismo comando con
+        `undo` delante, a veces sin los valores.
+      en: >-
+        Undoes a command or returns it to its factory value. You write the same command with
+        `undo` in front, sometimes without the values.
+    examples:
+      - command: description Pruebas
+      - command: undo description
+        note:
+          es: Sin el texto; basta con decir qué se quita.
+          en: Without the text; saying what to remove is enough.
+    ios: |-
+      description Pruebas
+      no description
+    pitfalls:
+      - es: Por costumbre de IOS se escribe `no`, que en VRP no existe y da `Unrecognized command`.
+        en: Out of IOS habit people type `no`, which does not exist in VRP and gives `Unrecognized command`.
+
+  - id: display-this
+    syntax: display this
+    summary:
+      es: >-
+        Muestra la configuración de la vista en la que estás: en una interfaz, solo esa
+        interfaz; en un pool o una ACL, solo ese bloque. Es la forma rápida de comprobar lo que
+        acabas de escribir.
+      en: >-
+        Shows the configuration of the view you are in: in an interface, just that
+        interface; in a pool or an ACL, just that block. It is the quick way to check what you
+        just typed.
+    examples:
+      - command: display this
+        note:
+          es: Solo el bloque de GigabitEthernet0/0/2.
+          en: Just the GigabitEthernet0/0/2 block.
+      - command: quit
+      - command: display this
+        note:
+          es: En la vista de sistema sale la configuración global.
+          en: In the system view the global configuration is shown.
+    ios: show running-config interface GigabitEthernet0/2
+    pitfalls:
+      - es: Solo lista lo que difiere de fábrica. Una interfaz encendida no muestra `undo shutdown`; una apagada sí muestra `shutdown`.
+        en: It only lists what differs from factory. An enabled interface does not show `undo shutdown`; a disabled one does show `shutdown`.
+
+  - id: comando-de-sistema
+    syntax: '[Huawei-<subvista>] <comando de la vista de sistema>'
+    summary:
+      es: >-
+        Desde una subvista se puede escribir un comando de la vista de sistema sin salir antes:
+        VRP lo ejecuta y te deja en la vista de sistema.
+      en: >-
+        From a subview you can type a system view command without leaving first: VRP runs it
+        and leaves you in the system view.
+    examples:
+      - command: interface g0/0/1
+      - command: sysname Practica
+        note:
+          es: Funciona y el prompt pasa a `[Practica]`, ya fuera de la interfaz.
+          en: It works and the prompt becomes `[Practica]`, already out of the interface.
+    pitfalls:
+      - es: Tras uno de estos comandos ya no estás en la interfaz; lo que escribas después para ella fallará o irá a otro sitio.
+        en: After one of these commands you are no longer in the interface; whatever you type next for it will fail or land elsewhere.

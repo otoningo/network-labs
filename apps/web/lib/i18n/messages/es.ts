@@ -24,8 +24,15 @@ export const es = {
     compare: 'Comparar',
     reference: 'Aprender',
   },
+  systems: {
+    label: 'Sistema',
+    names: { routeros: 'MikroTik RouterOS v7', vrp: 'Huawei VRP', ios: 'Cisco IOS' },
+    vendors: { routeros: 'MikroTik', vrp: 'Huawei', ios: 'Cisco' },
+    short: { routeros: 'RouterOS', vrp: 'VRP', ios: 'IOS' },
+  },
   lab: {
     paths: {
+      'ios-desde-cero': 'Cisco IOS desde cero',
       'mikrotik-desde-cero': 'MikroTik desde cero',
       'vrp-desde-cero': 'Huawei VRP desde cero',
     },
@@ -178,6 +185,8 @@ export const es = {
     practise: 'Se practica en {os}',
     titles: { 'vyos-desde-cero': 'VyOS desde cero' },
     descriptions: {
+      'ios-desde-cero':
+        'El punto de partida de casi todos: modos, interfaces que vienen apagadas, rutas estáticas y la oficina con DHCP, NAT con ACL y DNS. Cuatro labs para empezar desde cero o para repasar.',
       'vrp-desde-cero':
         'Lo mismo en un router Huawei: vistas, direcciones, rutas estáticas y la oficina con DHCP, NAT y DNS. Cuatro labs para quien ya hizo los de MikroTik o viene de IOS.',
       'mikrotik-desde-cero':
@@ -207,11 +216,11 @@ export const es = {
     meta: {
       title: 'Compara sintaxis · Network Labs',
       description:
-        'La misma tarea en MikroTik RouterOS, Huawei VRP, VyOS y Cisco IOS, una al lado de la otra. Las líneas de RouterOS y VRP se comprueban en un simulador.',
+        'La misma tarea en MikroTik RouterOS, Huawei VRP, VyOS y Cisco IOS, una al lado de la otra. Las líneas de RouterOS, VRP e IOS se comprueban en un simulador.',
     },
     title: 'Compara sintaxis',
     intro:
-      'Elige una tarea y mira cómo se escribe en cada sistema. Las líneas de RouterOS y de VRP se ejecutan en el simulador y se comprueban por lo que hace la red; las de VyOS e IOS son citas.',
+      'Elige una tarea y mira cómo se escribe en cada sistema. Las líneas de RouterOS, VRP e IOS se ejecutan en el simulador y se comprueban por lo que hace la red; las de VyOS son citas.',
     ports:
       'En los cuatro, el primer puerto va al proveedor y el segundo a la LAN: ether1 y ether2 en RouterOS, GigabitEthernet0/0/0 y 0/0/1 en VRP, eth0 y eth1 en VyOS, Gi0/0 y Gi0/1 en IOS.',
     tasks: 'Tareas',
@@ -254,7 +263,7 @@ export const es = {
       },
       telnet: {
         title: 'Apagar Telnet',
-        note: 'Telnet viaja en claro. RouterOS y VRP lo traen encendido de fábrica; en IOS se deja solo SSH en las líneas vty.',
+        note: 'Telnet viaja en claro. RouterOS y VRP lo traen encendido de fábrica; en IOS se deja solo SSH en las líneas vty, que aquí tenían Telnet abierto con contraseña.',
       },
     },
     absent: {
@@ -270,7 +279,7 @@ export const es = {
     meta: {
       title: 'Network Labs · Aprende RouterOS desde lo que sabes de IOS',
       description:
-        'Aprende y practica el CLI de MikroTik RouterOS partiendo de lo que ya sabes de Cisco IOS: una referencia de comandos y labs cortos en el navegador que se comprueban por lo que hace la red.',
+        'Aprende y practica el CLI de MikroTik RouterOS, Huawei VRP y Cisco IOS en el navegador, partiendo de lo que ya sabes de IOS: una referencia de comandos por sistema y labs cortos que se comprueban por lo que hace la red.',
     },
     hero: {
       title: 'Ya sabes IOS.',
@@ -295,7 +304,14 @@ export const es = {
     },
     learn: {
       title: 'Aprender',
-      lead: 'Los comandos de RouterOS tema por tema: qué hacen, cómo se escriben, ejemplos que puedes probar y lo que escribirías en IOS.',
+      lead: {
+        routeros:
+          'Los comandos de RouterOS tema por tema: qué hacen, cómo se escriben, ejemplos que puedes probar y lo que escribirías en IOS.',
+        vrp: 'Los comandos de VRP tema por tema: qué hacen, cómo se escriben, ejemplos que puedes probar y lo que escribirías en IOS.',
+        ios: 'Los comandos de IOS tema por tema: qué hacen, cómo se escriben y ejemplos que puedes probar.',
+      },
+      empty:
+        'La referencia de {system} está en preparación. Mientras tanto, la ruta de labs ya está abierta.',
       cta: 'Abrir la referencia',
       compare: 'Compara sintaxis entre sistemas',
     },
@@ -304,6 +320,7 @@ export const es = {
       lead: 'La ruta «{path}»: labs cortos con una tarea real cada uno. La casilla se marca cuando la red lo cumple.',
       cta: 'Ver la ruta completa',
       done: 'terminado',
+      allPaths: 'Todas las rutas',
       upcoming: 'Después viene VyOS.',
     },
   },
@@ -311,12 +328,30 @@ export const es = {
     meta: {
       title: 'Referencia de comandos · Network Labs',
       description:
-        'Los comandos de MikroTik RouterOS v7 tema por tema, con su sintaxis, ejemplos que se prueban en un router simulado y su equivalente en Cisco IOS.',
-      topicTitle: '{title} · Referencia de comandos · Network Labs',
+        'Los comandos de MikroTik RouterOS, Huawei VRP y Cisco IOS tema por tema, con su sintaxis y ejemplos que se prueban en un router simulado.',
+      systemTitle: 'Referencia de {system} · Network Labs',
+      topicTitle: '{title} · {system} · Network Labs',
     },
     title: 'Referencia de comandos',
-    intro:
-      'Los comandos de MikroTik RouterOS v7, tema por tema: qué hace cada uno, cómo se escribe, ejemplos que puedes probar en un router de práctica y lo que escribirías en IOS.',
+    lead: 'Elige un sistema. Cada tema explica qué hace un comando, cómo se escribe y qué suele salir mal, con ejemplos que puedes probar en un router de práctica.',
+    chooseSystem: 'Sistemas',
+    blurb: {
+      routeros:
+        'El de los routers MikroTik: menús como /ip address, propiedades nombre=valor y print para mirar. Cada comando trae su equivalente en IOS.',
+      vrp: 'El de los routers Huawei: vistas parecidas a los modos de IOS, pero con display en vez de show y undo en vez de no. Cada comando trae su equivalente en IOS.',
+      ios: 'El de los routers Cisco: modos EXEC y de configuración, show, no y el clásico no shutdown. La base que las otras dos referencias dan por sabida.',
+    },
+    systemHeading: 'Referencia de {system}',
+    topicNumber: 'Tema {n}',
+    topicCount: { one: '{n} tema', other: '{n} temas' },
+    intro: {
+      routeros:
+        'Los comandos de MikroTik RouterOS v7, tema por tema: qué hace cada uno, cómo se escribe, ejemplos que puedes probar en un router de práctica y lo que escribirías en IOS.',
+      vrp: 'Los comandos de Huawei VRP, tema por tema: qué hace cada uno, cómo se escribe, ejemplos que puedes probar en un router de práctica y lo que escribirías en IOS.',
+      ios: 'Los comandos de Cisco IOS, tema por tema: qué hace cada uno, cómo se escribe y ejemplos que puedes probar en un router de práctica.',
+    },
+    preparing: 'La referencia de {system} está en preparación.',
+    preparingPath: 'Mientras tanto, practícalo en la ruta «{path}»',
     topics: 'Temas',
     compareLink: 'Compara la misma tarea en RouterOS, VRP, VyOS e IOS',
     commands: { one: '{n} comando', other: '{n} comandos' },
@@ -341,9 +376,18 @@ export const es = {
     search: {
       label: 'Buscar un comando',
       placeholder: 'dhcp, nat, show ip route…',
-      hint: 'Vale lo que escribirías en IOS o en RouterOS.',
+      hint: {
+        routeros: 'Vale lo que escribirías en IOS o en RouterOS.',
+        vrp: 'Vale lo que escribirías en IOS o en VRP.',
+        ios: 'Vale el comando o lo que hace: ruta, dhcp, show ip…',
+      },
       found: { one: '{n} comando', other: '{n} comandos' },
-      empty: 'Ningún comando coincide con «{q}». Prueba con otra palabra, en IOS o en RouterOS.',
+      empty: {
+        routeros:
+          'Ningún comando coincide con «{q}». Prueba con otra palabra, en IOS o en RouterOS.',
+        vrp: 'Ningún comando coincide con «{q}». Prueba con otra palabra, en IOS o en VRP.',
+        ios: 'Ningún comando coincide con «{q}». Prueba con otra palabra.',
+      },
       topic: 'Tema {n}. {title}',
       clear: 'Borrar la búsqueda',
     },

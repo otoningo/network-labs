@@ -1,0 +1,274 @@
+# Referencia de comandos de IOS, tema 1: modos y línea de comandos. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/ios.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: cli
+vendor: ios
+order: 1
+title:
+  es: Modos y línea de comandos
+  en: Modes and the command line
+summary:
+  es: Los modos de IOS y cómo moverse entre ellos, abreviar, pedir ayuda, leer los mensajes de error y filtrar la salida.
+  en: The IOS modes and how to move between them, abbreviate, ask for help, read the error messages and filter the output.
+labs: [ios-01-acceso-inicial]
+
+commands:
+  - id: enable
+    syntax: enable  |  disable
+    summary:
+      es: >-
+        Al conectarte llegas al EXEC de usuario (`Router>`), donde solo se pueden hacer
+        consultas básicas. `enable` sube al EXEC privilegiado (`Router#`), desde el que se ve
+        toda la configuración, se guarda y se entra a configurar. `disable` baja de nuevo.
+      en: >-
+        When you connect you land in user EXEC (`Router>`), where only basic checks are
+        possible. `enable` takes you up to privileged EXEC (`Router#`), from which you can see
+        the whole configuration, save and go into configuration. `disable` takes you back
+        down.
+    examples:
+      - command: configure terminal
+        fails: true
+        note:
+          es: Desde `Router>` no se puede configurar; el `^` cae sobre la palabra que no existe en este modo.
+          en: You cannot configure from `Router>`; the `^` lands on the word that does not exist in this mode.
+      - command: enable
+        note:
+          es: El prompt pasa de `>` a `#`.
+          en: The prompt changes from `>` to `#`.
+      - command: disable
+        note:
+          es: De vuelta en `Router>`.
+          en: Back in `Router>`.
+      - command: enable
+    pitfalls:
+      - es: Fíjate siempre en el último carácter del prompt. `>` es EXEC de usuario, `#` es privilegiado y `(config...)#` es algún modo de configuración.
+        en: Always look at the last character of the prompt. `>` is user EXEC, `#` is privileged and `(config...)#` is some configuration mode.
+      - es: Si hay un `enable secret` configurado, `enable` pide esa contraseña. Un router de fábrica no la pide.
+        en: If an `enable secret` is configured, `enable` asks for that password. A factory router does not ask.
+
+  - id: configure-terminal
+    syntax: configure terminal
+    summary:
+      es: >-
+        Desde `Router#` entra en la configuración global, `Router(config)#`. Cada línea que
+        escribas ahí se aplica en el momento a la configuración en marcha; no hay que
+        confirmar nada.
+      en: >-
+        From `Router#` it enters global configuration, `Router(config)#`. Every line you type
+        there is applied at once to the running configuration; there is nothing to confirm.
+    examples:
+      - command: hostname R1
+        fails: true
+        note:
+          es: >-
+            El despiste más común: escribir un comando de configuración en `Router#`. IOS
+            no reconoce el comando y el `^` sale bajo la segunda palabra, no bajo la
+            primera.
+          en: >-
+            The most common slip: typing a configuration command at `Router#`. IOS does not
+            recognise the command and the `^` shows under the second word, not the first.
+      - command: configure terminal
+        note:
+          es: El prompt pasa a `Router(config)#`.
+          en: The prompt becomes `Router(config)#`.
+    pitfalls:
+      - es: Los cambios se aplican al instante pero solo a la configuración en marcha. Si el router se reinicia sin guardar, se pierden (ver el tema de guardar).
+        en: Changes apply instantly but only to the running configuration. If the router restarts without saving, they are lost (see the saving topic).
+
+  - id: submodos
+    syntax: interface <nombre>  |  exit  |  end
+    summary:
+      es: >-
+        Desde la configuración global se entra en submodos más concretos, como el de una
+        interfaz (`Router(config-if)#`). `exit` sube un nivel y `end` (o Ctrl+Z) vuelve de un
+        salto a `Router#`.
+      en: >-
+        From global configuration you enter narrower submodes, such as an interface's
+        (`Router(config-if)#`). `exit` goes up one level and `end` (or Ctrl+Z) jumps straight
+        back to `Router#`.
+    args:
+      - name: exit
+        text:
+          es: De un submodo a la configuración global; de la configuración global a `Router#`.
+          en: From a submode to global configuration; from global configuration to `Router#`.
+      - name: end
+        text:
+          es: Desde cualquier modo de configuración, de vuelta a `Router#`.
+          en: From any configuration mode, back to `Router#`.
+    examples:
+      - command: interface GigabitEthernet0/1
+        note:
+          es: El prompt pasa a `Router(config-if)#`.
+          en: The prompt becomes `Router(config-if)#`.
+      - command: exit
+        note:
+          es: De vuelta en `Router(config)#`.
+          en: Back in `Router(config)#`.
+      - command: interface GigabitEthernet0/1
+      - command: end
+        note:
+          es: De un salto a `Router#`. IOS avisa en la consola de que se ha configurado.
+          en: Straight to `Router#`. IOS notes on the console that it has been configured.
+    pitfalls:
+      - es: "`exit` en `Router#` o en `Router>` no sube a ningún sitio: cierra la sesión. Por consola solo hay que pulsar Enter para volver; por SSH te desconecta."
+        en: "`exit` at `Router#` or `Router>` has nowhere to go up to: it closes the session. On the console you just press Enter to come back; over SSH it disconnects you."
+      - es: Desde un submodo se puede escribir directamente un comando de configuración global (otro `interface`, un `hostname`...). IOS sale solo del submodo y lo ejecuta.
+        en: From a submode you can type a global configuration command directly (another `interface`, a `hostname`...). IOS leaves the submode by itself and runs it.
+
+  - id: abreviaturas
+    syntax: <prefijo de cada palabra>  (? muestra opciones, Tab completa)
+    summary:
+      es: >-
+        Cada palabra se puede acortar mientras ningún otro comando empiece igual: `conf t` es
+        `configure terminal` e `int g0/1` es `interface GigabitEthernet0/1`. `?` lista lo que
+        puede ir en ese punto y Tab completa la palabra a medias.
+      en: >-
+        Every word can be shortened as long as no other command starts the same way:
+        `conf t` is `configure terminal` and `int g0/1` is `interface GigabitEthernet0/1`. `?`
+        lists what can go at that point and Tab completes the half-typed word.
+    examples:
+      - command: conf t
+      - command: int g0/2
+        note:
+          es: "`g` vale por GigabitEthernet. Con espacio también se acepta: `int g 0/2`."
+          en: "`g` stands for GigabitEthernet. A space is also accepted: `int g 0/2`."
+      - command: end
+      - command: c
+        fails: true
+        note:
+          es: "`% Ambiguous command`: en `Router#` hay varios comandos que empiezan por c (configure, copy...). Escribe más letras."
+          en: "`% Ambiguous command`: at `Router#` several commands start with c (configure, copy...). Type more letters."
+      - command: sh ip int br
+        note:
+          es: La forma corta de `show ip interface brief`, de las más tecleadas.
+          en: The short form of `show ip interface brief`, one of the most typed.
+    pitfalls:
+      - es: "`?` pegado a la palabra (`sh?`) lista las palabras que empiezan así; separado (`show ?`), lo que puede venir después. No hace falta pulsar Enter."
+        en: "`?` right after a word (`sh?`) lists the words that start that way; after a space (`show ?`), what can come next. No need to press Enter."
+      - es: Una abreviatura que hoy funciona puede volverse ambigua en otro modo o en otra versión de IOS. En scripts y documentación escribe los comandos completos.
+        en: An abbreviation that works today may become ambiguous in another mode or IOS version. In scripts and documentation, write commands in full.
+
+  - id: errores
+    syntax: "% Invalid input detected at '^' marker.  |  % Incomplete command.  |  % Ambiguous command"
+    summary:
+      es: >-
+        IOS tiene tres respuestas típicas a una línea que no entiende. Con `Invalid input`
+        repite la línea con un `^` debajo del punto exacto donde se perdió. `Incomplete
+        command` dice que faltan palabras al final. `Ambiguous command` dice que una
+        abreviatura vale para más de un comando.
+      en: >-
+        IOS has three typical answers to a line it does not understand. With
+        `Invalid input` it repeats the line with a `^` under the exact spot where it got lost.
+        `Incomplete command` says words are missing at the end. `Ambiguous command` says an
+        abbreviation fits more than one command.
+    examples:
+      - command: conf t
+      - command: hostnme R1
+        fails: true
+        note:
+          es: Falta una a en hostname; el `^` señala la primera letra de la palabra mal escrita.
+          en: hostname is missing an a; the `^` points at the first letter of the misspelt word.
+      - command: interface g0/1
+      - command: ip address 192.168.1.300 255.255.255.0
+        fails: true
+        note:
+          es: La palabra `address` estaba bien, pero 300 no es un octeto válido; el `^` señala la dirección.
+          en: The word `address` was fine, but 300 is not a valid octet; the `^` points at the address.
+      - command: ip address 192.168.1.1
+        fails: true
+        note:
+          es: "`% Incomplete command.`: falta la máscara."
+          en: "`% Incomplete command.`: the mask is missing."
+      - command: end
+    pitfalls:
+      - es: Todo lo que queda a la izquierda del `^` estaba bien escrito. Corrige solo desde ahí.
+        en: Everything to the left of the `^` was fine. Fix only from there on.
+
+  - id: palabra-desconocida
+    syntax: Translating "<palabra>"...domain server (255.255.255.255)
+    summary:
+      es: >-
+        En `Router>` y `Router#`, una sola palabra que no es un comando no da `Invalid input`.
+        IOS cree que es el nombre de un equipo al que quieres conectarte por Telnet, intenta
+        traducirlo por DNS y, tras una espera, se rinde con `Unknown command or computer
+        name`.
+      en: >-
+        At `Router>` and `Router#`, a single word that is not a command does not give
+        `Invalid input`. IOS takes it for the name of a host you want to Telnet to, tries to
+        translate it over DNS and, after a wait, gives up with `Unknown command or computer
+        name`.
+    examples:
+      - command: shwo
+        fails: true
+        note:
+          es: >-
+            Un `show` mal escrito. En un router real la consola se queda bloqueada varios
+            segundos mientras busca un servidor DNS que no existe.
+          en: >-
+            A misspelt `show`. On a real router the console hangs for several seconds while
+            it looks for a DNS server that does not exist.
+    pitfalls:
+      - es: Para que una errata no te bloquee la consola, se suele poner `no ip domain-lookup` en la configuración global (ver el tema de DNS). Ojo, entonces el router tampoco resolverá nombres por DNS.
+        en: To stop a typo from freezing the console, people usually put `no ip domain-lookup` in global configuration (see the DNS topic). Beware, then the router will not resolve names over DNS either.
+      - es: Si la errata va seguida de más palabras (`shwo ip route`), IOS sí responde con `Invalid input`, pero el `^` aparece bajo la segunda palabra.
+        en: If the typo is followed by more words (`shwo ip route`), IOS does answer with `Invalid input`, but the `^` shows under the second word.
+
+  - id: do
+    syntax: do <comando de EXEC>
+    summary:
+      es: >-
+        Los `show`, `ping` y demás comandos de EXEC no existen en los modos de configuración.
+        Con `do` delante se ejecutan sin salir del modo en el que estás.
+      en: >-
+        The `show`, `ping` and other EXEC commands do not exist in the configuration modes.
+        With `do` in front they run without leaving the mode you are in.
+    examples:
+      - command: conf t
+      - command: interface g0/1
+      - command: show ip interface brief
+        fails: true
+        note:
+          es: En un modo de configuración `show` no existe por sí solo.
+          en: In a configuration mode `show` does not exist on its own.
+      - command: do show ip interface brief
+        note:
+          es: Funciona y sigues en `Router(config-if)#`.
+          en: It works and you stay in `Router(config-if)#`.
+      - command: end
+    pitfalls:
+      - es: Con `?` después de `do ` se ven los comandos de EXEC, no los del modo en el que estás.
+        en: With `?` after `do ` you see the EXEC commands, not those of the mode you are in.
+
+  - id: filtros
+    syntax: <comando show> | include|exclude|begin|section <texto>
+    summary:
+      es: >-
+        Una barra vertical detrás de un `show` filtra su salida. `include` deja las líneas que
+        contienen el texto, `exclude` quita las que lo contienen, `begin` empieza en la
+        primera que lo contiene y `section` muestra los bloques completos cuya cabecera lo
+        contiene.
+      en: >-
+        A vertical bar after a `show` filters its output. `include` keeps the lines that
+        contain the text, `exclude` drops those that contain it, `begin` starts at the first
+        line that contains it and `section` shows the full blocks whose header contains it.
+    examples:
+      - command: show running-config | include hostname
+        note:
+          es: Una sola línea, `hostname Router`.
+          en: A single line, `hostname Router`.
+      - command: show running-config | section interface
+        note:
+          es: Solo los bloques `interface`, con sus líneas sangradas.
+          en: Only the `interface` blocks, with their indented lines.
+      - command: show ip interface brief | exclude unassigned
+        note:
+          es: Las interfaces que tienen dirección IP; aquí aún ninguna, solo la cabecera.
+          en: The interfaces that have an IP address; none yet here, just the header.
+      - command: show running-config | inclde hostname
+        fails: true
+        note:
+          es: El nombre del filtro también se puede abreviar, pero no escribir mal.
+          en: The filter name can be abbreviated too, but not misspelt.
+    pitfalls:
+      - es: El filtro distingue mayúsculas y minúsculas. `| include Hostname` no encuentra `hostname`.
+        en: The filter is case sensitive. `| include Hostname` does not find `hostname`.

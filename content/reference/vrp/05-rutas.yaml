@@ -1,0 +1,211 @@
+# Referencia de comandos de VRP, tema 5: rutas estáticas. Los ejemplos corren
+# en orden sobre el router de práctica (content/sandbox/vrp.yaml) después del
+# setup; los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: rutas
+vendor: vrp
+order: 5
+title:
+  es: Rutas estáticas
+  en: Static routes
+summary:
+  es: Rutas hacia otras redes, la ruta por defecto, rutas de respaldo con preferencia y cómo leer la tabla de rutas.
+  en: Routes to other networks, the default route, backup routes with preference and how to read the routing table.
+fromIos:
+  es: >-
+    `ip route` se llama `ip route-static` y admite la máscara como longitud
+    (`ip route-static 10.20.0.0 16 192.168.88.20`). La distancia administrativa se llama
+    preferencia, va con la palabra `preference` y vale 60 para las estáticas, no 1. Las
+    directas tienen 0, igual que en IOS. `show ip route` es `display ip routing-table`, y
+    `null0` se escribe `NULL0`.
+  en: >-
+    `ip route` is called `ip route-static` and accepts the mask as a length
+    (`ip route-static 10.20.0.0 16 192.168.88.20`). Administrative distance is called
+    preference, goes with the word `preference` and is 60 for static routes, not 1. Direct
+    routes have 0, as in IOS. `show ip route` is `display ip routing-table`, and `null0` is
+    written `NULL0`.
+labs: [vrp-03-rutas-estaticas]
+setup: |
+  system-view
+  interface GigabitEthernet0/0/0
+  ip address 203.0.113.2 24
+  interface GigabitEthernet0/0/1
+  ip address 192.168.88.1 24
+  return
+
+commands:
+  - id: route-static
+    syntax: ip route-static <destino> <máscara|longitud> <siguiente salto>
+    summary:
+      es: >-
+        Añade una ruta hacia una red por un siguiente salto, que debe estar en una red
+        directamente conectada. Va en la vista de sistema.
+      en: >-
+        Adds a route to a network through a next hop, which must be on a directly connected
+        network. It goes in the system view.
+    args:
+      - name: destino
+        text:
+          es: La red de destino. Si escribes una dirección con bits de host, VRP guarda la red.
+          en: The destination network. If you type an address with host bits, VRP stores the network.
+      - name: máscara|longitud
+        text:
+          es: 255.255.0.0 o 16.
+          en: 255.255.0.0 or 16.
+      - name: siguiente salto
+        text:
+          es: La IP del router vecino, no la tuya.
+          en: The neighbour router's IP, not yours.
+    examples:
+      - command: system-view
+      - command: ip route-static 10.10.0.0 255.255.0.0 192.168.88.20
+      - command: ip route-static 10.20.0.0 16 192.168.88.20
+        note:
+          es: Lo mismo con la máscara como longitud.
+          en: The same with the mask as a length.
+    ios: |-
+      ip route 10.10.0.0 255.255.0.0 192.168.88.20
+      ip route 10.20.0.0 255.255.0.0 192.168.88.20
+    pitfalls:
+      - es: Una ruta en un router no basta. El otro extremo necesita la ruta de vuelta, o el ping sale y la respuesta se pierde.
+        en: A route on one router is not enough. The far end needs the route back, or the ping goes out and the reply gets lost.
+
+  - id: ruta-por-defecto
+    syntax: ip route-static 0.0.0.0 0 <siguiente salto>
+    summary:
+      es: La ruta para todo lo que no tenga una más concreta, normalmente hacia el proveedor.
+      en: The route for everything without a more specific one, usually towards the provider.
+    examples:
+      - command: ip route-static 0.0.0.0 0 203.0.113.1
+      - command: ip route-static 0.0.0.0 0.0.0.0 203.0.113.1
+        note:
+          es: Es la misma ruta con la máscara larga; no se crea otra.
+          en: It is the same route with the long mask; no new one is created.
+    ios: ip route 0.0.0.0 0.0.0.0 203.0.113.1
+    pitfalls:
+      - es: Con la ruta por defecto el router llega a Internet, pero las PC de la LAN además necesitan NAT para que las respuestas vuelvan.
+        en: With the default route the router reaches the Internet, but the LAN PCs also need NAT for the replies to come back.
+
+  - id: interfaz-de-salida
+    syntax: ip route-static <destino> <máscara|longitud> <interfaz> [<siguiente salto>]  |  … NULL0
+    summary:
+      es: >-
+        Además del siguiente salto se puede fijar la interfaz de salida. Con `NULL0` y sin
+        siguiente salto, lo que vaya a esa red se descarta.
+      en: >-
+        Besides the next hop you can pin the outgoing interface. With `NULL0` and no next hop,
+        whatever goes to that network is dropped.
+    examples:
+      - command: ip route-static 172.16.0.0 12 GigabitEthernet0/0/0 203.0.113.1
+      - command: ip route-static 10.0.0.0 8 NULL0
+        note:
+          es: Descarta lo dirigido a 10.0.0.0/8 que no tenga una ruta más concreta, como 10.10.0.0/16.
+          en: Drops traffic for 10.0.0.0/8 without a more specific route, such as 10.10.0.0/16.
+    ios: |-
+      ip route 172.16.0.0 255.240.0.0 GigabitEthernet0/0 203.0.113.1
+      ip route 10.0.0.0 255.0.0.0 Null0
+    pitfalls:
+      - es: En Ethernet conviene poner siempre el siguiente salto; solo con la interfaz, el router tiene que preguntar por ARP cada destino.
+        en: On Ethernet always give the next hop; with just the interface, the router has to ARP for every destination.
+
+  - id: preference
+    syntax: ip route-static <destino> <máscara|longitud> <siguiente salto> preference <1-255>
+    summary:
+      es: >-
+        Cambia la preferencia de la ruta (60 por defecto). A igual destino gana la de número
+        más bajo; una ruta con número alto queda de respaldo, inactiva hasta que falle la otra.
+      en: >-
+        Changes the route's preference (60 by default). For the same destination the lower
+        number wins; a route with a high number stays as a backup, inactive until the other
+        one fails.
+    examples:
+      - command: ip route-static 0.0.0.0 0 192.168.88.254 preference 100
+        note:
+          es: Ruta por defecto de respaldo por la LAN.
+          en: Backup default route through the LAN.
+      - command: display ip routing-table protocol static
+        note:
+          es: La de preferencia 100 aparece en el apartado Inactive.
+          en: The preference 100 route shows in the Inactive section.
+    ios: ip route 0.0.0.0 0.0.0.0 192.168.88.254 100
+    pitfalls:
+      - es: En IOS el número va suelto al final; en VRP hace falta la palabra `preference` delante.
+        en: In IOS the number goes bare at the end; in VRP the word `preference` must come first.
+
+  - id: route-static-errores
+    syntax: ip route-static <destino> <máscara|longitud> <siguiente salto>
+    summary:
+      es: Errores típicos al añadir rutas, con la respuesta del equipo.
+      en: Typical mistakes when adding routes, with the device's answer.
+    examples:
+      - command: ip route-static 10.30.0.0 16 192.168.88.1
+        fails: true
+        note:
+          es: 192.168.88.1 es la dirección del propio router; el siguiente salto tiene que ser el vecino.
+          en: 192.168.88.1 is the router's own address; the next hop has to be the neighbour.
+      - command: ip route-static 10.30.0.0 16
+        fails: true
+        note:
+          es: Falta por dónde ir, el siguiente salto o la interfaz.
+          en: It is missing where to go, the next hop or the interface.
+      - command: ip route-static 10.30.0.0 16 GigabitEthernet0/0/9 192.168.88.20
+        fails: true
+        note:
+          es: Esa interfaz no existe.
+          en: That interface does not exist.
+
+  - id: display-ip-routing-table
+    syntax: display ip routing-table [protocol static]
+    summary:
+      es: >-
+        Muestra la tabla de rutas activas: destino, protocolo, preferencia, flags, siguiente
+        salto e interfaz. Con `protocol static` solo las estáticas, separadas en activas e
+        inactivas.
+      en: >-
+        Shows the table of active routes: destination, protocol, preference, flags, next hop
+        and interface. With `protocol static` just the static ones, split into active and
+        inactive.
+    args:
+      - name: Flags
+        text:
+          es: D, la ruta está en la tabla de reenvío. R, el siguiente salto se resolvió a través de otra ruta.
+          en: D, the route is in the forwarding table. R, the next hop was resolved through another route.
+    examples:
+      - command: display ip routing-table
+        note:
+          es: Cada red directa ocupa tres filas, la red, la dirección propia /32 y la de difusión /32.
+          en: Each direct network takes three rows, the network, the own address /32 and the broadcast /32.
+      - command: display ip routing-table protocol static
+    ios: |-
+      show ip route
+      show ip route static
+    pitfalls:
+      - es: La tabla general solo enseña rutas activas. Si una estática no aparece, búscala con `protocol static`, en el apartado Inactive.
+        en: The main table only shows active routes. If a static route is missing, look for it with `protocol static`, in the Inactive section.
+
+  - id: undo-route-static
+    syntax: undo ip route-static <destino> <máscara|longitud> [<interfaz>] [<siguiente salto>]
+    summary:
+      es: >-
+        Borra rutas. Con el destino y la máscara solo, borra todas las de ese destino; con el
+        siguiente salto o la interfaz, solo esa.
+      en: >-
+        Deletes routes. With just the destination and mask, it deletes every route to that
+        destination; with the next hop or the interface, just that one.
+    examples:
+      - command: undo ip route-static 10.0.0.0 8 NULL0
+      - command: undo ip route-static 0.0.0.0 0 192.168.88.254
+        note:
+          es: Quita solo la de respaldo; la ruta por defecto principal sigue.
+          en: It removes only the backup; the main default route stays.
+      - command: undo ip route-static 10.20.0.0 16
+      - command: undo ip route-static 10.20.0.0 16
+        fails: true
+        note:
+          es: Ya no queda ninguna ruta a ese destino.
+          en: There is no route to that destination left.
+    ios: |-
+      no ip route 10.0.0.0 255.0.0.0 Null0
+      no ip route 10.20.0.0 255.255.0.0
+    pitfalls:
+      - es: "`undo ip route-static 0.0.0.0 0` sin siguiente salto borra todas las rutas por defecto, también la de respaldo."
+        en: "`undo ip route-static 0.0.0.0 0` without a next hop deletes every default route, the backup one too."

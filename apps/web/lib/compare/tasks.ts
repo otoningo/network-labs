@@ -21,18 +21,19 @@ export type CompareTaskId =
   | 'telnet';
 
 /** Sistemas con simulador: sus líneas se ejecutan y se comprueban. */
-export type SimulatedOs = 'routeros' | 'vrp';
+export type SimulatedOs = 'routeros' | 'vrp' | 'ios';
 /** Sistemas que solo se citan. */
-export type QuotedOs = 'vyos' | 'ios';
+export type QuotedOs = 'vyos';
 export type CompareOs = SimulatedOs | QuotedOs;
 
-export const COMPARE_OS: readonly CompareOs[] = ['routeros', 'vrp', 'vyos', 'ios'];
+export const COMPARE_OS: readonly CompareOs[] = ['routeros', 'vrp', 'ios', 'vyos'];
 
 /** Nombres de los dos puertos del router en cada sistema simulado. */
 export const PORTS: Readonly<Record<SimulatedOs, { readonly wan: string; readonly lan: string }>> =
   {
     routeros: { wan: 'ether1', lan: 'ether2' },
     vrp: { wan: 'GigabitEthernet0/0/0', lan: 'GigabitEthernet0/0/1' },
+    ios: { wan: 'GigabitEthernet0/0', lan: 'GigabitEthernet0/1' },
   };
 
 export interface CompareTask {
@@ -72,68 +73,83 @@ const VRP_NAT = [
   'quit',
 ];
 
-// ── Citas de VyOS e IOS ─────────────────────────────────────────────────────
+// El arranque de IOS entra solo en configuración y levanta las interfaces que nombra.
+const IOS_LAN = ['interface GigabitEthernet0/1', ' ip address 192.168.88.1 255.255.255.0'];
+const IOS_WAN = ['interface GigabitEthernet0/0', ' ip address 203.0.113.2 255.255.255.0'];
+const IOS_ROUTE = ['ip route 0.0.0.0 0.0.0.0 203.0.113.1'];
+const IOS_NAT = [
+  'interface GigabitEthernet0/0',
+  ' ip nat outside',
+  'interface GigabitEthernet0/1',
+  ' ip nat inside',
+  'access-list 1 permit 192.168.88.0 0.0.0.255',
+  'ip nat inside source list 1 interface GigabitEthernet0/0 overload',
+];
+/** Telnet abierto: sin contraseña en las vty, IOS de fábrica no deja entrar por Telnet. */
+const IOS_TELNET = ['line vty 0 4', ' password cisco', ' login', ' transport input all'];
+
+// ── Citas de VyOS ─────────────────────────────────────────────────────
 
 const vy = (command: string): QuotedLine => ({ prompt: 'vyos@R1# ', command });
 const vyCommit: readonly QuotedLine[] = [vy('commit'), vy('save')];
-const ios = (mode: string, command: string): QuotedLine => ({ prompt: `R1${mode}# `, command });
-const conf = (command: string) => ios('(config)', command);
-const confIf = (command: string) => ios('(config-if)', command);
 
 export const COMPARE_TASKS: readonly CompareTask[] = [
   {
     id: 'hostname',
     pc: 'static',
-    setup: { routeros: [], vrp: [] },
+    setup: { routeros: [], vrp: [], ios: [] },
     simulated: {
       routeros: ['/system identity set name=R1'],
       vrp: ['system-view', 'sysname R1'],
+      ios: ['enable', 'configure terminal', 'hostname R1'],
     },
     quoted: {
       vyos: [{ prompt: 'vyos@vyos# ', command: 'set system host-name R1' }, ...vyCommit],
-      ios: [
-        { prompt: 'Router# ', command: 'configure terminal' },
-        { prompt: 'Router(config)# ', command: 'hostname R1' },
-      ],
     },
     check: () => ({ setting: { device: 'R1', key: 'system', field: 'identity', is: 'R1' } }),
   },
   {
     id: 'address',
     pc: 'static',
-    setup: { routeros: [], vrp: [] },
+    setup: { routeros: [], vrp: [], ios: [] },
     simulated: {
       routeros: [ROS_LAN],
       vrp: ['system-view', 'interface GigabitEthernet0/0/1', 'ip address 192.168.88.1 24'],
+      ios: [
+        'enable',
+        'configure terminal',
+        'interface GigabitEthernet0/1',
+        'ip address 192.168.88.1 255.255.255.0',
+        'no shutdown',
+      ],
     },
     quoted: {
       vyos: [vy('set interfaces ethernet eth1 address 192.168.88.1/24'), ...vyCommit],
-      ios: [
-        conf('interface GigabitEthernet0/1'),
-        confIf('ip address 192.168.88.1 255.255.255.0'),
-        confIf('no shutdown'),
-      ],
     },
     check: () => ({ reachable: { from: 'PC1', to: '192.168.88.1' } }),
   },
   {
     id: 'route',
     pc: 'static',
-    setup: { routeros: [ROS_LAN, ROS_WAN], vrp: [...VRP_LAN, ...VRP_WAN] },
+    setup: {
+      routeros: [ROS_LAN, ROS_WAN],
+      vrp: [...VRP_LAN, ...VRP_WAN],
+      ios: [...IOS_LAN, ...IOS_WAN],
+    },
     simulated: {
       routeros: [ROS_ROUTE],
       vrp: ['system-view', 'ip route-static 0.0.0.0 0 203.0.113.1'],
+      ios: ['enable', 'configure terminal', 'ip route 0.0.0.0 0.0.0.0 203.0.113.1'],
     },
     quoted: {
       vyos: [vy('set protocols static route 0.0.0.0/0 next-hop 203.0.113.1'), ...vyCommit],
-      ios: [conf('ip route 0.0.0.0 0.0.0.0 203.0.113.1')],
     },
     check: () => ({ reachable: { from: 'R1', to: '93.184.216.34' } }),
   },
   {
     id: 'dhcp',
     pc: 'dhcp',
-    setup: { routeros: [ROS_LAN], vrp: VRP_LAN },
+    setup: { routeros: [ROS_LAN], vrp: VRP_LAN, ios: IOS_LAN },
     simulated: {
       routeros: [
         '/ip pool add name=lan ranges=192.168.88.10-192.168.88.254',
@@ -150,6 +166,15 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
         'quit',
         'interface GigabitEthernet0/0/1',
         'dhcp select global',
+      ],
+      ios: [
+        'enable',
+        'configure terminal',
+        'ip dhcp excluded-address 192.168.88.1',
+        'ip dhcp pool LAN',
+        'network 192.168.88.0 255.255.255.0',
+        'default-router 192.168.88.1',
+        'dns-server 192.168.88.1',
       ],
     },
     quoted: {
@@ -169,20 +194,17 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
         ),
         ...vyCommit,
       ],
-      ios: [
-        conf('ip dhcp excluded-address 192.168.88.1'),
-        conf('ip dhcp pool LAN'),
-        ios('(dhcp-config)', 'network 192.168.88.0 255.255.255.0'),
-        ios('(dhcp-config)', 'default-router 192.168.88.1'),
-        ios('(dhcp-config)', 'dns-server 192.168.88.1'),
-      ],
     },
     check: () => ({ leaseBound: { server: 'R1', client: 'PC1', within: '192.168.88.0/24' } }),
   },
   {
     id: 'nat',
     pc: 'static',
-    setup: { routeros: [ROS_LAN, ROS_WAN, ROS_ROUTE], vrp: [...VRP_LAN, ...VRP_WAN, ...VRP_ROUTE] },
+    setup: {
+      routeros: [ROS_LAN, ROS_WAN, ROS_ROUTE],
+      vrp: [...VRP_LAN, ...VRP_WAN, ...VRP_ROUTE],
+      ios: [...IOS_LAN, ...IOS_WAN, ...IOS_ROUTE],
+    },
     simulated: {
       routeros: [ROS_NAT],
       vrp: [
@@ -193,6 +215,17 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
         'interface GigabitEthernet0/0/0',
         'nat outbound 2000',
       ],
+      ios: [
+        'enable',
+        'configure terminal',
+        'interface GigabitEthernet0/0',
+        'ip nat outside',
+        'interface GigabitEthernet0/1',
+        'ip nat inside',
+        'exit',
+        'access-list 1 permit 192.168.88.0 0.0.0.255',
+        'ip nat inside source list 1 interface GigabitEthernet0/0 overload',
+      ],
     },
     quoted: {
       vyos: [
@@ -200,15 +233,6 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
         vy('set nat source rule 100 source address 192.168.88.0/24'),
         vy('set nat source rule 100 translation address masquerade'),
         ...vyCommit,
-      ],
-      ios: [
-        conf('interface GigabitEthernet0/0'),
-        confIf('ip nat outside'),
-        confIf('interface GigabitEthernet0/1'),
-        confIf('ip nat inside'),
-        confIf('exit'),
-        conf('access-list 1 permit 192.168.88.0 0.0.0.255'),
-        conf('ip nat inside source list 1 interface GigabitEthernet0/0 overload'),
       ],
     },
     check: ({ wan }) => ({
@@ -227,10 +251,12 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
     setup: {
       routeros: [ROS_LAN, ROS_WAN, ROS_ROUTE, ROS_NAT],
       vrp: [...VRP_LAN, ...VRP_WAN, ...VRP_ROUTE, ...VRP_NAT],
+      ios: [...IOS_LAN, ...IOS_WAN, ...IOS_ROUTE, ...IOS_NAT],
     },
     simulated: {
       routeros: ['/ip dns set servers=1.1.1.1 allow-remote-requests=yes'],
       vrp: ['system-view', 'dns resolve', 'dns server 1.1.1.1', 'dns proxy enable'],
+      ios: ['enable', 'configure terminal', 'ip dns server', 'ip name-server 1.1.1.1'],
     },
     quoted: {
       vyos: [
@@ -239,14 +265,13 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
         vy('set service dns forwarding name-server 1.1.1.1'),
         ...vyCommit,
       ],
-      ios: [conf('ip dns server'), conf('ip name-server 1.1.1.1'), conf('ip domain lookup')],
     },
     check: () => ({ resolves: { from: 'PC1', name: 'example.com', via: 'R1' } }),
   },
   {
     id: 'user',
     pc: 'static',
-    setup: { routeros: [], vrp: [] },
+    setup: { routeros: [], vrp: [], ios: [] },
     simulated: {
       routeros: ['/user add name=soporte group=full password=Cl4ve-Segura'],
       vrp: [
@@ -256,13 +281,13 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
         'local-user soporte privilege level 15',
         'local-user soporte service-type ssh',
       ],
+      ios: ['enable', 'configure terminal', 'username soporte privilege 15 secret Cl4ve-Segura'],
     },
     quoted: {
       vyos: [
         vy('set system login user soporte authentication plaintext-password Cl4ve-Segura'),
         ...vyCommit,
       ],
-      ios: [conf('username soporte privilege 15 secret Cl4ve-Segura')],
     },
     check: () => ({
       exists: { device: 'R1', collection: 'users', where: { name: 'soporte', hasPassword: true } },
@@ -271,15 +296,15 @@ export const COMPARE_TASKS: readonly CompareTask[] = [
   {
     id: 'telnet',
     pc: 'static',
-    setup: { routeros: [ROS_LAN], vrp: VRP_LAN },
+    setup: { routeros: [ROS_LAN], vrp: VRP_LAN, ios: [...IOS_LAN, ...IOS_TELNET] },
     simulated: {
       routeros: ['/ip service disable telnet'],
       vrp: ['system-view', 'undo telnet server enable'],
+      ios: ['enable', 'configure terminal', 'line vty 0 4', 'transport input ssh'],
     },
     quoted: {
       // VyOS no trae servidor Telnet: no hay nada que apagar (la página lo explica).
       vyos: [],
-      ios: [conf('line vty 0 4'), ios('(config-line)', 'transport input ssh')],
     },
     check: () => ({
       all: [

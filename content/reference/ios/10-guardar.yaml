@@ -1,0 +1,132 @@
+# Referencia de comandos de IOS, tema 10: guardar la configuración. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/ios.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: guardar
+vendor: ios
+order: 10
+title:
+  es: Guardar la configuración
+  en: Saving the configuration
+summary:
+  es: La configuración en marcha y la de arranque, cómo pasar una a la otra, compararlas y borrar lo guardado.
+  en: The running and the startup configuration, how to copy one to the other, compare them and erase what is saved.
+labs: [ios-01-acceso-inicial]
+
+commands:
+  - id: write-memory
+    syntax: write memory
+    summary:
+      es: >-
+        Todo lo que escribes cambia la configuración en marcha, que vive en la memoria y se
+        pierde al reiniciar. `write memory` la copia a la de arranque (startup-config), la que
+        el router carga al encenderse. Responde `[OK]` y no pregunta nada.
+      en: >-
+        Everything you type changes the running configuration, which lives in memory and is
+        lost on restart. `write memory` copies it to the startup one (startup-config), which
+        the router loads when it boots. It answers `[OK]` and asks nothing.
+    examples:
+      - command: enable
+      - command: show startup-config
+        note:
+          es: "`startup-config is not present`: un router de fábrica no tiene nada guardado."
+          en: "`startup-config is not present`: a factory router has nothing saved."
+      - command: configure terminal
+      - command: hostname R1-Oficina
+      - command: write memory
+        fails: true
+        note:
+          es: En configuración no existe; se escribe desde `Router#` (o con `do` delante).
+          en: It does not exist in configuration; it is typed from `Router#` (or with `do` in front).
+      - command: end
+      - command: write memory
+        note:
+          es: "`Building configuration...` y `[OK]`."
+          en: "`Building configuration...` and `[OK]`."
+      - command: show startup-config
+        note:
+          es: Ahora sale con `hostname R1-Oficina`.
+          en: Now it shows with `hostname R1-Oficina`.
+    pitfalls:
+      - es: Guarda al terminar un cambio que funciona, no a mitad. Si algo sale mal, reiniciar sin guardar te devuelve a lo último guardado.
+        en: Save once a change works, not halfway. If something goes wrong, restarting without saving takes you back to the last saved state.
+      - es: Se abrevia `wr`. Es tan corto que se vuelve costumbre escribirlo tras cada cambio.
+        en: It abbreviates to `wr`. It is so short it becomes a habit to type it after every change.
+
+  - id: copy-run-start
+    syntax: copy running-config startup-config
+    summary:
+      es: >-
+        Hace lo mismo que `write memory`, pero antes pregunta el nombre del destino y ofrece
+        `startup-config` entre corchetes. Enter acepta lo que hay entre corchetes.
+      en: >-
+        Does the same as `write memory`, but first asks for the destination name and offers
+        `startup-config` in brackets. Enter accepts what is in the brackets.
+    examples:
+      - command: copy running-config startup-config
+        note:
+          es: Pregunta `Destination filename [startup-config]?`.
+          en: It asks `Destination filename [startup-config]?`.
+      - command: startup-config
+        note:
+          es: Escribir el nombre es lo mismo que pulsar Enter. Responde `[OK]`.
+          en: Typing the name is the same as pressing Enter. It answers `[OK]`.
+      - command: copy run start
+        note:
+          es: La forma abreviada, la más tecleada.
+          en: The short form, the most typed.
+      - command: startup-config
+    pitfalls:
+      - es: Mientras espera la respuesta, lo que escribas en la línea siguiente se toma como nombre del destino, no como comando.
+        en: While it waits for the answer, whatever you type on the next line is taken as the destination name, not as a command.
+
+  - id: comparar
+    syntax: show running-config  |  show startup-config
+    summary:
+      es: >-
+        Comparar las dos dice si hay cambios sin guardar. Un cambio aparece en la
+        configuración en marcha al momento y en la de arranque solo tras guardar.
+      en: >-
+        Comparing both tells you whether there are unsaved changes. A change shows in the
+        running configuration at once and in the startup one only after saving.
+    examples:
+      - command: configure terminal
+      - command: hostname R2-Oficina
+      - command: end
+      - command: show running-config | include hostname
+        note:
+          es: "`hostname R2-Oficina`."
+          en: "`hostname R2-Oficina`."
+      - command: show startup-config | include hostname
+        note:
+          es: La guardada sigue con `hostname R1-Oficina`.
+          en: The saved one still has `hostname R1-Oficina`.
+
+  - id: erase-startup-config
+    syntax: erase startup-config
+    summary:
+      es: >-
+        Borra la configuración guardada. Pide confirmación con `[confirm]`: Enter o y borran,
+        n cancela. La configuración en marcha no cambia; el router volverá a estar de fábrica
+        en el próximo arranque.
+      en: >-
+        Erases the saved configuration. It asks for confirmation with `[confirm]`: Enter or y
+        erase, n cancels. The running configuration does not change; the router will be back
+        to factory on the next boot.
+    examples:
+      - command: erase startup-config
+      - command: n
+        note:
+          es: Cancelado; lo guardado sigue ahí.
+          en: Cancelled; the saved configuration is still there.
+      - command: erase startup-config
+      - command: y
+        note:
+          es: "`Erase of nvram: complete`."
+          en: "`Erase of nvram: complete`."
+      - command: show startup-config
+        note:
+          es: Otra vez `startup-config is not present`.
+          en: "`startup-config is not present` again."
+    pitfalls:
+      - es: Si guardas después de borrar, vuelves a guardar la configuración en marcha y el borrado no habrá servido de nada. Para dejar un router de fábrica se borra y se reinicia sin guardar.
+        en: If you save after erasing, you save the running configuration again and the erase is undone. To return a router to factory you erase and restart without saving.

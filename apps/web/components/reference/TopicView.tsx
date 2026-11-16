@@ -4,6 +4,7 @@ import { ConsoleQuote } from '@/components/ui/ConsoleQuote';
 import { RichText } from '@/components/ui/RichText';
 import { fill, type Locale, type Messages } from '@/lib/i18n';
 import { commandAnchor, PRACTICE_PANEL_ID, splitSummary } from '@/lib/reference/text';
+import { systemName, topicHref } from '@/lib/systems';
 import { TryButton } from './Sandbox';
 
 /** Prompt del router de práctica tal como sale de fábrica. */
@@ -48,6 +49,19 @@ export function TopicView({
   return (
     <article className="min-w-0">
       <header>
+        <p className="mb-2 text-sm text-ink-muted">
+          <Link
+            href={`/${locale}/referencia/${topic.vendor}`}
+            className="no-underline hover:text-ink hover:underline"
+          >
+            {fill(t.systemHeading, { system: systemName(messages, topic.vendor) })}
+          </Link>
+          <span aria-hidden className="mx-1.5 text-ink-faint">
+            ·
+          </span>
+          <span className="sr-only">. </span>
+          {fill(t.topicNumber, { n: topic.order })}
+        </p>
         <h1 className="text-xl leading-tight font-semibold text-balance text-ink">
           {topic.title[locale]}
         </h1>
@@ -111,7 +125,7 @@ export function TopicView({
       <footer className="mt-10 text-sm">
         {next ? (
           <Link
-            href={`/${locale}/referencia/${next.id}`}
+            href={topicHref(locale, topic.vendor, next.id)}
             className="group inline-flex flex-wrap items-baseline gap-x-2 text-ink no-underline"
           >
             <span className="text-ink-muted">{t.next}</span>
@@ -120,7 +134,7 @@ export function TopicView({
             </span>
           </Link>
         ) : (
-          <Link href={`/${locale}/referencia`} className={linkClass}>
+          <Link href={`/${locale}/referencia/${topic.vendor}`} className={linkClass}>
             {t.allTopics}
           </Link>
         )}

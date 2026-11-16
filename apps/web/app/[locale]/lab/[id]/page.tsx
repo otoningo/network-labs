@@ -26,6 +26,10 @@ export default async function LabPage({ params }: PageProps<'/[locale]/lab/[id]'
   const lab = labById(id);
   if (!lab || !isLocale(locale)) notFound();
   // De la referencia solo viaja lo que enlaza la hoja: id y título.
-  const topics = topicsForLab(id).map((topic) => ({ id: topic.id, title: topic.title }));
+  const topics = topicsForLab(id).map((topic) => ({
+    id: topic.id,
+    system: topic.vendor,
+    title: topic.title,
+  }));
   return <LabScreen lab={lab} nav={{ ...labNav(id), topics }} />;
 }

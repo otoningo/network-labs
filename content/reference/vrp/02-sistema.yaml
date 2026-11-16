@@ -1,0 +1,100 @@
+# Referencia de comandos de VRP, tema 2: el equipo y su configuración. Los
+# ejemplos corren en orden sobre el router de práctica (content/sandbox/vrp.yaml);
+# los marcados con `fails: true` deben fallar, porque enseñan un error típico.
+id: sistema
+vendor: vrp
+order: 2
+title:
+  es: El equipo y su configuración
+  en: The device and its configuration
+summary:
+  es: Ponerle nombre al router, ver su versión y leer la configuración que está corriendo.
+  en: Naming the router, checking its version and reading the configuration that is running.
+fromIos:
+  es: >-
+    `hostname` se llama `sysname` y `show version` es `display version`. El
+    `show running-config` de IOS es `display current-configuration`, que se suele abreviar
+    `dis cu`. Los bloques no se separan con `!` sino con `#`, y la configuración termina con
+    `return`. Como en IOS, lo que escribes cambia la configuración en marcha pero no la
+    guardada: para eso está `save` (tema Guardar).
+  en: >-
+    `hostname` is called `sysname` and `show version` is `display version`. IOS
+    `show running-config` is `display current-configuration`, usually shortened to
+    `dis cu`. Blocks are not separated by `!` but by `#`, and the configuration ends with
+    `return`. As in IOS, what you type changes the running configuration but not the saved
+    one: that is what `save` is for (Save topic).
+labs: [vrp-01-acceso-inicial]
+
+commands:
+  - id: sysname
+    syntax: sysname <nombre>
+    summary:
+      es: Cambia el nombre del equipo. Se ve al momento en el prompt.
+      en: Changes the device name. It shows in the prompt right away.
+    args:
+      - name: nombre
+        text:
+          es: Hasta 246 caracteres, sin espacios.
+          en: Up to 246 characters, no spaces.
+    examples:
+      - command: system-view
+      - command: sysname R1-Oficina
+        note:
+          es: El prompt pasa a `[R1-Oficina]`.
+          en: The prompt becomes `[R1-Oficina]`.
+      - command: sysname Router Oficina
+        fails: true
+        note:
+          es: El nombre no admite espacios; el `^` cae en el espacio.
+          en: The name does not allow spaces; the `^` lands on the space.
+    ios: hostname R1-Oficina
+    pitfalls:
+      - es: Va en la vista de sistema. En la vista de usuario da `Unrecognized command`.
+        en: It goes in the system view. In the user view it gives `Unrecognized command`.
+
+  - id: undo-sysname
+    syntax: undo sysname
+    summary:
+      es: Devuelve el nombre de fábrica, Huawei.
+      en: Restores the factory name, Huawei.
+    examples:
+      - command: undo sysname
+        note:
+          es: El prompt vuelve a `[Huawei]`.
+          en: The prompt goes back to `[Huawei]`.
+    ios: no hostname
+
+  - id: display-version
+    syntax: display version
+    summary:
+      es: Muestra la versión de VRP y cuánto tiempo lleva encendido el equipo.
+      en: Shows the VRP version and how long the device has been up.
+    examples:
+      - command: display version
+    ios: show version
+    pitfalls:
+      - es: Como todos los `display`, funciona en cualquier vista; no hace falta volver a la de usuario.
+        en: Like every `display`, it works in any view; there is no need to go back to the user view.
+
+  - id: display-current-configuration
+    syntax: display current-configuration
+    summary:
+      es: >-
+        Muestra la configuración en marcha, bloque a bloque y separada por `#`. Solo aparece lo
+        que difiere de fábrica, salvo las interfaces, que se listan siempre aunque estén vacías.
+      en: >-
+        Shows the running configuration, block by block and separated by `#`. Only what
+        differs from factory appears, except the interfaces, which are always listed even when
+        empty.
+    examples:
+      - command: display current-configuration
+      - command: dis cu
+        note:
+          es: La abreviatura de siempre; hace lo mismo.
+          en: The usual abbreviation; it does the same.
+    ios: show running-config
+    pitfalls:
+      - es: Las contraseñas nunca salen en claro, solo el texto cifrado. Copiar ese texto a otro equipo no revela la clave.
+        en: Passwords never appear in clear text, only the ciphered string. Copying it to another device does not reveal the password.
+      - es: La configuración termina con `return`. Si la pegas en otro equipo, esa línea lo devuelve a la vista de usuario.
+        en: The configuration ends with `return`. If you paste it into another device, that line takes it back to the user view.
